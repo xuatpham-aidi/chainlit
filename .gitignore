@@ -1,6 +1,6 @@
 build
 dist
-
+backend/chainlit/sample/*
 *.egg-info
 
 .env

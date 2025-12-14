@@ -199,8 +199,8 @@
     "newChat": {
       "button": "New Chat",
       "dialog": {
-        "title": "Create New Chat",
-        "description": "This will clear your current chat history. Are you sure you want to continue?",
+        "title": "Create New Empty Chat",
+        "description": "Are you sure you want to continue?",
         "tooltip": "New Chat"
       }
     },
