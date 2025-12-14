@@ -4,17 +4,18 @@ import { useNavigate } from 'react-router-dom';
 import { useAudio, useAuth, useConfig } from '@chainlit/react-client';
 
 import AudioPresence from '@/components/AudioPresence';
-import ButtonLink from '@/components/ButtonLink';
+// import ButtonLink from '@/components/ButtonLink';
 import { useSidebar } from '@/components/ui/sidebar';
 
-import ApiKeys from './ApiKeys';
+// import ApiKeys from './ApiKeys';
 import ChatProfiles from './ChatProfiles';
 import NewChatButton from './NewChat';
-import ReadmeButton from './Readme';
-import ShareButton from './Share';
+// import ReadmeButton from './Readme';
+// import ShareButton from './Share';
 import SidebarTrigger from './SidebarTrigger';
 import { ThemeToggle } from './ThemeToggle';
-import UserNav from './UserNav';
+
+// import UserNav from './UserNav';
 
 const Header = memo(() => {
   const { audioConnection } = useAudio();
@@ -27,7 +28,7 @@ const Header = memo(() => {
 
   const historyEnabled = data?.requireLogin && config?.dataPersistence;
 
-  const links = config?.ui?.header_links || [];
+  // const links = config?.ui?.header_links || [];
 
   return (
     <div
@@ -61,7 +62,7 @@ const Header = memo(() => {
 
       <div />
       <div className="flex items-center gap-1">
-        <ShareButton />
+        {/* <ShareButton />
         <ReadmeButton />
         <ApiKeys />
         {links &&
@@ -74,9 +75,9 @@ const Header = memo(() => {
               url={link.url}
               target={link.target}
             />
-          ))}
+          ))} */}
         <ThemeToggle />
-        <UserNav />
+        {/* <UserNav /> */}
       </div>
     </div>
   );
