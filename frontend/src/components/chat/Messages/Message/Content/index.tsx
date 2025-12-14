@@ -1,4 +1,5 @@
 import { prepareContent } from '@/lib/message';
+import { cn } from '@/lib/utils';
 import { isEqual } from 'lodash';
 import { forwardRef, memo, useMemo } from 'react';
 
@@ -17,6 +18,7 @@ export interface Props {
   allowHtml?: boolean;
   latex?: boolean;
   sections?: ContentSection[];
+  isUserMessage?: boolean;
 }
 
 const getMessageRenderProps = (message: IStep) => ({
@@ -29,9 +31,27 @@ const getMessageRenderProps = (message: IStep) => ({
   type: message.type
 });
 
+// Format utcTimestamp to local time
+const formatTime = (utcTimestamp: number | string | undefined): string => {
+  if (!utcTimestamp) return '';
+
+  // UTC : client timezone (automatic)
+  const date = new Date(utcTimestamp);
+  if (isNaN(date.getTime())) return '';
+
+  return date.toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+};
+
 const MessageContent = memo(
   forwardRef<HTMLDivElement, Props>(
-    ({ message, elements, allowHtml, latex, sections }, ref) => {
+    (
+      { isUserMessage = false, message, elements, allowHtml, latex, sections },
+      ref
+    ) => {
       const outputContent =
         message.streaming && message.output
           ? message.output + CURSOR_PLACEHOLDER
@@ -113,11 +133,25 @@ const MessageContent = memo(
         </div>
       );
 
+      const timestamp = formatTime(message.createdAt);
       return (
-        <div ref={ref} className="message-content w-full flex flex-col gap-2">
+        <div
+          ref={ref}
+          className="self-end message-content w-full flex flex-col gap-2"
+        >
           {displayInput || (displayOutput && output) ? markdownContent : null}
           {displayOutput ? (
             <InlinedElements elements={outputInlinedElements} />
+          ) : null}
+          {timestamp && (displayInput || (displayOutput && output)) ? (
+            <div
+              className={cn(
+                'text-xs text-muted-foreground mt-1',
+                isUserMessage ? 'self-end' : 'self-start'
+              )}
+            >
+              {timestamp}
+            </div>
           ) : null}
         </div>
       );

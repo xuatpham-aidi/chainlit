@@ -59,6 +59,7 @@ const Message = memo(
     const userMessageContent = useMemo(
       () => (
         <MessageContent
+          isUserMessage={true}
           elements={EMPTY_ELEMENTS}
           message={message}
           allowHtml={allowHtml}
