@@ -97,7 +97,7 @@ unsafe_allow_html = false
 latex = false
 
 # Autoscroll new user messages at the top of the window
-user_message_autoscroll = true
+user_message_autoscroll = false
 
 # Autoscroll new assistant messages
 assistant_message_autoscroll = true
@@ -117,7 +117,7 @@ reaction_on_message_received = false
 
 # Authorize users to spontaneously upload files with messages
 [features.spontaneous_file_upload]
-    enabled = true
+    enabled = false
     # Define accepted file types using MIME types
     # Examples:
     # 1. For specific file types:
@@ -127,8 +127,9 @@ reaction_on_message_received = false
     # 3. For specific file extensions:
     #    accept = {{ "application/octet-stream" = [".xyz", ".pdb"] }}
     # Note: Using "*/*" is not recommended as it may cause browser warnings
-    accept = ["*/*"]
-    max_files = 20
+    # accept = ["*/*"]
+    accept = ["application/pdf", "application/json", "image/png", "image/jpeg", "audio/mpeg", "video/mp4"]
+    max_files = 50
     max_size_mb = 500
 
 [features.audio]
