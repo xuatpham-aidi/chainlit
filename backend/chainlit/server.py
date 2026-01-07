@@ -77,6 +77,9 @@ from chainlit.types import (
 from chainlit.user import PersistedUser, User
 from chainlit.utils import utc_now
 
+from ainfra.memory import A_STORE_CHAT_WORKER
+from atoolkit.worker import stop_async_worker
+
 from ._utils import is_path_inside
 
 if TYPE_CHECKING:
@@ -161,6 +164,10 @@ async def lifespan(app: FastAPI):
 
         slack_task = asyncio.create_task(start_socket_mode())
 
+    # Start all async aworkers
+    aworkers = []
+    aworkers.extend(A_STORE_CHAT_WORKER.create_tasks())
+
     try:
         yield
     finally:
@@ -183,6 +190,11 @@ async def lifespan(app: FastAPI):
 
             if data_layer := get_data_layer():
                 await data_layer.close()
+            
+            # Stop all async aworkers
+            for aworker in aworkers:
+                await stop_async_worker(aworker)
+
         except asyncio.exceptions.CancelledError:
             pass
 
