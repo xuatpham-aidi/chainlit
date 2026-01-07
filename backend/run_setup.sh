@@ -1,0 +1,1 @@
+uv sync --extra tests --extra mypy --extra dev --extra custom-data
