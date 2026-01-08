@@ -71,6 +71,39 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                 "SQLAlchemyDataLayer storage client is not initialized and elements will not be persisted!"
             )
 
+    def _clean_for_json(self, obj: Any) -> Any:
+        """
+        Recursively clean non-serializable objects (like ModelMetaclass) from dicts/lists.
+        This prevents JSON serialization errors when persisting callback data.
+        """
+        if isinstance(obj, dict):
+            cleaned = {}
+            for k, v in obj.items():
+                # Skip class/metaclass objects
+                if isinstance(v, type):
+                    cleaned[k] = str(v)
+                else:
+                    try:
+                        cleaned[k] = self._clean_for_json(v)
+                    except (TypeError, AttributeError):
+                        cleaned[k] = str(v)
+            return cleaned
+        elif isinstance(obj, list):
+            return [self._clean_for_json(item) for item in obj]
+        elif isinstance(obj, (str, int, float, bool, type(None))):
+            return obj
+        elif hasattr(obj, '__dict__'):
+            # Try to convert objects to dict, but skip metaclasses
+            if isinstance(obj, type):
+                return str(obj)
+            try:
+                return self._clean_for_json(obj.__dict__)
+            except (TypeError, AttributeError):
+                return str(obj)
+        else:
+            # Fallback: convert to string
+            return str(obj)
+
     async def build_debug_url(self) -> str:
         return ""
 
@@ -381,8 +414,9 @@ class SQLAlchemyDataLayer(BaseDataLayer):
             for key, value in step_dict.items()
             if value is not None and not (isinstance(value, dict) and not value)
         }
-        parameters["metadata"] = json.dumps(step_dict.get("metadata", {}))
-        parameters["generation"] = json.dumps(step_dict.get("generation", {}))
+        # Clean non-serializable objects before JSON encoding
+        parameters["metadata"] = json.dumps(self._clean_for_json(step_dict.get("metadata", {})))
+        parameters["generation"] = json.dumps(self._clean_for_json(step_dict.get("generation", {})))
         columns = ", ".join(f'"{key}"' for key in parameters.keys())
         values = ", ".join(f":{key}" for key in parameters.keys())
         updates = ", ".join(
