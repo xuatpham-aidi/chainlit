@@ -13,7 +13,8 @@ import {
   IStep,
   useAuth,
   useChatData,
-  useChatInteract
+  useChatInteract,
+  useConfig
 } from '@chainlit/react-client';
 import type { IMode, IModeOption } from '@chainlit/react-client';
 import { modesState } from '@chainlit/react-client';
@@ -35,6 +36,7 @@ import {
 import { Attachments } from './Attachments';
 import CommandButtons from './CommandButtons';
 import CommandButton from './CommandPopoverButton';
+import FavoriteButton from './FavoriteButton';
 import Input, { InputMethods } from './Input';
 import McpButton from './Mcp';
 import ModePicker from './ModePicker';
@@ -69,6 +71,11 @@ export default function MessageComposer({
   const { askUser, chatSettingsInputs, disabled: _disabled } = useChatData();
 
   const disabled = _disabled || !!attachments.find((a) => !a.uploaded);
+
+  const { config } = useConfig();
+  const showSettingsInComposer =
+    config?.ui?.chat_settings_location !== 'sidebar' &&
+    chatSettingsInputs.length > 0;
 
   const isMobile = useIsMobile();
 
@@ -108,6 +115,13 @@ export default function MessageComposer({
   }
 
   const [promptUsed, setPromptUsed] = useState(false);
+
+  const onFavoriteSelect = useCallback((content: string) => {
+    setValue(content);
+    if (inputRef.current) {
+      inputRef.current.setValueExtern(content);
+    }
+  }, []);
 
   const onPaste = useCallback(
     (event: ClipboardEvent) => {
@@ -259,7 +273,7 @@ export default function MessageComposer({
             onFileUploadError={onFileUploadError}
             onFileUpload={onFileUpload}
           />
-          {chatSettingsInputs.length > 0 && (
+          {showSettingsInComposer && (
             <Button
               id="chat-settings-open-modal"
               disabled={disabled}
@@ -291,6 +305,8 @@ export default function MessageComposer({
             selectedCommandId={selectedCommand?.id}
             onCommandSelect={setSelectedCommand}
           />
+
+          <FavoriteButton disabled={disabled} onSelect={onFavoriteSelect} />
         </div>
         <div className="flex items-center gap-1">
           <SubmitButton

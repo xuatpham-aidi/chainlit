@@ -65,6 +65,10 @@
         "attachFiles": "கோப்புகளை இணை"
       }
     },
+    "favorites": {
+      "use": "விருப்பமான செய்தியைப் பயன்படுத்தவும்",
+      "headline": "விருப்பமான செய்திகள்"
+    },
     "commands": {
       "button": "கருவிகள்",
       "changeTool": "கருவியை மாற்றவும்",
@@ -240,6 +244,12 @@
   "components": {
     "MultiSelectInput": {
       "placeholder": "தேர்ந்தெடுக்கவும்..."
+    },
+    "DatePickerInput": {
+      "placeholder": {
+        "single": "தேதியைத் தேர்ந்தெடுக்கவும்",
+        "range": "தேதி வரம்பைத் தேர்ந்தெடுக்கவும்"
+      }
     }
   }
 }

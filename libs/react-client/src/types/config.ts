@@ -36,6 +36,9 @@ export interface IChainlitConfig {
     default_theme?: 'light' | 'dark';
     layout?: 'default' | 'wide';
     default_sidebar_state?: 'open' | 'closed';
+    chat_settings_location?: 'message_composer' | 'sidebar';
+    default_chat_settings_open?: boolean;
+    confirm_new_chat?: boolean;
     cot: 'hidden' | 'tool_call' | 'full';
     github?: string;
     custom_css?: string;
@@ -69,6 +72,7 @@ export interface IChainlitConfig {
     assistant_message_autoscroll?: boolean;
     latex?: boolean;
     edit_message?: boolean;
+    favorites?: boolean;
     mcp?: {
       enabled?: boolean;
       sse?: {

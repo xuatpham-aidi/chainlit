@@ -70,6 +70,10 @@
         "stop": "録音停止",
         "connecting": "接続中"
       },
+      "favorites": {
+        "use": "お気に入りのメッセージを使用",
+        "headline": "お気に入りのメッセージ"
+      },
       "commands": {
         "button": "ツール",
         "changeTool": "ツールを変更",
@@ -239,6 +243,12 @@
   "components": {
     "MultiSelectInput": {
       "placeholder": "選択..."
+    },
+    "DatePickerInput": {
+      "placeholder": {
+        "single": "日付を選択",
+        "range": "日付範囲を選択"
+      }
     }
   }
 }

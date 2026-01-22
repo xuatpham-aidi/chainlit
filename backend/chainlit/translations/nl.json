@@ -83,6 +83,10 @@
           "removeAttachment": "Verwijder bijlage"
         }
       },
+      "favorites": {
+        "use": "Gebruik een favoriet bericht",
+        "headline": "Favoriete berichten"
+      },
       "commands": {
         "button": "Hulpmiddelen",
         "changeTool": "Wijzig hulpmiddel",
@@ -240,6 +244,12 @@
   "components": {
     "MultiSelectInput": {
       "placeholder": "Selecteer..."
+    },
+    "DatePickerInput": {
+      "placeholder": {
+        "single": "Kies een datum",
+        "range": "Kies een datumbereik"
+      }
     }
   }
 }
