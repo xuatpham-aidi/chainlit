@@ -136,6 +136,9 @@ class GenerationHelper:
             return [self.ensure_values_serializable(item) for item in data]
         elif isinstance(data, (str, int, float, bool, type(None))):
             return data
+        elif isinstance(data, type):
+            # Handle ModelMetaclass and other type objects
+            return str(data)
         elif isinstance(data, (tuple, set)):
             return list(data)  # Convert tuples and sets to lists
         else:
@@ -278,6 +281,9 @@ class GenerationHelper:
         # make sure there is no api key specification
         settings = {k: v for k, v in merged.items() if not k.endswith("_api_key")}
 
+        # Clean settings to ensure all values are JSON serializable (handles ModelMetaclass, etc.)
+        settings = self.ensure_values_serializable(settings)
+
         model_keys = ["azure_deployment", "deployment_name", "model", "model_name"]
         model = next((settings[k] for k in model_keys if k in settings), None)
         if isinstance(model, str):
@@ -292,6 +298,9 @@ class GenerationHelper:
                 else t
                 for t in settings["tools"]
             ]
+        # Clean tools to ensure all values are JSON serializable
+        if tools is not None:
+            tools = self.ensure_values_serializable(tools)
         return provider, model, tools, settings
 
 

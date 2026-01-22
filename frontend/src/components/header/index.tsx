@@ -112,7 +112,7 @@ const Header = memo(() => {
               <Translator path="chat.settings.title" />
             </TooltipContent>
           </Tooltip>
-        )}
+        )} */}
         <ThemeToggle />
         {/* <UserNav /> */}
       </div>
