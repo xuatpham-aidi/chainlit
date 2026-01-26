@@ -151,6 +151,9 @@ export function ThreadList({
       clear();
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
+    
+    clear();
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
     toast.promise(apiClient.deleteThread(threadIdToDelete), {
       loading: (
