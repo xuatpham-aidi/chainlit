@@ -1,6 +1,6 @@
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import aiofiles
@@ -54,7 +54,7 @@ class ChainlitDataLayer(BaseDataLayer):
             self.pool = await asyncpg.create_pool(self.database_url)
 
     async def get_current_timestamp(self) -> datetime:
-        return datetime.now()
+        return datetime.now(timezone.utc)
 
     async def execute_query(
         self, query: str, params: Union[Dict, None] = None
@@ -617,7 +617,7 @@ class ChainlitDataLayer(BaseDataLayer):
             "userId": user_id,
             "tags": tags,
             "metadata": json.dumps(metadata or {}),
-            "updatedAt": datetime.now(),
+            "updatedAt": datetime.now(timezone.utc),
         }
 
         # Remove None values

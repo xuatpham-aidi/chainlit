@@ -219,13 +219,6 @@ export function ThreadList({
   };
 
   const getTimeGroupLabel = (group: string) => {
-    // hardcoded
-    try {
-      return <Translator path="threadHistory.sidebar.timeframes.chathistory" />
-    } catch (e) {
-      return 'Chat History'
-    }
-
     const labels = {
       Today: <Translator path="threadHistory.sidebar.timeframes.today" />,
       Yesterday: (
