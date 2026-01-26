@@ -51,7 +51,7 @@ export default function WelcomeScreen(props: Props) {
       );
       if (currentChatProfile?.icon) {
         return (
-          <div className="flex flex-col gap-2 mb-2 items-center">
+          <div className="flex flex-col gap-2 mb-2 items-center select-none pointer-events-none">
             <img
               className="h-16 w-16 rounded-full"
               src={
