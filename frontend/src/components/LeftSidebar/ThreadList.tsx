@@ -272,13 +272,13 @@ export function ThreadList({
               <Translator path="threadHistory.thread.actions.rename.title" />
             </DialogTitle>
             <DialogDescription>
-              <Translator path="threadHistory.thread.actions.rename.description" />
+              {/* <Translator path="threadHistory.thread.actions.rename.description" /> */}
             </DialogDescription>
           </DialogHeader>
           <div className="my-6">
-            <Label htmlFor="name" className="text-right">
+            {/* <Label htmlFor="name" className="text-right">
               <Translator path="threadHistory.thread.actions.rename.form.name.label" />
-            </Label>
+            </Label> */}
             <Input
               id="name"
               required
