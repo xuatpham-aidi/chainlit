@@ -178,3 +178,47 @@ code {
     background-color: transparent;
   }
 }
+
+/* 3D Cube Animation */
+@keyframes rotate3d {
+  0% {
+    transform: rotate3d(1, 1, 0, 0deg);
+  }
+  25% {
+    transform: rotate3d(1, 1, 0, 90deg);
+  }
+  50% {
+    transform: rotate3d(1, 1, 0, 180deg);
+  }
+  75% {
+    transform: rotate3d(1, 1, 0, 270deg);
+  }
+  100% {
+    transform: rotate3d(1, 1, 0, 360deg);
+  }
+}
+
+.cube-container {
+  perspective: 800px;
+  perspective-origin: center center;
+  transform-style: preserve-3d;
+}
+
+.cube-3d {
+  transform-style: preserve-3d;
+  animation: rotate3d 15s ease-in-out infinite;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.cube-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
