@@ -10,6 +10,7 @@ import ChatSettingsModal from './components/ChatSettings';
 import { ThemeProvider } from './components/ThemeProvider';
 import { Loader } from '@/components/Loader';
 import { Toaster } from '@/components/ui/sonner';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 import { userEnvState } from 'state/user';
 
@@ -30,6 +31,9 @@ function App() {
   const { isAuthenticated, data, isReady } = useAuth();
   const userEnv = useRecoilValue(userEnvState);
   const { connect, chatProfile, setChatProfile } = useChatSession();
+  
+  // Update browser tab title with current thread name
+  useDocumentTitle();
 
   const configLoaded = !!config;
 
