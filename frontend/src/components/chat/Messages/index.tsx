@@ -7,7 +7,7 @@ import {
   type IStep
 } from '@chainlit/react-client';
 
-import BlinkingCursor from '@/components/BlinkingCursor';
+import { ThinkingIndicator } from '@/components/ThinkingIndicator';
 
 import { Message } from './Message';
 
@@ -90,7 +90,12 @@ const Messages = memo(
                 ) : null}
                 {(showToolCoTLoader || showHiddenCoTLoader) &&
                 m.name !== 'on_chat_start' ? (
-                  <BlinkingCursor />
+                  <div className="flex gap-4 w-full items-center">
+                    <div className="w-5 shrink-0" aria-hidden />
+                    <div className="flex-grow min-w-0 flex items-center justify-start">
+                      <ThinkingIndicator className="py-2" />
+                    </div>
+                  </div>
                 ) : null}
               </React.Fragment>
             );

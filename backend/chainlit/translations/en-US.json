@@ -65,10 +65,6 @@
         "attachFiles": "Attach files"
       }
     },
-    "favorites": {
-      "use": "Use a favorite message",
-      "headline": "Favorite Messages"
-    },
     "commands": {
       "button": "Tools",
       "changeTool": "Change Tool",
@@ -93,6 +89,7 @@
       }
     },
     "messages": {
+      "processing": "Processing",
       "status": {
         "using": "Using",
         "used": "Used"
@@ -137,7 +134,6 @@
         "placeholder": "Search conversations..."
       },
       "timeframes": {
-        "chathistory": "Chat history",
         "today": "Today",
         "yesterday": "Yesterday",
         "previous7days": "Previous 7 days",

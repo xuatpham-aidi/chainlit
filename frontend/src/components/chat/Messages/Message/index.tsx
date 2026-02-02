@@ -8,8 +8,9 @@ import {
   type IStep
 } from '@chainlit/react-client';
 
-import { useLayoutMaxWidth } from 'hooks/useLayoutMaxWidth';
+import { useLayoutMaxWidth } from 'hooks/useLayoutMaxWidth'; 
 
+import { ThinkingIndicator } from '@/components/ThinkingIndicator';
 import { Messages } from '..';
 import { AskActionButtons } from './AskActionButtons';
 import { AskFileButton } from './AskFileButton';
@@ -106,79 +107,89 @@ const Message = memo(
                   </UserMessage>
                 </div>
               ) : (
-                <div className="ai-message flex gap-4 w-full">
-                  {!isStep || !indent ? (
-                    <MessageAvatar
-                      author={message.metadata?.avatarName || message.name}
-                      isError={message.isError}
-                    />
-                  ) : null}
-                  {/* Display the step and its children */}
-                  {isStep ? (
-                    <Step step={message} isRunning={isRunning}>
-                      {showInputSection ? (
-                        <MessageContent
-                          elements={elements}
+                <div className="flex flex-col w-full">
+                  <div className="ai-message flex gap-4 w-full">
+                    {!isStep || !indent ? (
+                      <MessageAvatar
+                        author={message.metadata?.avatarName || message.name}
+                        isError={message.isError}
+                      />
+                    ) : null}
+                    {/* Display the step and its children */}
+                    {isStep ? (
+                      <Step step={message} isRunning={isRunning}>
+                        {showInputSection ? (
+                          <MessageContent
+                            elements={elements}
+                            message={message}
+                            allowHtml={allowHtml}
+                            latex={latex}
+                            sections={['input']}
+                          />
+                        ) : null}
+                        {message.steps ? (
+                          <Messages
+                            messages={message.steps.filter(
+                              (s) => !s.type.includes('message')
+                            )}
+                            elements={elements}
+                            actions={actions}
+                            indent={indent + 1}
+                            isRunning={isRunning}
+                          />
+                        ) : null}
+                        {shouldRenderOutput ? (
+                          <MessageContent
+                            ref={contentRef}
+                            elements={elements}
+                            message={message}
+                            allowHtml={allowHtml}
+                            latex={latex}
+                            sections={showInputSection ? ['output'] : undefined}
+                          />
+                        ) : null}
+                        <MessageButtons
                           message={message}
-                          allowHtml={allowHtml}
-                          latex={latex}
-                          sections={['input']}
-                        />
-                      ) : null}
-                      {message.steps ? (
-                        <Messages
-                          messages={message.steps.filter(
-                            (s) => !s.type.includes('message')
-                          )}
-                          elements={elements}
                           actions={actions}
-                          indent={indent + 1}
-                          isRunning={isRunning}
+                          contentRef={contentRef}
                         />
-                      ) : null}
-                      {shouldRenderOutput ? (
+                      </Step>
+                    ) : (
+                      // Display an assistant message
+                      <div className="flex flex-col items-start min-w-[150px] flex-grow gap-2">
                         <MessageContent
                           ref={contentRef}
                           elements={elements}
                           message={message}
                           allowHtml={allowHtml}
                           latex={latex}
-                          sections={showInputSection ? ['output'] : undefined}
                         />
-                      ) : null}
-                      <MessageButtons
-                        message={message}
-                        actions={actions}
-                        contentRef={contentRef}
-                      />
-                    </Step>
-                  ) : (
-                    // Display an assistant message
-                    <div className="flex flex-col items-start min-w-[150px] flex-grow gap-2">
-                      <MessageContent
-                        ref={contentRef}
-                        elements={elements}
-                        message={message}
-                        allowHtml={allowHtml}
-                        latex={latex}
-                      />
+                        <AskFileButton messageId={message.id} onError={onError} />
+                        <AskActionButtons
+                          actions={actions}
+                          messageId={message.id}
+                        />
 
-                      <AskFileButton messageId={message.id} onError={onError} />
-                      <AskActionButtons
-                        actions={actions}
-                        messageId={message.id}
-                      />
-
-                      <MessageButtons
-                        message={message}
-                        actions={actions}
-                        run={
-                          scorableRun && isScorable ? scorableRun : undefined
-                        }
-                        contentRef={contentRef}
-                      />
+                        <MessageButtons
+                          message={message}
+                          actions={actions}
+                          run={
+                            scorableRun && isScorable ? scorableRun : undefined
+                          }
+                          contentRef={contentRef}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {/* Thinking indicator below message, left-aligned with ai-message margin; only when running and not streaming */}
+                  {!isStep && !indent && isRunning && !message.streaming ? (
+                    <div className="flex gap-4 w-full items-center mt-1">
+                      <div className="w-5 shrink-0" aria-hidden />
+                      <div className="flex-grow min-w-0 flex items-center justify-start">
+                        <ThinkingIndicator className="py-0" />
+                      </div>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               )}
             </div>

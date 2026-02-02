@@ -103,6 +103,10 @@ export default {
         'expand-width': {
           '0%': { width: '0' },
           '100%': { width: '30%' }
+        },
+        'thinking-dot': {
+          '0%, 80%, 100%': { transform: 'translateY(0)' },
+          '40%': { transform: 'translateY(-6px)' }
         }
       },
       animation: {
@@ -111,7 +115,9 @@ export default {
         'bounce-subtle': 'bounce-subtle 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
         'command-shift': 'command-shift 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
         'slide-up': 'slide-up 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        'expand-width': 'expand-width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+        'expand-width': 'expand-width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'thinking-dot':
+          'thinking-dot 0.6s ease-in-out infinite'
       },
       transitionProperty: {
         'width-padding': 'width, padding'

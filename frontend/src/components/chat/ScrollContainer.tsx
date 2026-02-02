@@ -8,7 +8,7 @@ import {
   useState
 } from 'react';
 
-import { useChatMessages } from '@chainlit/react-client';
+import { useChatData, useChatMessages } from '@chainlit/react-client';
 
 import { Button } from '@/components/ui/button';
 
@@ -31,6 +31,7 @@ export default function ScrollContainer({
   const spacerRef = useRef<HTMLDivElement>(null);
   const lastUserMessageRef = useRef<HTMLDivElement | null>(null);
   const { messages } = useChatMessages();
+  const { loading } = useChatData();
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
 
@@ -95,7 +96,40 @@ export default function ScrollContainer({
       // Update spacer height when last user message is found
       updateSpacerHeight();
     }
+
+    // Deferred scroll after DOM has updated (handles streaming / multiple messages)
+    const rafId = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        updateSpacerHeight();
+      });
+    });
+    return () => cancelAnimationFrame(rafId);
   }, [messages, updateSpacerHeight]);
+
+  // While loading (streaming or multiple messages), scroll to bottom when user is following (hasn't scrolled up)
+  useEffect(() => {
+    if (!loading || !autoScrollAssistantMessage) return;
+
+    // When loading starts, assume user wants to follow: scroll once and set ref so interval keeps following
+    if (autoScrollRef) {
+      autoScrollRef.current = true;
+    }
+    if (ref.current) {
+      ref.current.scrollTop = ref.current.scrollHeight;
+    }
+
+    const scrollToBottomIfFollowing = () => {
+      if (autoScrollRef?.current && ref.current) {
+        ref.current.scrollTop = ref.current.scrollHeight;
+      }
+    };
+
+    const intervalId = setInterval(() => {
+      updateSpacerHeight();
+      scrollToBottomIfFollowing();
+    }, 100);
+    return () => clearInterval(intervalId);
+  }, [loading, autoScrollAssistantMessage, autoScrollRef, updateSpacerHeight]);
 
   // Add window resize listener to update spacer height
   useEffect(() => {

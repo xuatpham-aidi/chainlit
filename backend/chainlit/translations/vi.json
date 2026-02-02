@@ -89,6 +89,7 @@
             }
         },
         "messages": {
+            "processing": "Đang xử lý",
             "status": {
                 "using": "Đang dùng",
                 "used": "Đã dùng"
@@ -133,13 +134,12 @@
                 "placeholder": "Tìm kiếm cuộc trò chuyện..."
             },
             "timeframes": {
-                "chathistory": "Các đoạn chat của bạn",
                 "today": "Hôm nay",
                 "yesterday": "Hôm qua",
                 "previous7days": "7 ngày trước",
                 "previous30days": "30 ngày trước"
             },
-            "empty": "Không tìm thấy cuộc trò chuyện",
+            "empty": "Không tìm thấy lịch sử chat",
             "actions": {
                 "close": "Đóng sidebar",
                 "open": "Mở sidebar"
