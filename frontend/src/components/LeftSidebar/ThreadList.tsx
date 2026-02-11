@@ -12,11 +12,13 @@ import {
   ClientError,
   ThreadHistory,
   threadHistoryState,
+  threadGroupsState,
   useChatInteract,
   useChatMessages,
   useChatSession,
   useConfig
 } from '@chainlit/react-client';
+import { useRecoilValue } from 'recoil';
 
 import Alert from '@/components/Alert';
 import ShareDialog from '@/components/share/ShareDialog';
@@ -110,8 +112,34 @@ export function ThreadList({
   const [threadIdToRename, setThreadIdToRename] = useState<string>();
   const [threadNewName, setThreadNewName] = useState<string>();
   const setThreadHistory = useSetRecoilState(threadHistoryState);
+  const threadGroups = useRecoilValue(threadGroupsState) ?? [];
   const apiClient = useContext(ChainlitContext);
   const { config } = useConfig();
+
+  const handleMoveToGroup = useCallback(
+    (threadId: string, groupId: string | null) => {
+      const effectiveGroupId = groupId ?? undefined;
+      const thread = threadHistory?.threads?.find((t) => t.id === threadId);
+      if (thread && (thread.groupId ?? undefined) === effectiveGroupId) return;
+      toast.promise(apiClient.moveThreadToGroup(threadId, groupId), {
+        loading: <Translator path="threadHistory.thread.actions.moveToGroup.inProgress" />,
+        success: () => {
+          setThreadHistory((prev) => ({
+            ...prev,
+            threads: prev?.threads?.map((t) =>
+              t.id === threadId ? { ...t, groupId: effectiveGroupId } : t
+            )
+          }));
+          return <Translator path="threadHistory.thread.actions.moveToGroup.success" />;
+        },
+        error: (err) => {
+          if (err instanceof ClientError) return <span>{err.message}</span>;
+          return <Translator path="threadHistory.thread.actions.moveToGroup.error" />;
+        }
+      });
+    },
+    [apiClient, setThreadHistory, threadHistory?.threads]
+  );
   const dataPersistence = config?.dataPersistence;
   const threadSharingReady = Boolean((config as any)?.threadSharing);
   // sessionId not needed here
@@ -185,9 +213,6 @@ export function ThreadList({
       clear();
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
-    
-    clear();
-    await new Promise((resolve) => setTimeout(resolve, 300));
 
     toast.promise(apiClient.deleteThread(threadIdToDelete), {
       loading: (
@@ -377,15 +402,15 @@ export function ThreadList({
               key={group}
               className={cn(
                 'px-3 py-2',
-                groupIndex > 0 && 'mt-0 pt-3 border-t border-sidebar-border/50'
+                groupIndex > 0 && 'mt-0 border-t border-sidebar-border/50'
               )}
             >
-              <div className="sticky top-0 z-10 -mx-3 px-3 pt-2 pb-1 bg-sidebar ">
+              <div className="sticky top-0 z-10 bg-sidebar ">
                 <button
                   type="button"
                   onClick={() => toggleGroup(group)}
                   className={cn(
-                    'flex w-full items-center gap-2 rounded-lg py-2 pl-2 pr-2 -mx-0.5',
+                    'flex w-full items-center gap-2 rounded-lg py-1.5 pl-2 pr-2',
                     'text-xs font-medium tracking-tight bg-neutral-300/20',
                     'hover:scale-105',
                     'transition-colors duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
@@ -406,7 +431,7 @@ export function ThreadList({
                   </span>
                   <span
                     className={cn(
-                      'text-[11px] font-normal tabular-nums rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center',
+                      'text-sm font-normal rounded-full px-1.5 text-center',
                       groupContainsSelected
                         ? 'bg-neutral-600/20 font-medium'
                         : 'text-sidebar-foreground/45 bg-sidebar-foreground/10'
@@ -449,12 +474,12 @@ export function ThreadList({
                                 isActive={isSelected}
                                 className={cn(
                                   'relative group/thread transition-all duration-150 ease-out',
-                                  'rounded-xl pl-3 my-1',
+                                  'rounded-xl pl-3 my-0.5',
                                   'hover:bg-neutral-600/10',
                                   'data-[active=true]:!bg-neutral-600/20'
                                 )}
                               >
-                                <span className="flex pl-3 min-w-0 flex-1 items-center gap-2.5 pr-1">
+                                <span className="flex pl-3 min-w-0 flex-1 items-center gap-2">
                                   {thread.metadata?.is_shared ? (
                                     <Share2
                                       className="h-4 w-4 shrink-0 text-sidebar-foreground/70"
@@ -476,6 +501,10 @@ export function ThreadList({
                                   </span>
                                 </span>
                                 <ThreadOptions
+                                  threadId={thread.id}
+                                  threadGroupId={thread.groupId}
+                                  threadGroups={threadGroups}
+                                  onMoveToGroup={handleMoveToGroup}
                                   onDelete={() =>
                                     setThreadIdToDelete(thread.id)
                                   }

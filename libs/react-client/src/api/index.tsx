@@ -1,4 +1,4 @@
-import { IElement, IThread, IUser } from 'src/types';
+import { IElement, IThread, IThreadGroup, IUser } from 'src/types';
 
 import { IAction } from 'src/types/action';
 import { IFeedback } from 'src/types/feedback';
@@ -234,6 +234,49 @@ export class ChainlitAPI extends APIBase {
   async renameThread(threadId: string, name: string) {
     const res = await this.put(`/project/thread`, { threadId, name });
 
+    return res.json();
+  }
+
+  async moveThreadToGroup(
+    threadId: string,
+    groupId: string | null
+  ): Promise<{ success: boolean }> {
+    const res = await this.put(`/project/thread`, { threadId, groupId });
+    return res.json();
+  }
+
+  async listThreadGroups(): Promise<IThreadGroup[]> {
+    const res = await this.get(`/project/thread-groups`);
+    return res.json();
+  }
+
+  async createThreadGroup(name: string): Promise<IThreadGroup> {
+    const res = await this.post(`/project/thread-groups`, { name });
+    return res.json();
+  }
+
+  async updateThreadGroup(
+    groupId: string,
+    payload: { name?: string; displayOrder?: number }
+  ): Promise<{ success: boolean }> {
+    const res = await this.put(`/project/thread-group`, {
+      groupId,
+      ...payload
+    });
+    return res.json();
+  }
+
+  async deleteThreadGroup(groupId: string): Promise<{ success: boolean }> {
+    const res = await this.delete(`/project/thread-group`, { groupId });
+    return res.json();
+  }
+
+  async reorderThreadGroups(
+    orderedGroupIds: string[]
+  ): Promise<{ success: boolean }> {
+    const res = await this.put(`/project/thread-groups/reorder`, {
+      orderedGroupIds
+    });
     return res.json();
   }
 

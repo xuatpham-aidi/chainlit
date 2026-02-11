@@ -19,6 +19,8 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 
+import { cn } from '@/lib/utils';
+
 import { EditSquare } from '../icons/EditSquare';
 
 type NewChatDialogProps = {
@@ -70,9 +72,16 @@ export const NewChatDialog = ({
 interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   navigate?: (to: string) => void;
   onConfirm?: () => void;
+  showLabel?: boolean;
 }
 
-const NewChatButton = ({ navigate, onConfirm, ...buttonProps }: Props) => {
+const NewChatButton = ({
+  navigate,
+  onConfirm,
+  showLabel = false,
+  className,
+  ...buttonProps
+}: Props) => {
   const [open, setOpen] = useState(false);
   const { clear } = useChatInteract();
   const { config } = useConfig();
@@ -99,26 +108,45 @@ const NewChatButton = ({ navigate, onConfirm, ...buttonProps }: Props) => {
     handleClose();
   };
 
+  const button = (
+    <Button
+      variant="ghost"
+      size={showLabel ? 'default' : 'icon'}
+      id="new-chat-button"
+      className={cn(
+        !showLabel &&
+        'h-8 w-8 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150',
+        className
+      )}
+      onClick={handleClickOpen}
+      {...buttonProps}
+    >
+      {showLabel ? (
+        <>
+          <span className="min-w-0 flex-1 truncate text-left">
+            <Translator path="navigation.newChat.button" />
+          </span>
+          <EditSquare className="size-4 shrink-0" />
+        </>
+      ) : (
+        <EditSquare className="size-5" />
+      )}
+    </Button>
+  );
+
   return (
     <div>
       <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              id="new-chat-button"
-              className="h-8 w-8 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
-              onClick={handleClickOpen}
-              {...buttonProps}
-            >
-              <EditSquare className="size-5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <Translator path="navigation.newChat.dialog.tooltip" />
-          </TooltipContent>
-        </Tooltip>
+        {showLabel ? (
+          button
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>{button}</TooltipTrigger>
+            <TooltipContent>
+              <Translator path="navigation.newChat.dialog.tooltip" />
+            </TooltipContent>
+          </Tooltip>
+        )}
       </TooltipProvider>
       <NewChatDialog
         open={open}

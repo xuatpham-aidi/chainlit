@@ -16,6 +16,7 @@ import {
   IMessageElement,
   IStep,
   ITasklistElement,
+  IThreadGroup,
   IUser,
   ThreadHistory
 } from './types';
@@ -226,6 +227,11 @@ export const threadHistoryState = atom<ThreadHistory | undefined>({
       );
     }
   ]
+});
+
+export const threadGroupsState = atom<IThreadGroup[] | undefined>({
+  key: 'ThreadGroups',
+  default: undefined
 });
 
 export const sideViewState = atom<

@@ -37,12 +37,21 @@ InputWidgetType = Literal[
 ToastType = Literal["info", "success", "warning", "error"]
 
 
+class ThreadGroupDict(TypedDict):
+    id: str
+    userId: str
+    name: str
+    displayOrder: int
+    createdAt: Optional[str]
+
+
 class ThreadDict(TypedDict):
     id: str
     createdAt: str
     name: Optional[str]
     userId: Optional[str]
     userIdentifier: Optional[str]
+    groupId: Optional[str]
     tags: Optional[List[str]]
     metadata: Optional[Dict]
     steps: List["StepDict"]
@@ -58,6 +67,7 @@ class ThreadFilter(BaseModel):
     feedback: Literal[0, 1] | None = None
     userId: str | None = None
     search: str | None = None
+    groupId: str | None = None
 
 
 @dataclass
@@ -217,7 +227,26 @@ class AskElementResponse(TypedDict, total=False):
 
 class UpdateThreadRequest(BaseModel):
     threadId: str
+    name: Optional[str] = None
+    groupId: Optional[str] = None
+
+
+class CreateThreadGroupRequest(BaseModel):
     name: str
+
+
+class UpdateThreadGroupRequest(BaseModel):
+    groupId: str
+    name: Optional[str] = None
+    displayOrder: Optional[int] = None
+
+
+class DeleteThreadGroupRequest(BaseModel):
+    groupId: str
+
+
+class ReorderThreadGroupsRequest(BaseModel):
+    orderedGroupIds: List[str]
 
 
 class ShareThreadRequest(BaseModel):

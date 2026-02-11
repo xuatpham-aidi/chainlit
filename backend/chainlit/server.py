@@ -64,14 +64,18 @@ from chainlit.types import (
     AskFileSpec,
     CallActionRequest,
     ConnectMCPRequest,
+    CreateThreadGroupRequest,
     DeleteFeedbackRequest,
     DeleteThreadRequest,
+    DeleteThreadGroupRequest,
     DisconnectMCPRequest,
     ElementRequest,
     GetThreadsRequest,
+    ReorderThreadGroupsRequest,
     ShareThreadRequest,
     Theme,
     UpdateFeedbackRequest,
+    UpdateThreadGroupRequest,
     UpdateThreadRequest,
 )
 from chainlit.user import PersistedUser, User
@@ -1165,7 +1169,11 @@ async def rename_thread(
 
     await is_thread_author(current_user.identifier, thread_id)
 
-    await data_layer.update_thread(thread_id, name=payload.name)
+    await data_layer.update_thread(
+        thread_id,
+        name=payload.name,
+        group_id=payload.groupId,
+    )
 
     return JSONResponse(content={"success": True})
 
@@ -1243,6 +1251,111 @@ async def delete_thread(
     await is_thread_author(current_user.identifier, thread_id)
 
     await data_layer.delete_thread(thread_id)
+    return JSONResponse(content={"success": True})
+
+
+async def _get_user_id_for_data_layer(data_layer, current_user: GenericUser) -> str:
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    if isinstance(current_user, PersistedUser):
+        return current_user.id
+    persisted_user = await data_layer.get_user(identifier=current_user.identifier)
+    if not persisted_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return persisted_user.id
+
+
+@router.get("/project/thread-groups")
+async def list_thread_groups(
+    request: Request,
+    current_user: UserParam,
+):
+    """List thread groups for the current user."""
+    data_layer = get_data_layer()
+    if not data_layer:
+        raise HTTPException(status_code=400, detail="Data persistence is not enabled")
+    user_id = await _get_user_id_for_data_layer(data_layer, current_user)
+    groups = await data_layer.list_thread_groups(user_id)
+    return JSONResponse(content=groups)
+
+
+@router.post("/project/thread-groups")
+async def create_thread_group(
+    request: Request,
+    payload: CreateThreadGroupRequest,
+    current_user: UserParam,
+):
+    """Create a thread group."""
+    data_layer = get_data_layer()
+    if not data_layer:
+        raise HTTPException(status_code=400, detail="Data persistence is not enabled")
+    user_id = await _get_user_id_for_data_layer(data_layer, current_user)
+    group = await data_layer.create_thread_group(user_id, payload.name)
+    return JSONResponse(content=group)
+
+
+@router.put("/project/thread-group")
+async def update_thread_group(
+    request: Request,
+    payload: UpdateThreadGroupRequest,
+    current_user: UserParam,
+):
+    """Update a thread group (rename and/or display order)."""
+    data_layer = get_data_layer()
+    if not data_layer:
+        raise HTTPException(status_code=400, detail="Data persistence is not enabled")
+    user_id = await _get_user_id_for_data_layer(data_layer, current_user)
+    groups = await data_layer.list_thread_groups(user_id)
+    group_ids = {g["id"] for g in groups}
+    if payload.groupId not in group_ids:
+        raise HTTPException(status_code=404, detail="Thread group not found")
+    await data_layer.update_thread_group(
+        payload.groupId,
+        name=payload.name,
+        display_order=payload.displayOrder,
+    )
+    return JSONResponse(content={"success": True})
+
+
+@router.delete("/project/thread-group")
+async def delete_thread_group(
+    request: Request,
+    payload: DeleteThreadGroupRequest,
+    current_user: UserParam,
+):
+    """Delete a thread group and all threads within it."""
+    data_layer = get_data_layer()
+    if not data_layer:
+        raise HTTPException(status_code=400, detail="Data persistence is not enabled")
+    user_id = await _get_user_id_for_data_layer(data_layer, current_user)
+    groups = await data_layer.list_thread_groups(user_id)
+    group_ids = {g["id"] for g in groups}
+    if payload.groupId not in group_ids:
+        raise HTTPException(status_code=404, detail="Thread group not found")
+    await data_layer.delete_thread_group(payload.groupId)
+    return JSONResponse(content={"success": True})
+
+
+@router.put("/project/thread-groups/reorder")
+async def reorder_thread_groups(
+    request: Request,
+    payload: ReorderThreadGroupsRequest,
+    current_user: UserParam,
+):
+    """Reorder thread groups by display order."""
+    data_layer = get_data_layer()
+    if not data_layer:
+        raise HTTPException(status_code=400, detail="Data persistence is not enabled")
+    user_id = await _get_user_id_for_data_layer(data_layer, current_user)
+    groups = await data_layer.list_thread_groups(user_id)
+    group_ids = {g["id"] for g in groups}
+    for gid in payload.orderedGroupIds:
+        if gid not in group_ids:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Thread group not found or not owned: {gid}",
+            )
+    await data_layer.reorder_thread_groups(user_id, payload.orderedGroupIds)
     return JSONResponse(content={"success": True})
 
 

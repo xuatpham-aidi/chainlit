@@ -7,6 +7,7 @@ from chainlit.types import (
     Pagination,
     ThreadDict,
     ThreadFilter,
+    ThreadGroupDict,
 )
 
 from .utils import queue_until_user_message
@@ -99,7 +100,38 @@ class BaseDataLayer(ABC):
         user_id: Optional[str] = None,
         metadata: Optional[Dict] = None,
         tags: Optional[List[str]] = None,
+        group_id: Optional[str] = None,
     ):
+        pass
+
+    @abstractmethod
+    async def list_thread_groups(self, user_id: str) -> List["ThreadGroupDict"]:
+        pass
+
+    @abstractmethod
+    async def create_thread_group(
+        self, user_id: str, name: str
+    ) -> "ThreadGroupDict":
+        pass
+
+    @abstractmethod
+    async def update_thread_group(
+        self,
+        group_id: str,
+        *,
+        name: Optional[str] = None,
+        display_order: Optional[int] = None,
+    ) -> None:
+        pass
+
+    @abstractmethod
+    async def delete_thread_group(self, group_id: str) -> None:
+        pass
+
+    @abstractmethod
+    async def reorder_thread_groups(
+        self, user_id: str, ordered_group_ids: List[str]
+    ) -> None:
         pass
 
     @abstractmethod

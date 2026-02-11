@@ -1,5 +1,5 @@
 import { uniqBy } from 'lodash';
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
 
@@ -9,6 +9,7 @@ import {
   threadHistoryState,
   useChatMessages
 } from '@chainlit/react-client';
+import { groupByDate } from '@chainlit/react-client';
 
 import { threadListLoadingState } from '@/state/project';
 
@@ -44,6 +45,8 @@ interface ThreadHistoryProps {
   hideScrollbar?: boolean;
   showCollapseButton?: boolean;
   onCollapseAll?: () => void;
+  threadsFilter?: (thread: IThread) => boolean;
+  sectionTitle?: React.ReactNode;
 }
 
 export function ThreadHistory({
@@ -51,7 +54,9 @@ export function ThreadHistory({
   setCollapsedGroups,
   hideScrollbar = false,
   showCollapseButton = false,
-  onCollapseAll
+  onCollapseAll,
+  threadsFilter,
+  sectionTitle
 }: ThreadHistoryProps = {}) {
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -234,10 +239,33 @@ export function ThreadHistory({
   const showThreadList = Boolean(threadHistory || isFetching || isLoadingMore);
   const isLoading = isFetching || isLoadingMore;
 
+  const displayedThreadHistory = useMemo(() => {
+    if (!threadHistory?.threads) return threadHistory;
+    const threads = threadsFilter
+      ? threadHistory.threads.filter(threadsFilter)
+      : threadHistory.threads;
+    return {
+      ...threadHistory,
+      threads,
+      timeGroupedThreads: groupByDate(threads)
+    };
+  }, [threadHistory, threadsFilter]);
+
   return (
     <SidebarContent className="flex min-h-0 flex-1 flex-col gap-0 p-0 overflow-hidden">
-      <div className="flex shrink-0 px-3 pb-2 pt-2">
-        <div className="flex w-full items-center gap-2 rounded-lg h-9 border border-sidebar-border/60 bg-transparent px-3 text-sidebar-foreground/60 select-none transition-colors duration-150">
+      <header className="flex shrink-0 pb-2" aria-label="History section">
+        <div className="flex w-full items-center justify-between gap-2 rounded-lg h-9 border border-sidebar-border/60 bg-transparent px-3 text-sidebar-foreground/60 select-none transition-colors duration-150">
+          <p className="min-w-0 flex-1 truncate text-left text-sm font-medium tracking-tight">
+            {sectionTitle != null ? (
+              typeof sectionTitle === 'string' ? (
+                <Translator path={sectionTitle} />
+              ) : (
+                sectionTitle
+              )
+            ) : (
+              <Translator path="threadHistory.sidebar.title" />
+            )}
+          </p>
           <div className="flex h-8 w-8 shrink-0 items-center justify-center">
             {isLoading ? (
               <Loader />
@@ -250,12 +278,10 @@ export function ThreadHistory({
               <span className="size-4 shrink-0" aria-hidden />
             )}
           </div>
-          <p className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">
-            <Translator path="threadHistory.sidebar.title" />
-          </p>
         </div>
-      </div>
-      <CustomScrollbar
+      </header>
+      <div className="flex flex-1 flex-col min-h-0" role="region" aria-label="Chat history list">
+        <CustomScrollbar
         ref={scrollRef}
         onScroll={handleScroll}
         className="flex-1 min-h-0"
@@ -272,7 +298,7 @@ export function ThreadHistory({
             {showThreadList ? (
               <div id="thread-history" className="flex-grow">
                 <ThreadList
-                  threadHistory={threadHistory}
+                  threadHistory={displayedThreadHistory}
                   error={error}
                   isFetching={isFetching}
                   isLoadingMore={isLoadingMore}
@@ -284,6 +310,7 @@ export function ThreadHistory({
           </SidebarMenu>
         </SidebarGroup>
       </CustomScrollbar>
+      </div>
     </SidebarContent>
   );
 }

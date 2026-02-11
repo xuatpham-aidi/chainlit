@@ -26,6 +26,7 @@ from chainlit.types import (
     Pagination,
     ThreadDict,
     ThreadFilter,
+    ThreadGroupDict,
 )
 from chainlit.user import PersistedUser, User
 
@@ -255,6 +256,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         user_id: Optional[str] = None,
         metadata: Optional[Dict] = None,
         tags: Optional[List[str]] = None,
+        group_id: Optional[str] = None,
     ):
         if self.show_logger:
             logger.info(f"SQLAlchemy: update_thread, thread_id={thread_id}")
@@ -294,12 +296,15 @@ class SQLAlchemyDataLayer(BaseDataLayer):
             "name": name_value,
             "userId": user_id,
             "userIdentifier": user_identifier,
+            "groupId": group_id,
             "tags": tags,
             "metadata": json.dumps(metadata) if metadata else None,
         }
         parameters = {
-            key: value for key, value in data.items() if value is not None
-        }  # Remove keys with None values
+            key: value
+            for key, value in data.items()
+            if value is not None or key == "groupId"
+        }  # Remove keys with None except groupId (allow clearing group)
         columns = ", ".join(f'"{key}"' for key in parameters.keys())
         values = ", ".join(f":{key}" for key in parameters.keys())
         updates = ", ".join(
@@ -345,12 +350,14 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                 raw_meta = {}
         if not isinstance(raw_meta, dict):
             raw_meta = {}
+        group_id = row.get("groupId")
         return ThreadDict(
             id=str(row["id"]),
             createdAt=row["createdAt"],
             name=row.get("name"),
             userId=row.get("userId"),
             userIdentifier=row.get("userIdentifier"),
+            groupId=str(group_id) if group_id is not None else None,
             tags=row.get("tags"),
             metadata=raw_meta,
             steps=[],
@@ -358,15 +365,26 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         )
 
     async def _list_threads_metadata_only(
-        self, user_id: str, first: int, cursor: Optional[str] = None
+        self,
+        user_id: str,
+        first: int,
+        cursor: Optional[str] = None,
+        group_id_filter: Optional[str] = None,
     ) -> PaginatedResponse:
-        """List threads with only metadata (no steps/elements). Fast path for sidebar."""
+        """List threads with only metadata (no steps/elements). Fast path for sidebar.
+        group_id_filter: None = all, "" = ungrouped only, non-empty = that group only.
+        """
         base_select = """
             SELECT t."id", t."createdAt", t."name", t."userId", t."userIdentifier",
-                   t."tags", t."metadata"
+                   t."groupId", t."tags", t."metadata"
             FROM threads t
             WHERE t."userId" = :user_id
         """
+        if group_id_filter is not None:
+            if group_id_filter == "":
+                base_select += "\n            AND t.\"groupId\" IS NULL"
+            else:
+                base_select += "\n            AND t.\"groupId\" = :group_id_filter"
         order_limit = """
             ORDER BY t."createdAt" DESC, t."id" DESC
             LIMIT :limit
@@ -389,6 +407,8 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         else:
             query = base_select + order_limit
             parameters = {"user_id": user_id, "limit": first + 1}
+        if group_id_filter not in (None, ""):
+            parameters["group_id_filter"] = group_id_filter
 
         rows = await self.execute_sql(query=query, parameters=parameters)
         if not isinstance(rows, list):
@@ -428,6 +448,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                 user_id=filters.userId,
                 first=pagination.first,
                 cursor=pagination.cursor,
+                group_id_filter=filters.groupId,
             )
 
         all_user_threads: List[ThreadDict] = (
@@ -438,6 +459,13 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         for thread in all_user_threads:
             keyword_match = True
             feedback_match = True
+            group_match = True
+            if filters.groupId is not None:
+                thr_group = thread.get("groupId")
+                if filters.groupId == "":
+                    group_match = thr_group is None or thr_group == ""
+                else:
+                    group_match = thr_group == filters.groupId
             if search_keyword or feedback_value is not None:
                 if search_keyword:
                     keyword_match = any(
@@ -452,7 +480,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                         if feedback and feedback.get("value") == feedback_value:
                             feedback_match = True
                             break
-            if keyword_match and feedback_match:
+            if keyword_match and feedback_match and group_match:
                 filtered_threads.append(thread)
 
         start = 0
@@ -476,6 +504,104 @@ class SQLAlchemyDataLayer(BaseDataLayer):
             ),
             data=paginated_threads,
         )
+
+    ###### Thread groups ######
+    async def list_thread_groups(self, user_id: str) -> List[ThreadGroupDict]:
+        query = """
+            SELECT "id", "userId", "name", "displayOrder", "createdAt"
+            FROM thread_groups
+            WHERE "userId" = :user_id
+            ORDER BY "displayOrder" ASC, "createdAt" ASC
+        """
+        rows = await self.execute_sql(query, {"user_id": user_id})
+        if not isinstance(rows, list):
+            return []
+        result = []
+        for r in rows:
+            created_at = r.get("createdAt")
+            if hasattr(created_at, "isoformat"):
+                created_at = created_at.isoformat()
+            result.append(
+                ThreadGroupDict(
+                    id=str(r["id"]),
+                    userId=str(r["userId"]),
+                    name=r["name"],
+                    displayOrder=int(r.get("displayOrder") or 0),
+                    createdAt=created_at,
+                )
+            )
+        return result
+
+    async def create_thread_group(
+        self, user_id: str, name: str
+    ) -> ThreadGroupDict:
+        group_id = str(uuid.uuid4())
+        now = await self.get_current_timestamp()
+        query = """
+            INSERT INTO thread_groups ("id", "userId", "name", "displayOrder", "createdAt")
+            VALUES (:id, :user_id, :name, 0, :created_at)
+        """
+        await self.execute_sql(
+            query,
+            {
+                "id": group_id,
+                "user_id": user_id,
+                "name": name,
+                "created_at": now,
+            },
+        )
+        return ThreadGroupDict(
+            id=group_id,
+            userId=user_id,
+            name=name,
+            displayOrder=0,
+            createdAt=now,
+        )
+
+    async def update_thread_group(
+        self,
+        group_id: str,
+        *,
+        name: Optional[str] = None,
+        display_order: Optional[int] = None,
+    ) -> None:
+        updates = []
+        params: Dict[str, Any] = {"id": group_id}
+        if name is not None:
+            updates.append('"name" = :name')
+            params["name"] = name
+        if display_order is not None:
+            updates.append('"displayOrder" = :display_order')
+            params["display_order"] = display_order
+        if not updates:
+            return
+        query = f"""
+            UPDATE thread_groups SET {", ".join(updates)} WHERE "id" = :id
+        """
+        await self.execute_sql(query, params)
+
+    async def delete_thread_group(self, group_id: str) -> None:
+        thread_ids_query = """
+            SELECT "id" FROM threads WHERE "groupId" = :group_id
+        """
+        rows = await self.execute_sql(thread_ids_query, {"group_id": group_id})
+        if isinstance(rows, list):
+            for r in rows:
+                await self.delete_thread(str(r["id"]))
+        delete_query = """DELETE FROM thread_groups WHERE "id" = :group_id"""
+        await self.execute_sql(delete_query, {"group_id": group_id})
+
+    async def reorder_thread_groups(
+        self, user_id: str, ordered_group_ids: List[str]
+    ) -> None:
+        for index, gid in enumerate(ordered_group_ids):
+            await self.execute_sql(
+                """
+                UPDATE thread_groups SET "displayOrder" = :display_order
+                WHERE "id" = :id AND "userId" = :user_id
+                """,
+                {"display_order": index, "id": gid, "user_id": user_id},
+            )
 
     ###### Steps ######
     @queue_until_user_message()
@@ -775,6 +901,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                 t."name" AS thread_name,
                 t."userId" AS user_id,
                 t."userIdentifier" AS user_identifier,
+                t."groupId" AS thread_groupid,
                 t."tags" AS thread_tags,
                 t."metadata" AS thread_metadata,
                 MAX(s."createdAt") AS updatedAt
@@ -787,6 +914,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                 t."name",
                 t."userId",
                 t."userIdentifier",
+                t."groupId",
                 t."tags",
                 t."metadata"
             ORDER BY updatedAt DESC NULLS LAST
@@ -867,12 +995,14 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         for thread in user_threads:
             thread_id = thread["thread_id"]
             if thread_id is not None:
+                group_id_val = thread.get("thread_groupid")
                 thread_dicts[thread_id] = ThreadDict(
                     id=thread_id,
                     createdAt=thread["thread_createdat"],
                     name=thread["thread_name"],
                     userId=thread["user_id"],
                     userIdentifier=thread["user_identifier"],
+                    groupId=str(group_id_val) if group_id_val is not None else None,
                     tags=thread["thread_tags"],
                     metadata=thread["thread_metadata"],
                     steps=[],

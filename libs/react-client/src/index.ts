@@ -9,6 +9,7 @@ export * from './types';
 export * from './context';
 export * from './state';
 export * from './utils/message';
+export { groupByDate } from './utils/group';
 
 export { Socket } from 'socket.io-client';
 

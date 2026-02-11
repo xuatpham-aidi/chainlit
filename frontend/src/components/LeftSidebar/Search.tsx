@@ -70,7 +70,7 @@ export default function SearchChats({
   const groupedThreads = useMemo(() => {
     return _.groupBy(threads, (thread) => {
       const date = new Date(thread.createdAt);
-      return `${date.toLocaleString('default', {
+      return `${date.toLocaleString(navigator.language, {
         month: 'long'
       })} ${date.getFullYear()}`;
     });
@@ -102,12 +102,12 @@ export default function SearchChats({
         onClick={() => setOpen(!open)}
         variant="ghost"
         size="default"
-        className="w-full justify-start gap-2 rounded-lg h-9 px-3 border border-sidebar-border/60 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
+        className="w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/60 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
       >
-        <Search className="size-4 shrink-0" />
-        <span className="truncate text-left">
+        <span className="min-w-0 flex-1 truncate text-left">
           {t('threadHistory.sidebar.filters.placeholder')}
         </span>
+        <Search className="size-4 shrink-0" />
       </Button>
     ) : (
       <Button

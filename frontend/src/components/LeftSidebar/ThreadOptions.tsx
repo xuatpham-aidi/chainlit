@@ -7,12 +7,27 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 
 import { Translator } from '../i18n';
 
+interface IThreadGroup {
+  id: string;
+  userId: string;
+  name: string;
+  displayOrder: number;
+  createdAt?: string;
+}
+
 interface Props {
+  threadId: string;
+  threadGroupId?: string | null;
+  threadGroups?: IThreadGroup[];
+  onMoveToGroup?: (threadId: string, groupId: string | null) => void | Promise<void>;
   onDelete: () => void;
   onRename: () => void;
   onShare?: () => void;
@@ -21,6 +36,10 @@ interface Props {
 }
 
 export default function ThreadOptions({
+  threadId,
+  threadGroupId,
+  threadGroups = [],
+  onMoveToGroup,
   onDelete,
   onRename,
   onShare,
@@ -28,6 +47,15 @@ export default function ThreadOptions({
   disabled = false
 }: Props) {
   if (disabled) return null;
+
+  const otherGroups = threadGroups.filter((g) => g.id !== threadGroupId);
+  const hasGroups = threadGroups.length > 0;
+  const isInGroup = Boolean(threadGroupId);
+
+  const handleMoveToGroup = (e: React.MouseEvent, groupId: string | null) => {
+    e.stopPropagation();
+    onMoveToGroup?.(threadId, groupId);
+  };
 
   return (
     <DropdownMenu>
@@ -47,7 +75,13 @@ export default function ThreadOptions({
           <Ellipsis className="h-4 w-4" />
         </div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="min-w-[8rem] rounded-xl border-sidebar-border/80 shadow-lg" align="end" forceMount sideOffset={4}>
+      <DropdownMenuContent
+        className="min-w-[8rem] rounded-xl border-sidebar-border/80 shadow-lg"
+        side="right"      // Changed from default (bottom) to right
+        align="start"     // Aligns to the start of the trigger
+        forceMount
+        sideOffset={20}
+      >
         <DropdownMenuItem
           id="rename-thread"
           onClick={(e) => {
@@ -59,6 +93,37 @@ export default function ThreadOptions({
           <Translator path="threadHistory.thread.menu.rename" />
           <Pencil className="ml-auto h-4 w-4 opacity-60" />
         </DropdownMenuItem>
+        {hasGroups && onMoveToGroup && (
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger
+              className="rounded-lg py-2 cursor-pointer-none"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}>
+              <Translator path="threadHistory.thread.menu.moveToGroup" />
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent className="rounded-xl border-sidebar-border/80" >
+              {isInGroup && (
+                <DropdownMenuItem
+                  className="rounded-lg py-2 cursor-pointer"
+                  onClick={(e) => handleMoveToGroup(e, null)}
+                >
+                  <Translator path="threadHistory.sidebar.ungroupedChat" />
+                </DropdownMenuItem>
+              )}
+              {otherGroups.map((g) => (
+                <DropdownMenuItem
+                  key={g.id}
+                  className="rounded-lg py-2 cursor-pointer"
+                  onClick={(e) => handleMoveToGroup(e, g.id)}
+                >
+                  {g.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        )}
         {onShare && (
           <DropdownMenuItem
             id="share-thread"

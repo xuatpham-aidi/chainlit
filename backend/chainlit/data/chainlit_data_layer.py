@@ -20,6 +20,7 @@ from chainlit.types import (
     Pagination,
     ThreadDict,
     ThreadFilter,
+    ThreadGroupDict,
 )
 from chainlit.user import PersistedUser, User
 
@@ -501,6 +502,7 @@ class ChainlitDataLayer(BaseDataLayer):
                 name=thread["name"],
                 userId=str(thread["userId"]) if thread["userId"] else None,
                 userIdentifier=thread["user_identifier"],
+                groupId=str(thread["groupId"]) if thread.get("groupId") else None,
                 metadata=json.loads(thread["metadata"]),
                 steps=[],
                 elements=[],
@@ -565,6 +567,7 @@ class ChainlitDataLayer(BaseDataLayer):
             name=thread["name"],
             userId=str(thread["userId"]) if thread["userId"] else None,
             userIdentifier=thread["user_identifier"],
+            groupId=str(thread["groupId"]) if thread.get("groupId") else None,
             metadata=json.loads(thread["metadata"]),
             steps=[self._convert_step_row_to_dict(step) for step in steps_results],
             elements=[
@@ -580,6 +583,7 @@ class ChainlitDataLayer(BaseDataLayer):
         user_id: Optional[str] = None,
         metadata: Optional[Dict] = None,
         tags: Optional[List[str]] = None,
+        group_id: Optional[str] = None,
     ):
         if self.show_logger:
             logger.info(f"asyncpg: update_thread, thread_id={thread_id}")
@@ -618,10 +622,15 @@ class ChainlitDataLayer(BaseDataLayer):
             "tags": tags,
             "metadata": json.dumps(metadata or {}),
             "updatedAt": datetime.now(timezone.utc),
+            "groupId": group_id,
         }
 
-        # Remove None values
-        data = {k: v for k, v in data.items() if v is not None}
+        # Remove None values except groupId (allow clearing group)
+        data = {
+            k: v
+            for k, v in data.items()
+            if v is not None or k == "groupId"
+        }
 
         # Build the query dynamically based on available fields
         columns = [f'"{k}"' for k in data.keys()]
@@ -645,6 +654,33 @@ class ChainlitDataLayer(BaseDataLayer):
             """
 
         await self.execute_query(query, {str(i + 1): v for i, v in enumerate(values)})
+
+    async def list_thread_groups(self, user_id: str) -> List[ThreadGroupDict]:
+        return []
+
+    async def create_thread_group(
+        self, user_id: str, name: str
+    ) -> ThreadGroupDict:
+        raise NotImplementedError(
+            "Thread groups are not supported with ChainlitDataLayer"
+        )
+
+    async def update_thread_group(
+        self,
+        group_id: str,
+        *,
+        name: Optional[str] = None,
+        display_order: Optional[int] = None,
+    ) -> None:
+        pass
+
+    async def delete_thread_group(self, group_id: str) -> None:
+        pass
+
+    async def reorder_thread_groups(
+        self, user_id: str, ordered_group_ids: List[str]
+    ) -> None:
+        pass
 
     async def get_favorite_steps(self, user_id: str) -> List[StepDict]:
         query = """

@@ -27,6 +27,7 @@ from chainlit.types import (
     Pagination,
     ThreadDict,
     ThreadFilter,
+    ThreadGroupDict,
 )
 from chainlit.user import PersistedUser, User
 
@@ -579,6 +580,7 @@ class DynamoDBDataLayer(BaseDataLayer):
         user_id: Optional[str] = None,
         metadata: Optional[Dict] = None,
         tags: Optional[List[str]] = None,
+        group_id: Optional[str] = None,
     ):
         _logger.info("DynamoDB: update_thread thread=%s userId=%s", thread_id, user_id)
         _logger.debug(
@@ -611,6 +613,33 @@ class DynamoDBDataLayer(BaseDataLayer):
             },
             updates=item,
         )
+
+    async def list_thread_groups(self, user_id: str) -> List[ThreadGroupDict]:
+        return []
+
+    async def create_thread_group(
+        self, user_id: str, name: str
+    ) -> ThreadGroupDict:
+        raise NotImplementedError(
+            "Thread groups are not supported with DynamoDB data layer"
+        )
+
+    async def update_thread_group(
+        self,
+        group_id: str,
+        *,
+        name: Optional[str] = None,
+        display_order: Optional[int] = None,
+    ) -> None:
+        pass
+
+    async def delete_thread_group(self, group_id: str) -> None:
+        pass
+
+    async def reorder_thread_groups(
+        self, user_id: str, ordered_group_ids: List[str]
+    ) -> None:
+        pass
 
     async def get_favorite_steps(self, user_id: str) -> List["StepDict"]:
         _logger.info("DynamoDB: get_favorite_steps user_id=%s", user_id)
