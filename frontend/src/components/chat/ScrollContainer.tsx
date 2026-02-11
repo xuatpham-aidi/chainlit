@@ -10,6 +10,7 @@ import {
 
 import { useChatData, useChatMessages } from '@chainlit/react-client';
 
+import { CustomScrollbar } from '@/components/CustomScrollbar';
 import { Button } from '@/components/ui/button';
 
 interface Props {
@@ -229,16 +230,16 @@ export default function ScrollContainer({
   };
 
   return (
-    <div className="relative flex flex-col flex-grow overflow-y-auto">
-      <div
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <CustomScrollbar
         ref={ref}
-        className={cn('flex flex-col flex-grow overflow-y-auto', className)}
         onScroll={handleScroll}
+        className={cn('flex-1', className)}
+        variant="chat"
       >
         {children}
-        {/* Dynamic spacer to position the last user message at the top */}
         <div ref={spacerRef} className="flex-shrink-0" />
-      </div>
+      </CustomScrollbar>
 
       {showScrollButton ? (
         <div className="absolute bottom-4 left-0 right-0 flex justify-center">

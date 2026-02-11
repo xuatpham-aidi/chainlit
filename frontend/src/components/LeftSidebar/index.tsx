@@ -30,9 +30,14 @@ export default function LeftSidebar({
   const {
     collapsedGroups,
     setCollapsedGroups,
+    effectiveCollapsed,
     collapseAllGroups,
     showButton
   } = useThreadCollapseState(sortedTimeGroupKeys);
+
+  const allGroupsCollapsed =
+    sortedTimeGroupKeys.length > 0 &&
+    effectiveCollapsed.size === sortedTimeGroupKeys.length;
 
   return (
     <Sidebar {...props} className="border-none">
@@ -52,6 +57,7 @@ export default function LeftSidebar({
       <ThreadHistory
         collapsedGroups={collapsedGroups}
         setCollapsedGroups={setCollapsedGroups}
+        hideScrollbar={allGroupsCollapsed}
       />
       {/* <SidebarRail /> */}
     </Sidebar>

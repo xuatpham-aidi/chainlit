@@ -17,6 +17,8 @@ import {
   SidebarMenu
 } from '@/components/ui/sidebar';
 
+import { CustomScrollbar } from '@/components/CustomScrollbar';
+
 import { ThreadList } from './ThreadList';
 
 const LIST_PAGINATION = {
@@ -31,11 +33,13 @@ interface ThreadHistoryProps {
   setCollapsedGroups?: React.Dispatch<
     React.SetStateAction<Set<string> | null>
   >;
+  hideScrollbar?: boolean;
 }
 
 export function ThreadHistory({
   collapsedGroups,
-  setCollapsedGroups
+  setCollapsedGroups,
+  hideScrollbar = false
 }: ThreadHistoryProps = {}) {
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -169,27 +173,36 @@ export function ThreadHistory({
   const showThreadList = Boolean(threadHistory || isFetching || isLoadingMore);
 
   return (
-    <SidebarContent
-      className="overflow-y-scroll"
-      onScroll={handleScroll}
-      ref={scrollRef}
-    >
-      <SidebarGroup>
-        <SidebarMenu>
-          {showThreadList ? (
-            <div id="thread-history" className="flex-grow">
-              <ThreadList
-                threadHistory={threadHistory}
-                error={error}
-                isFetching={isFetching}
-                isLoadingMore={isLoadingMore}
-                collapsedGroups={collapsedGroups}
-                setCollapsedGroups={setCollapsedGroups}
-              />
-            </div>
-          ) : null}
-        </SidebarMenu>
-      </SidebarGroup>
+    <SidebarContent className="flex min-h-0 flex-1 flex-col gap-2 p-0">
+      <CustomScrollbar
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex-1"
+        variant="sidebar"
+        hideScrollbar={hideScrollbar}
+        invalidateKey={
+          collapsedGroups
+            ? Array.from(collapsedGroups).sort().join(',')
+            : ''
+        }
+      >
+        <SidebarGroup>
+          <SidebarMenu>
+            {showThreadList ? (
+              <div id="thread-history" className="flex-grow">
+                <ThreadList
+                  threadHistory={threadHistory}
+                  error={error}
+                  isFetching={isFetching}
+                  isLoadingMore={isLoadingMore}
+                  collapsedGroups={collapsedGroups}
+                  setCollapsedGroups={setCollapsedGroups}
+                />
+              </div>
+            ) : null}
+          </SidebarMenu>
+        </SidebarGroup>
+      </CustomScrollbar>
     </SidebarContent>
   );
 }
