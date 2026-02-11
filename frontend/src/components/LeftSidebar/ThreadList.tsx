@@ -26,7 +26,6 @@ import {
 } from '@chainlit/react-client';
 
 import Alert from '@/components/Alert';
-import { Loader } from '@/components/Loader';
 import ShareDialog from '@/components/share/ShareDialog';
 import {
   AlertDialog,
@@ -375,16 +374,6 @@ export function ThreadList({
         threadId={threadIdToShare || null}
       />
       <TooltipProvider delayDuration={300}>
-        <div className="flex items-center justify-between gap-2 px-3 pb-2 pt-3 select-none">
-          <p className="text-xs font-medium text-sidebar-foreground/70 tracking-tight shrink-0">
-            <Translator path="threadHistory.sidebar.title" />
-          </p>
-          {isLoading ? (
-            <span className="shrink-0">
-              <Loader />
-            </span>
-          ) : null}
-        </div>
         {error ? (
           <div className="px-3 py-4">
             <Alert variant="error" className="rounded-xl border-sidebar-border/80">
@@ -449,39 +438,41 @@ export function ThreadList({
                 groupIndex > 0 && 'mt-0 pt-3 border-t border-sidebar-border/50'
               )}
             >
-              <button
-                type="button"
-                onClick={() => toggleGroup(group)}
-                className={cn(
-                  'flex w-full items-center gap-2 rounded-lg py-2 pl-2 pr-2 -mx-0.5',
-                  'text-xs font-medium tracking-tight bg-neutral-300/20',
-                  'transition-colors duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
-                  groupContainsSelected
-                    ? 'bg-neutral-600/30 text-sidebar-foreground'
-                    : 'hover:bg-neutral-300/50 hover:text-sidebar-foreground/90'
-                )}
-                aria-expanded={!isCollapsed}
-                data-active={groupContainsSelected || undefined}
-              >
-                {isCollapsed ? (
-                  <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                ) : (
-                  <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                )}
-                <span className="flex-1 text-left">
-                  {getTimeGroupLabel(group)}
-                </span>
-                <span
+              <div className="sticky top-0 z-10 -mx-3 px-3 pt-2 pb-1 bg-sidebar ">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group)}
                   className={cn(
-                    'text-[11px] font-normal tabular-nums rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center',
+                    'flex w-full items-center gap-2 rounded-lg py-2 pl-2 pr-2 -mx-0.5',
+                    'text-xs font-medium tracking-tight bg-neutral-300/20',
+                    'transition-colors duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
                     groupContainsSelected
-                      ? 'bg-neutral-600/20 font-medium'
-                      : 'text-sidebar-foreground/45 bg-sidebar-foreground/10'
+                      ? 'bg-neutral-600/30 text-sidebar-foreground'
+                      : 'hover:bg-neutral-300/50 hover:text-sidebar-foreground/90'
                   )}
+                  aria-expanded={!isCollapsed}
+                  data-active={groupContainsSelected || undefined}
                 >
-                  {count}
-                </span>
-              </button>
+                  {isCollapsed ? (
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  ) : (
+                    <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  )}
+                  <span className="flex-1 text-left">
+                    {getTimeGroupLabel(group)}
+                  </span>
+                  <span
+                    className={cn(
+                      'text-[11px] font-normal tabular-nums rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center',
+                      groupContainsSelected
+                        ? 'bg-neutral-600/20 font-medium'
+                        : 'text-sidebar-foreground/45 bg-sidebar-foreground/10'
+                    )}
+                  >
+                    {count}
+                  </span>
+                </button>
+              </div>
               <div
                 className={cn(
                   'grid transition-[grid-template-rows] duration-200 ease-out',

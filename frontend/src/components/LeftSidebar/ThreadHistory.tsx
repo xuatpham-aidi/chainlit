@@ -18,8 +18,10 @@ import {
   SidebarMenu
 } from '@/components/ui/sidebar';
 
+import { Loader } from '@/components/Loader';
 import { CustomScrollbar } from '@/components/CustomScrollbar';
 
+import { Translator } from '../i18n';
 import { ThreadList } from './ThreadList';
 
 const MAX_THREAD_NAME_LENGTH = 40;
@@ -225,13 +227,24 @@ export function ThreadHistory({
   }, [shouldLoadMore, isLoadingMore, threadHistory]);
 
   const showThreadList = Boolean(threadHistory || isFetching || isLoadingMore);
+  const isLoading = isFetching || isLoadingMore;
 
   return (
     <SidebarContent className="flex min-h-0 flex-1 flex-col gap-0 p-0 overflow-hidden">
+      <div className="flex shrink-0 items-center justify-between gap-2  bg-sidebar px-3 pb-2 pt-3 select-none">
+        <p className="text-xs font-medium text-sidebar-foreground/70 tracking-tight shrink-0">
+          <Translator path="threadHistory.sidebar.title" />
+        </p>
+        {isLoading ? (
+          <span className="shrink-0">
+            <Loader />
+          </span>
+        ) : null}
+      </div>
       <CustomScrollbar
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1"
+        className="flex-1 min-h-0"
         variant="sidebar"
         hideScrollbar={hideScrollbar}
         invalidateKey={
