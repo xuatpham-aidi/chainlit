@@ -1,10 +1,11 @@
 import { uniqBy } from 'lodash';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
 
 import {
   ChainlitContext,
+  IThread,
   threadHistoryState,
   useChatMessages
 } from '@chainlit/react-client';
@@ -18,8 +19,11 @@ import {
 } from '@/components/ui/sidebar';
 
 import { CustomScrollbar } from '@/components/CustomScrollbar';
+import { Translator } from '@/components/i18n';
 
 import { ThreadList } from './ThreadList';
+
+const MAX_THREAD_NAME_LENGTH = 40;
 
 const LIST_PAGINATION = {
   initialBatch: 3,
@@ -59,9 +63,29 @@ export function ThreadHistory({
     if (scrollRef.current) scrollRef.current.scrollTop = scrollTopCache;
   }, []);
 
+  // On first interaction (new chat): prepend a stub thread so the sidebar shows it
+  // without refetching the list. No API call; timeGroupedThreads is derived from threads.
+  const prependNewThreadStub = useCallback(() => {
+    if (!threadId) return;
+    setThreadHistory((prev) => {
+      const prevThreads = prev?.threads ?? [];
+      if (prevThreads.some((t) => t.id === threadId)) return prev;
+      const stub: IThread = {
+        id: threadId,
+        createdAt: new Date().toISOString(),
+        steps: []
+      };
+      return {
+        ...prev,
+        currentThreadId: threadId,
+        threads: [stub, ...prevThreads]
+      };
+    });
+  }, [threadId, setThreadHistory]);
+
   // Handle first interaction
   useEffect(() => {
-    const handleFirstInteraction = async () => {
+    const handleFirstInteraction = () => {
       if (!firstInteraction) return;
 
       const isActualResume =
@@ -70,7 +94,7 @@ export function ThreadHistory({
 
       if (isActualResume) return;
 
-      await fetchThreads(undefined, true);
+      prependNewThreadStub();
 
       const currentPage = new URL(window.location.href);
       if (threadId && currentPage.pathname === '/') {
@@ -79,7 +103,33 @@ export function ThreadHistory({
     };
 
     handleFirstInteraction();
-  }, [firstInteraction]);
+  }, [firstInteraction, prependNewThreadStub, threadId, messages, navigate]);
+
+  // Update current thread name from first user message so the sidebar shows it without reload
+  useEffect(() => {
+    if (!threadId || !messages?.length) return;
+    const firstUserMessage = messages.find(
+      (m) => m.type === 'user_message' && (m.output || m.input)
+    );
+    const titleSource = firstUserMessage?.output ?? firstUserMessage?.input;
+    if (!titleSource || typeof titleSource !== 'string') return;
+    const truncated =
+      titleSource.length > MAX_THREAD_NAME_LENGTH
+        ? titleSource.slice(0, MAX_THREAD_NAME_LENGTH).trim() + '...'
+        : titleSource.trim();
+    if (!truncated) return;
+    setThreadHistory((prev) => {
+      const threads = prev?.threads ?? [];
+      const match = threads.find((t) => t.id === threadId);
+      if (!match || (match.name && match.name.length > 0)) return prev;
+      return {
+        ...prev,
+        threads: threads.map((t) =>
+          t.id === threadId ? { ...t, name: truncated } : t
+        )
+      };
+    });
+  }, [threadId, messages, setThreadHistory]);
 
   const handleScroll = () => {
     if (!scrollRef.current) return;
@@ -186,6 +236,11 @@ export function ThreadHistory({
             : ''
         }
       >
+        <div className="px-2 pb-2 pt-1">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+            <Translator path="threadHistory.sidebar.title" />
+          </p>
+        </div>
         <SidebarGroup>
           <SidebarMenu>
             {showThreadList ? (
