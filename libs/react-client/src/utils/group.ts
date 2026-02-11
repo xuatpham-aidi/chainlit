@@ -29,7 +29,7 @@ export const groupByDate = (data: IThread[]) => {
       } else if (daysDiff <= 30) {
         category = 'Previous 30 days';
       } else {
-        category = threadDate.toLocaleString('default', {
+        category = threadDate.toLocaleString(navigator.language, {
           month: 'long',
           year: 'numeric'
         });
