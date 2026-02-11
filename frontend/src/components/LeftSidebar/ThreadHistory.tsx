@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/sidebar';
 
 import { CustomScrollbar } from '@/components/CustomScrollbar';
-import { Translator } from '@/components/i18n';
 
 import { ThreadList } from './ThreadList';
 
@@ -236,11 +235,6 @@ export function ThreadHistory({
             : ''
         }
       >
-        <div className="px-2 pb-2 pt-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/60">
-            <Translator path="threadHistory.sidebar.title" />
-          </p>
-        </div>
         <SidebarGroup>
           <SidebarMenu>
             {showThreadList ? (

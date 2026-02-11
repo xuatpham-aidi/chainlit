@@ -397,6 +397,11 @@ export function ThreadList({
         threadId={threadIdToShare || null}
       />
       <TooltipProvider delayDuration={300}>
+        <div className="px-2 pb-2 pt-1">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+            <Translator path="threadHistory.sidebar.title" />
+          </p>
+        </div>
         {sortedTimeGroupKeys.length > 1 && !isControlled ? (
           <div className="px-2 pb-1.5">
             <Tooltip>
