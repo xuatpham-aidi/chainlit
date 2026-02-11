@@ -2,7 +2,12 @@ import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSetRecoilState } from 'recoil';
 
-import { useAudio, useAuth, useChatData, useConfig } from '@chainlit/react-client';
+import {
+  useAudio,
+  useAuth,
+  useChatData,
+  useConfig
+} from '@chainlit/react-client';
 
 import AudioPresence from '@/components/AudioPresence';
 import ButtonLink from '@/components/ButtonLink';
@@ -21,12 +26,11 @@ import { chatSettingsSidebarOpenState } from '@/state/project';
 import ApiKeys from './ApiKeys';
 import ChatProfiles from './ChatProfiles';
 import NewChatButton from './NewChat';
-// import ReadmeButton from './Readme';
-// import ShareButton from './Share';
+import ReadmeButton from './Readme';
+import ShareButton from './Share';
 import SidebarTrigger from './SidebarTrigger';
 import { ThemeToggle } from './ThemeToggle';
-
-// import UserNav from './UserNav';
+import UserNav from './UserNav';
 
 const Header = memo(() => {
   const { audioConnection } = useAudio();
@@ -81,7 +85,7 @@ const Header = memo(() => {
 
       <div />
       <div className="flex items-center gap-1">
-        {/* <ShareButton />
+        <ShareButton />
         <ReadmeButton />
         <ApiKeys />
         {links &&
@@ -112,9 +116,9 @@ const Header = memo(() => {
               <Translator path="chat.settings.title" />
             </TooltipContent>
           </Tooltip>
-        )} */}
+        )}
         <ThemeToggle />
-        {/* <UserNav /> */}
+        <UserNav />
       </div>
     </div>
   );
