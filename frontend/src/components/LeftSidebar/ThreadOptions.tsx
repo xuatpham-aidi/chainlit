@@ -17,14 +17,18 @@ interface Props {
   onRename: () => void;
   onShare?: () => void;
   className?: string;
+  disabled?: boolean;
 }
 
 export default function ThreadOptions({
   onDelete,
   onRename,
   onShare,
-  className
+  className,
+  disabled = false
 }: Props) {
+  if (disabled) return null;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

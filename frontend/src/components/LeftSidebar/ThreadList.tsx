@@ -536,6 +536,7 @@ export function ThreadList({
                                       ? () => handleShareThread(thread.id)
                                       : undefined
                                   }
+                                  disabled={isFetching || isLoadingMore}
                                   className={cn(
                                     'shrink-0 h-8 w-8 rounded-md flex opacity-0 group-hover/thread:opacity-100 transition-opacity',
                                     isSelected && 'opacity-100'
