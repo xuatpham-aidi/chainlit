@@ -99,9 +99,9 @@ export default function SearchChats() {
               onClick={() => setOpen(!open)}
               size="icon"
               variant="ghost"
-              className="text-muted-foreground hover:text-muted-foreground"
+              className="h-8 w-8 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
             >
-              <Search className="!size-5" />
+              <Search className="size-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>

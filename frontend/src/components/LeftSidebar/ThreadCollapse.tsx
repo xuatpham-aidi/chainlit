@@ -113,12 +113,12 @@ export function ThreadCollapseButton({
           onClick={onCollapseAll}
           size="icon"
           variant="ghost"
-          className="text-muted-foreground hover:text-muted-foreground"
+          className="h-8 w-8 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
         >
-          <CopyMinus className="!size-5" />
+          <CopyMinus className="size-4" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent className="flex flex-col items-center">
+      <TooltipContent side="bottom" sideOffset={6} className="rounded-lg">
         {tooltipText}
       </TooltipContent>
     </Tooltip>

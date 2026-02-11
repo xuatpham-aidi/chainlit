@@ -24,9 +24,9 @@ export default function SidebarTrigger() {
             }
             size="icon"
             variant="ghost"
-            className="text-muted-foreground hover:text-muted-foreground"
+            className="h-8 w-8 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
           >
-            <Sidebar className="!size-6" />
+            <Sidebar className="size-5" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>

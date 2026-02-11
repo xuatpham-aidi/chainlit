@@ -29,6 +29,8 @@ const LIST_PAGINATION = {
   batchSize: 10
 } as const;
 
+const BATCH_FETCH_DELAY_MS = 500;
+
 let scrollTopCache = 0;
 
 interface ThreadHistoryProps {
@@ -181,6 +183,9 @@ export function ThreadHistory({
         Boolean(pageInfo?.hasNextPage && pageInfo?.endCursor);
 
       if (willContinueInitial && pageInfo?.endCursor) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, BATCH_FETCH_DELAY_MS)
+        );
         fetchThreads(pageInfo.endCursor, false);
       } else if (initialLoadActiveRef.current) {
         initialLoadActiveRef.current = false;
@@ -222,7 +227,7 @@ export function ThreadHistory({
   const showThreadList = Boolean(threadHistory || isFetching || isLoadingMore);
 
   return (
-    <SidebarContent className="flex min-h-0 flex-1 flex-col gap-2 p-0">
+    <SidebarContent className="flex min-h-0 flex-1 flex-col gap-0 p-0 overflow-hidden">
       <CustomScrollbar
         ref={scrollRef}
         onScroll={handleScroll}

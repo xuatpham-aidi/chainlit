@@ -8,7 +8,7 @@ interface LoaderProps {
 const Loader = ({ className }: LoaderProps): JSX.Element => {
   return (
     <LoaderIcon
-      className={cn('h-4 w-4 animate-spin text-primary', className)}
+      className={cn('h-4 w-4 animate-spin text-blue-600', className)}
     />
   );
 };

@@ -200,29 +200,7 @@ export function ThreadList({
     !threadHistory?.timeGroupedThreads ||
     size(threadHistory.timeGroupedThreads) === 0;
 
-  if (error) {
-    return (
-      <Alert variant="error" className="m-3">
-        {error}
-      </Alert>
-    );
-  }
-
-  if (hasNoThreads && (isFetching || isLoadingMore)) {
-    return (
-      <div className="flex items-center justify-center p-2">
-        <Loader />
-      </div>
-    );
-  }
-
-  if (hasNoThreads) {
-    return (
-      <Alert variant="info" className="m-3">
-        <Translator path="threadHistory.sidebar.empty" />
-      </Alert>
-    );
-  }
+  const isLoading = isFetching || isLoadingMore;
 
   const handleDeleteThread = async () => {
     if (!threadIdToDelete) return;
@@ -397,13 +375,31 @@ export function ThreadList({
         threadId={threadIdToShare || null}
       />
       <TooltipProvider delayDuration={300}>
-        <div className="px-2 pb-2 pt-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+        <div className="flex items-center justify-between gap-2 px-3 pb-2 pt-3 select-none">
+          <p className="text-xs font-medium text-sidebar-foreground/70 tracking-tight shrink-0">
             <Translator path="threadHistory.sidebar.title" />
           </p>
+          {isLoading ? (
+            <span className="shrink-0">
+              <Loader />
+            </span>
+          ) : null}
         </div>
-        {sortedTimeGroupKeys.length > 1 && !isControlled ? (
-          <div className="px-2 pb-1.5">
+        {error ? (
+          <div className="px-3 py-4">
+            <Alert variant="error" className="rounded-xl border-sidebar-border/80">
+              {error}
+            </Alert>
+          </div>
+        ) : hasNoThreads && !isLoading ? (
+          <div className="px-3 py-6">
+            <Alert variant="info" className="rounded-xl border-sidebar-border/80 text-sidebar-foreground/90">
+              <Translator path="threadHistory.sidebar.empty" />
+            </Alert>
+          </div>
+        ) : null}
+        {!error && !hasNoThreads && sortedTimeGroupKeys.length > 1 && !isControlled ? (
+          <div className="px-3 pb-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -413,7 +409,7 @@ export function ThreadList({
                       ? collapseAllGroups
                       : expandAllGroups
                   }
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
                   aria-label={
                     effectiveCollapsed.size === 0
                       ? t('threadHistory.sidebar.collapseAll', 'Collapse all')
@@ -435,28 +431,37 @@ export function ThreadList({
             </Tooltip>
           </div>
         ) : null}
-        {sortedTimeGroupKeys.map((group, groupIndex) => {
+        {!error &&
+          !hasNoThreads &&
+          sortedTimeGroupKeys.map((group, groupIndex) => {
           const items = threadHistory!.timeGroupedThreads![group];
+          const currentId = threadHistory!.currentThreadId ?? idToResume;
+          const groupContainsSelected = Boolean(
+            currentId && items.some((t) => t.id === currentId)
+          );
           const isCollapsed = effectiveCollapsed.has(group);
           const count = items.length;
           return (
             <SidebarGroup
               key={group}
               className={cn(
-                'p-2',
-                groupIndex > 0 && 'mt-1 pt-3 border-t border-sidebar-border/60'
+                'px-3 py-2',
+                groupIndex > 0 && 'mt-0 pt-3 border-t border-sidebar-border/50'
               )}
             >
               <button
                 type="button"
                 onClick={() => toggleGroup(group)}
                 className={cn(
-                  'flex w-full items-center gap-1.5 rounded-md py-1.5 px-2 -mx-0.5',
-                  'text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/60',
-                  'hover:bg-sidebar-accent/50 hover:text-sidebar-foreground/80',
-                  'transition-colors outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring'
+                  'flex w-full items-center gap-2 rounded-lg py-2 pl-2 pr-2 -mx-0.5',
+                  'text-xs font-medium tracking-tight bg-neutral-300/20',
+                  'transition-colors duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
+                  groupContainsSelected
+                    ? 'bg-neutral-600/30 text-sidebar-foreground'
+                    : 'hover:bg-neutral-300/50 hover:text-sidebar-foreground/90'
                 )}
                 aria-expanded={!isCollapsed}
+                data-active={groupContainsSelected || undefined}
               >
                 {isCollapsed ? (
                   <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -466,7 +471,14 @@ export function ThreadList({
                 <span className="flex-1 text-left">
                   {getTimeGroupLabel(group)}
                 </span>
-                <span className="text-[10px] font-normal tabular-nums text-sidebar-foreground/50">
+                <span
+                  className={cn(
+                    'text-[11px] font-normal tabular-nums rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center',
+                    groupContainsSelected
+                      ? 'bg-neutral-600/20 font-medium'
+                      : 'text-sidebar-foreground/45 bg-sidebar-foreground/10'
+                  )}
+                >
                   {count}
                 </span>
               </button>
@@ -494,7 +506,7 @@ export function ThreadList({
                         key={thread.id}
                         id={`thread-${thread.id}`}
                         className="list-none thread-item-reveal"
-                        style={{ animationDelay: `${itemIndex * 40}ms` }}
+                        style={{ animationDelay: `${itemIndex * 35}ms` }}
                       >
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -502,15 +514,16 @@ export function ThreadList({
                               <SidebarMenuButton
                                 isActive={isSelected}
                                 className={cn(
-                                  'relative h-10 min-h-10 group/thread rounded-lg px-2.5 transition-colors',
-                                  isSelected &&
-                                    'border-l-2 border-l-primary pl-[6px]'
+                                  'relative group/thread transition-all duration-150 ease-out',
+                                  'rounded-xl pl-3 my-1',
+                                  'hover:bg-neutral-600/10',
+                                  'data-[active=true]:!bg-neutral-600/20'
                                 )}
                               >
-                                <span className="flex min-w-0 flex-1 items-center gap-2.5 pr-1">
+                                <span className="flex pl-3 min-w-0 flex-1 items-center gap-2.5 pr-1">
                                   {thread.metadata?.is_shared ? (
                                     <Share2
-                                      className="h-4 w-4 shrink-0 text-muted-foreground"
+                                      className="h-4 w-4 shrink-0 text-sidebar-foreground/70"
                                       aria-hidden="true"
                                     />
                                   ) : (
@@ -518,13 +531,13 @@ export function ThreadList({
                                       className={cn(
                                         'h-4 w-4 shrink-0',
                                         isSelected
-                                          ? 'text-sidebar-accent-foreground'
-                                          : 'text-muted-foreground'
+                                          ? 'text-blue-600'
+                                          : ''
                                       )}
                                       aria-hidden="true"
                                     />
                                   )}
-                                  <span className="truncate text-left">
+                                  <span className="truncate text-left text-sm">
                                     {displayName}
                                   </span>
                                 </span>
@@ -541,9 +554,9 @@ export function ThreadList({
                                       ? () => handleShareThread(thread.id)
                                       : undefined
                                   }
-                                  disabled={isFetching || isLoadingMore}
+                                  disabled={isLoading}
                                   className={cn(
-                                    'shrink-0 h-8 w-8 rounded-md flex opacity-0 group-hover/thread:opacity-100 transition-opacity',
+                                    'shrink-0 h-8 w-8 rounded-lg flex opacity-0 group-hover/thread:opacity-100 transition-opacity duration-150',
                                     isSelected && 'opacity-100'
                                   )}
                                 />
@@ -566,11 +579,6 @@ export function ThreadList({
           );
         })}
       </TooltipProvider>
-      {(isFetching || isLoadingMore) ? (
-        <div className="flex items-center justify-center p-2">
-          <Loader />
-        </div>
-      ) : null}
     </>
   );
 }

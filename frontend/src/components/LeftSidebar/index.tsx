@@ -40,11 +40,11 @@ export default function LeftSidebar({
     effectiveCollapsed.size === sortedTimeGroupKeys.length;
 
   return (
-    <Sidebar {...props} className="border-none">
-      <SidebarHeader className="py-3">
-        <div className="flex items-center justify-between">
+    <Sidebar {...props} className="border-none bg-sidebar">
+      <SidebarHeader className="sidebar-header-nbc border-b border-sidebar-border/80 px-3 py-3">
+        <div className="flex items-center justify-between gap-2">
           <SidebarTrigger />
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-0.5 rounded-md bg-sidebar-accent/30 p-0.5">
             <ThreadCollapseButton
               visible={showButton}
               onCollapseAll={collapseAllGroups}
