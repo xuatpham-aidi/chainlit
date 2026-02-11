@@ -335,6 +335,80 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         await self.execute_sql(query=steps_query, parameters=parameters)
         await self.execute_sql(query=thread_query, parameters=parameters)
 
+    def _thread_dict_from_metadata_row(self, row: Dict[str, Any]) -> ThreadDict:
+        """Build ThreadDict from a threads-table row (metadata only; no steps/elements)."""
+        raw_meta = row.get("metadata")
+        if isinstance(raw_meta, str) and raw_meta:
+            try:
+                raw_meta = json.loads(raw_meta)
+            except (json.JSONDecodeError, TypeError):
+                raw_meta = {}
+        if not isinstance(raw_meta, dict):
+            raw_meta = {}
+        return ThreadDict(
+            id=str(row["id"]),
+            createdAt=row["createdAt"],
+            name=row.get("name"),
+            userId=row.get("userId"),
+            userIdentifier=row.get("userIdentifier"),
+            tags=row.get("tags"),
+            metadata=raw_meta,
+            steps=[],
+            elements=[],
+        )
+
+    async def _list_threads_metadata_only(
+        self, user_id: str, first: int, cursor: Optional[str] = None
+    ) -> PaginatedResponse:
+        """List threads with only metadata (no steps/elements). Fast path for sidebar."""
+        base_select = """
+            SELECT t."id", t."createdAt", t."name", t."userId", t."userIdentifier",
+                   t."tags", t."metadata"
+            FROM threads t
+            WHERE t."userId" = :user_id
+        """
+        order_limit = """
+            ORDER BY t."createdAt" DESC, t."id" DESC
+            LIMIT :limit
+        """
+        if cursor:
+            query = (
+                base_select
+                + """
+                  AND (t."createdAt", t."id") < (
+                      SELECT "createdAt", "id" FROM threads WHERE "id" = :cursor
+                  )
+            """
+                + order_limit
+            )
+            parameters: Dict[str, Any] = {
+                "user_id": user_id,
+                "cursor": cursor,
+                "limit": first + 1,
+            }
+        else:
+            query = base_select + order_limit
+            parameters = {"user_id": user_id, "limit": first + 1}
+
+        rows = await self.execute_sql(query=query, parameters=parameters)
+        if not isinstance(rows, list):
+            return PaginatedResponse(
+                pageInfo=PageInfo(hasNextPage=False, startCursor=None, endCursor=None),
+                data=[],
+            )
+        has_next = len(rows) > first
+        if has_next:
+            rows = rows[:first]
+        thread_dicts = [self._thread_dict_from_metadata_row(r) for r in rows]
+        return PaginatedResponse(
+            pageInfo=PageInfo(
+                hasNextPage=has_next,
+                startCursor=thread_dicts[0]["id"] if thread_dicts else None,
+                endCursor=thread_dicts[-1]["id"] if thread_dicts else None,
+            ),
+            data=thread_dicts,
+        )
+
     async def list_threads(
         self, pagination: Pagination, filters: ThreadFilter
     ) -> PaginatedResponse:
@@ -344,12 +418,21 @@ class SQLAlchemyDataLayer(BaseDataLayer):
             )
         if not filters.userId:
             raise ValueError("userId is required")
-        all_user_threads: List[ThreadDict] = (
-            await self.get_all_user_threads(user_id=filters.userId) or []
-        )
 
         search_keyword = filters.search.lower() if filters.search else None
         feedback_value = int(filters.feedback) if filters.feedback else None
+        use_metadata_only = not search_keyword and feedback_value is None
+
+        if use_metadata_only:
+            return await self._list_threads_metadata_only(
+                user_id=filters.userId,
+                first=pagination.first,
+                cursor=pagination.cursor,
+            )
+
+        all_user_threads: List[ThreadDict] = (
+            await self.get_all_user_threads(user_id=filters.userId) or []
+        )
 
         filtered_threads = []
         for thread in all_user_threads:
@@ -363,7 +446,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                         if "output" in step
                     )
                 if feedback_value is not None:
-                    feedback_match = False  # Assume no match until found
+                    feedback_match = False
                     for step in thread["steps"]:
                         feedback = step.get("feedback")
                         if feedback and feedback.get("value") == feedback_value:
@@ -375,9 +458,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         start = 0
         if pagination.cursor:
             for i, thread in enumerate(filtered_threads):
-                if (
-                    thread["id"] == pagination.cursor
-                ):  # Find the start index using pagination.cursor
+                if thread["id"] == pagination.cursor:
                     start = i + 1
                     break
         end = start + pagination.first
