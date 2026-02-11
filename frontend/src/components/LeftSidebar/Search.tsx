@@ -29,7 +29,13 @@ import { Translator } from 'components/i18n';
 
 import { Kbd } from '../Kbd';
 
-export default function SearchChats() {
+interface SearchChatsProps {
+  triggerVariant?: 'icon' | 'bar';
+}
+
+export default function SearchChats({
+  triggerVariant = 'icon'
+}: SearchChatsProps = {}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -89,28 +95,48 @@ export default function SearchChats() {
     };
   }, [searchQuery, debouncedSearch]);
 
+  const trigger =
+    triggerVariant === 'bar' ? (
+      <Button
+        id="search-chats-button"
+        onClick={() => setOpen(!open)}
+        variant="ghost"
+        size="default"
+        className="w-full justify-start gap-2 rounded-lg h-9 px-3 border border-sidebar-border/60 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
+      >
+        <Search className="size-4 shrink-0" />
+        <span className="truncate text-left">
+          {t('threadHistory.sidebar.filters.placeholder')}
+        </span>
+      </Button>
+    ) : (
+      <Button
+        id="search-chats-button"
+        onClick={() => setOpen(!open)}
+        size="icon"
+        variant="ghost"
+        className="h-8 w-8 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
+      >
+        <Search className="size-4" />
+      </Button>
+    );
+
   return (
     <>
       <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              id="search-chats-button"
-              onClick={() => setOpen(!open)}
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
-            >
-              <Search className="size-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div className="flex flex-col items-center">
-              <Translator path="threadHistory.sidebar.filters.search" />
-              <Kbd>Cmd+k</Kbd>
-            </div>
-          </TooltipContent>
-        </Tooltip>
+        {triggerVariant === 'bar' ? (
+          trigger
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+            <TooltipContent>
+              <div className="flex flex-col items-center">
+                <Translator path="threadHistory.sidebar.filters.search" />
+                <Kbd>Cmd+k</Kbd>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        )}
       </TooltipProvider>
       <CommandDialog open={open} onOpenChange={setOpen}>
         <DialogTitle className="sr-only">

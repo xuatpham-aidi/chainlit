@@ -22,6 +22,7 @@ import { Loader } from '@/components/Loader';
 import { CustomScrollbar } from '@/components/CustomScrollbar';
 
 import { Translator } from '../i18n';
+import { ThreadCollapseButton } from './ThreadCollapse';
 import { ThreadList } from './ThreadList';
 
 const MAX_THREAD_NAME_LENGTH = 40;
@@ -41,12 +42,16 @@ interface ThreadHistoryProps {
     React.SetStateAction<Set<string> | null>
   >;
   hideScrollbar?: boolean;
+  showCollapseButton?: boolean;
+  onCollapseAll?: () => void;
 }
 
 export function ThreadHistory({
   collapsedGroups,
   setCollapsedGroups,
-  hideScrollbar = false
+  hideScrollbar = false,
+  showCollapseButton = false,
+  onCollapseAll
 }: ThreadHistoryProps = {}) {
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -231,15 +236,24 @@ export function ThreadHistory({
 
   return (
     <SidebarContent className="flex min-h-0 flex-1 flex-col gap-0 p-0 overflow-hidden">
-      <div className="flex shrink-0 items-center justify-between gap-2  bg-sidebar px-3 pb-2 pt-3 select-none">
-        <p className="text-xs font-medium text-sidebar-foreground/70 tracking-tight shrink-0">
-          <Translator path="threadHistory.sidebar.title" />
-        </p>
-        {isLoading ? (
-          <span className="shrink-0">
-            <Loader />
-          </span>
-        ) : null}
+      <div className="flex shrink-0 px-3 pb-2 pt-2">
+        <div className="flex w-full items-center gap-2 rounded-lg h-9 border border-sidebar-border/60 bg-transparent px-3 text-sidebar-foreground/60 select-none transition-colors duration-150">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+            {isLoading ? (
+              <Loader />
+            ) : showCollapseButton && onCollapseAll ? (
+              <ThreadCollapseButton
+                visible
+                onCollapseAll={onCollapseAll}
+              />
+            ) : (
+              <span className="size-4 shrink-0" aria-hidden />
+            )}
+          </div>
+          <p className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">
+            <Translator path="threadHistory.sidebar.title" />
+          </p>
+        </div>
       </div>
       <CustomScrollbar
         ref={scrollRef}

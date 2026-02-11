@@ -1,13 +1,6 @@
 import { cn } from '@/lib/utils';
 import { size } from 'lodash';
-import {
-  ChevronDown,
-  ChevronRight,
-  ChevronsDown,
-  ChevronsUp,
-  MessageSquare,
-  Share2
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, MessageSquare, Share2 } from 'lucide-react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
@@ -47,11 +40,9 @@ import {
   DialogTitle
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem
@@ -171,22 +162,6 @@ export function ThreadList({
     },
     [setCollapsedGroups, sortedTimeGroupKeys]
   );
-
-  const expandAllGroups = useCallback(() => {
-    setCollapsedGroups(() => {
-      const next = new Set<string>();
-      saveCollapsedGroups(next);
-      return next;
-    });
-  }, [setCollapsedGroups]);
-
-  const collapseAllGroups = useCallback(() => {
-    setCollapsedGroups(() => {
-      const next = new Set(sortedTimeGroupKeys);
-      saveCollapsedGroups(next);
-      return next;
-    });
-  }, [setCollapsedGroups, sortedTimeGroupKeys]);
 
   const handleShareThread = (threadId: string) => {
     if (!threadSharingReady) return;
@@ -387,39 +362,6 @@ export function ThreadList({
             </Alert>
           </div>
         ) : null}
-        {!error && !hasNoThreads && sortedTimeGroupKeys.length > 1 && !isControlled ? (
-          <div className="px-3 pb-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={
-                    effectiveCollapsed.size === 0
-                      ? collapseAllGroups
-                      : expandAllGroups
-                  }
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
-                  aria-label={
-                    effectiveCollapsed.size === 0
-                      ? t('threadHistory.sidebar.collapseAll', 'Collapse all')
-                      : t('threadHistory.sidebar.expandAll', 'Expand all')
-                  }
-                >
-                  {effectiveCollapsed.size === 0 ? (
-                    <ChevronsUp className="h-4 w-4" aria-hidden />
-                  ) : (
-                    <ChevronsDown className="h-4 w-4" aria-hidden />
-                  )}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8}>
-                {effectiveCollapsed.size === 0
-                  ? t('threadHistory.sidebar.collapseAll', 'Collapse all')
-                  : t('threadHistory.sidebar.expandAll', 'Expand all')}
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        ) : null}
         {!error &&
           !hasNoThreads &&
           sortedTimeGroupKeys.map((group, groupIndex) => {
@@ -445,6 +387,7 @@ export function ThreadList({
                   className={cn(
                     'flex w-full items-center gap-2 rounded-lg py-2 pl-2 pr-2 -mx-0.5',
                     'text-xs font-medium tracking-tight bg-neutral-300/20',
+                    'hover:scale-105',
                     'transition-colors duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
                     groupContainsSelected
                       ? 'bg-neutral-600/30 text-sidebar-foreground'
