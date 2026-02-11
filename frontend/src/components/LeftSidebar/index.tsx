@@ -61,7 +61,7 @@ export default function LeftSidebar({
         collapsedGroups={collapsedGroups}
         setCollapsedGroups={setCollapsedGroups}
       />
-      <SidebarRail />
+      {/* <SidebarRail /> */}
     </Sidebar>
   );
 }

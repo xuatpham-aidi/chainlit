@@ -2,9 +2,10 @@ import _ from 'lodash';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useSetRecoilState } from 'recoil';
 import { toast } from 'sonner';
 
-import { ChainlitContext, IThread } from '@chainlit/react-client';
+import { ChainlitContext, IThread, threadHistoryState } from '@chainlit/react-client';
 
 import { Loader } from '@/components/Loader';
 import { Search } from '@/components/icons/Search';
@@ -37,8 +38,9 @@ export default function SearchChats() {
   const [loading, setLoading] = useState(false);
 
   const apiClient = useContext(ChainlitContext);
+  const setThreadHistory = useSetRecoilState(threadHistoryState);
 
-  // Debounced search function
+  // Search hits backend list_threads with filters.search (DB-side filter on step content). Results are independent of sidebar list.
   const debouncedSearch = useMemo(
     () =>
       _.debounce(async (query: string) => {
@@ -141,6 +143,13 @@ export default function SearchChats() {
                     value={`${searchQuery}-${thread.id}`}
                     onSelect={() => {
                       setOpen(false);
+                      setThreadHistory((prev) => ({
+                        ...prev,
+                        threads: _.uniqBy(
+                          [thread, ...(prev?.threads ?? [])],
+                          'id'
+                        )
+                      }));
                       navigate(`/thread/${thread.id}`);
                     }}
                   >
