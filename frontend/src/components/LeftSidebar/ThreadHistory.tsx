@@ -20,10 +20,8 @@ import {
 import { ThreadList } from './ThreadList';
 
 const LIST_PAGINATION = {
-  batchSize: 10,
-  initialBatch: 1,
-  /** Max threads loaded during initial progressive load (by count or until viewport filled). After this, more only via scroll. */
-  initialPageCap: 5
+  initialBatch: 3,
+  batchSize: 10
 } as const;
 
 let scrollTopCache = 0;
@@ -49,7 +47,6 @@ export function ThreadHistory({
   const [error, setError] = useState<string>();
   const [shouldLoadMore, setShouldLoadMore] = useState(false);
   const initialLoadActiveRef = useRef(false);
-  const fillViewportCheckScheduledRef = useRef(false);
 
   const setListLoadingFlag = (key: 'isFetching' | 'isLoadingMore', value: boolean) =>
     setListLoading((prev) => ({ ...prev, [key]: value }));
@@ -107,9 +104,7 @@ export function ThreadHistory({
 
     try {
       const first =
-        isInitialContinuation || isInitialLoad
-          ? LIST_PAGINATION.initialBatch
-          : LIST_PAGINATION.batchSize;
+        isInitialLoad ? LIST_PAGINATION.initialBatch : LIST_PAGINATION.batchSize;
       const { pageInfo, data } = await apiClient.listThreads(
         { first, cursor },
         {}
@@ -130,8 +125,7 @@ export function ThreadHistory({
 
       willContinueInitial =
         initialLoadActiveRef.current &&
-        Boolean(pageInfo?.hasNextPage && pageInfo?.endCursor) &&
-        mergedLength < LIST_PAGINATION.initialPageCap;
+        Boolean(pageInfo?.hasNextPage && pageInfo?.endCursor);
 
       if (willContinueInitial && pageInfo?.endCursor) {
         fetchThreads(pageInfo.endCursor, false);
@@ -161,38 +155,7 @@ export function ThreadHistory({
     }
   }, [isFetching, threadHistory, error]);
 
-  // During initial load: keep loading until list fills viewport (so scrollbar appears) or cap / no more pages
-  const pageInfo = threadHistory?.pageInfo;
-  const endCursor = pageInfo?.endCursor;
-  const threadsLength = threadHistory?.threads?.length ?? 0;
-  useEffect(() => {
-    if (
-      fillViewportCheckScheduledRef.current ||
-      isFetching ||
-      isLoadingMore ||
-      !initialLoadActiveRef.current ||
-      threadsLength === 0 ||
-      !pageInfo?.hasNextPage ||
-      !endCursor ||
-      threadsLength >= LIST_PAGINATION.initialPageCap
-    ) {
-      return;
-    }
-    fillViewportCheckScheduledRef.current = true;
-    const cursorToFetch = endCursor;
-    const raf = requestAnimationFrame(() => {
-      fillViewportCheckScheduledRef.current = false;
-      const el = scrollRef.current;
-      if (!el) return;
-      const overflow = el.scrollHeight > el.clientHeight;
-      if (!overflow && cursorToFetch) {
-        fetchThreads(cursorToFetch, false);
-      }
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [threadsLength, pageInfo?.hasNextPage, endCursor, isFetching, isLoadingMore]);
-
-  // Load more when user scrolls to bottom (infinite scroll; uses batchSize, not initialPageCap)
+  // Load more when user scrolls to bottom (if backend ever returns more pages after initial full load)
   useEffect(() => {
     if (threadHistory?.pageInfo) {
       const { hasNextPage, endCursor } = threadHistory.pageInfo;

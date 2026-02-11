@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 
@@ -30,16 +30,9 @@ export default function LeftSidebar({
   const {
     collapsedGroups,
     setCollapsedGroups,
-    effectiveCollapsed,
-    expandAllGroups,
     collapseAllGroups,
     showButton
   } = useThreadCollapseState(sortedTimeGroupKeys);
-
-  const handleToggle = useCallback(() => {
-    if (effectiveCollapsed.size === 0) collapseAllGroups();
-    else expandAllGroups();
-  }, [effectiveCollapsed.size, collapseAllGroups, expandAllGroups]);
 
   return (
     <Sidebar {...props} className="border-none">
@@ -49,8 +42,7 @@ export default function LeftSidebar({
           <div className="flex items-center gap-0.5">
             <ThreadCollapseButton
               visible={showButton}
-              isAllExpanded={effectiveCollapsed.size === 0}
-              onToggle={handleToggle}
+              onCollapseAll={collapseAllGroups}
             />
             <SearchChats />
             <NewChatButton navigate={navigate} />

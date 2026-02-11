@@ -35,7 +35,6 @@ export interface ThreadCollapseState {
     React.SetStateAction<Set<string> | null>
   >;
   effectiveCollapsed: Set<string>;
-  expandAllGroups: () => void;
   collapseAllGroups: () => void;
   showButton: boolean;
 }
@@ -70,14 +69,6 @@ export function useThreadCollapseState(
     [collapsedGroups, sortedTimeGroupKeys]
   );
 
-  const expandAllGroups = useCallback(() => {
-    setCollapsedGroups(() => {
-      const next = new Set<string>();
-      saveToStorage(next);
-      return next;
-    });
-  }, []);
-
   const collapseAllGroups = useCallback(() => {
     setCollapsedGroups(() => {
       const next = new Set(sortedTimeGroupKeys);
@@ -92,7 +83,6 @@ export function useThreadCollapseState(
     collapsedGroups,
     setCollapsedGroups,
     effectiveCollapsed,
-    expandAllGroups,
     collapseAllGroups,
     showButton
   };
@@ -100,32 +90,27 @@ export function useThreadCollapseState(
 
 export interface ThreadCollapseButtonProps {
   visible: boolean;
-  isAllExpanded: boolean;
-  onToggle: () => void;
+  onCollapseAll: () => void;
 }
 
 /**
- * Icon button that toggles between "expand all" and "collapse all" thread groups.
- * Tooltip shows the action that will happen on click. Renders nothing when not visible.
+ * Icon button: collapse all thread groups. Renders nothing when not visible.
  */
 export function ThreadCollapseButton({
   visible,
-  isAllExpanded,
-  onToggle
+  onCollapseAll
 }: ThreadCollapseButtonProps) {
   const { t } = useTranslation();
 
   if (!visible) return null;
 
-  const labelExpand = t('threadHistory.sidebar.expandAll', 'Expand all');
-  const labelCollapse = t('threadHistory.sidebar.collapseAll', 'Collapse all');
-  const tooltipText = isAllExpanded ? labelCollapse : labelExpand;
+  const tooltipText = t('threadHistory.sidebar.collapseAll', 'Collapse all');
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          onClick={onToggle}
+          onClick={onCollapseAll}
           size="icon"
           variant="ghost"
           className="text-muted-foreground hover:text-muted-foreground"
