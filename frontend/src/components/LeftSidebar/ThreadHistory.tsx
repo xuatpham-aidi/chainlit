@@ -9,6 +9,8 @@ import {
   useChatMessages
 } from '@chainlit/react-client';
 
+import { threadListLoadingState } from '@/state/project';
+
 import {
   SidebarContent,
   SidebarGroup,
@@ -17,8 +19,13 @@ import {
 
 import { ThreadList } from './ThreadList';
 
-const BATCH_SIZE = 35;
-let _scrollTop = 0;
+const LIST_PAGINATION = {
+  batchSize: 10,
+  initialBatch: 5,
+  initialPageCap: 10
+} as const;
+
+let scrollTopCache = 0;
 
 interface ThreadHistoryProps {
   collapsedGroups?: Set<string> | null;
@@ -36,16 +43,17 @@ export function ThreadHistory({
   const apiClient = useContext(ChainlitContext);
   const { firstInteraction, messages, threadId } = useChatMessages();
   const [threadHistory, setThreadHistory] = useRecoilState(threadHistoryState);
+  const [listLoading, setListLoading] = useRecoilState(threadListLoadingState);
+  const { isFetching, isLoadingMore } = listLoading;
   const [error, setError] = useState<string>();
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
   const [shouldLoadMore, setShouldLoadMore] = useState(false);
+  const initialLoadActiveRef = useRef(false);
 
-  // Restore scroll position
+  const setListLoadingFlag = (key: 'isFetching' | 'isLoadingMore', value: boolean) =>
+    setListLoading((prev) => ({ ...prev, [key]: value }));
+
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = _scrollTop;
-    }
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollTopCache;
   }, []);
 
   // Handle first interaction
@@ -73,46 +81,74 @@ export function ThreadHistory({
   const handleScroll = () => {
     if (!scrollRef.current) return;
     const { scrollHeight, clientHeight, scrollTop } = scrollRef.current;
-    const atBottom = scrollTop + clientHeight >= scrollHeight - 10;
-
-    _scrollTop = scrollTop;
-    setShouldLoadMore(atBottom);
+    scrollTopCache = scrollTop;
+    setShouldLoadMore(scrollTop + clientHeight >= scrollHeight - 10);
   };
 
   const fetchThreads = async (
     cursor?: string | number,
     isLoadingMore = false
   ) => {
-    try {
-      setIsLoadingMore(!!cursor || isLoadingMore);
-      setIsFetching(!cursor && !isLoadingMore);
+    const isInitialLoad = !cursor && !isLoadingMore;
+    const isInitialContinuation = cursor !== undefined && initialLoadActiveRef.current;
 
+    if (isInitialLoad) {
+      initialLoadActiveRef.current = true;
+      setListLoadingFlag('isFetching', true);
+    } else if (cursor && !initialLoadActiveRef.current) {
+      setListLoadingFlag('isLoadingMore', true);
+    } else if (!cursor && isLoadingMore) {
+      setListLoadingFlag('isLoadingMore', true);
+    }
+
+    let willContinueInitial = false;
+
+    try {
+      const first =
+        isInitialContinuation || isInitialLoad
+          ? LIST_PAGINATION.initialBatch
+          : LIST_PAGINATION.batchSize;
       const { pageInfo, data } = await apiClient.listThreads(
-        { first: BATCH_SIZE, cursor },
+        { first, cursor },
         {}
       );
 
       setError(undefined);
 
-      // Prevent duplicate threads
-      const allThreads = uniqBy(
-        cursor ? threadHistory?.threads?.concat(data) : data,
-        'id'
-      );
+      let mergedLength = 0;
+      setThreadHistory((prev) => {
+        const prevThreads = prev?.threads ?? [];
+        const merged = uniqBy(
+          cursor ? prevThreads.concat(data) : data,
+          'id'
+        );
+        mergedLength = merged.length;
+        return { ...prev, pageInfo, threads: merged };
+      });
 
-      if (allThreads) {
-        setThreadHistory((prev) => ({
-          ...prev,
-          pageInfo,
-          threads: allThreads
-        }));
+      willContinueInitial =
+        initialLoadActiveRef.current &&
+        Boolean(pageInfo?.hasNextPage && pageInfo?.endCursor) &&
+        mergedLength < LIST_PAGINATION.initialPageCap;
+
+      if (willContinueInitial && pageInfo?.endCursor) {
+        fetchThreads(pageInfo.endCursor, false);
+      } else if (initialLoadActiveRef.current) {
+        initialLoadActiveRef.current = false;
+        setListLoadingFlag('isFetching', false);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      if (initialLoadActiveRef.current) {
+        initialLoadActiveRef.current = false;
+        setListLoadingFlag('isFetching', false);
+      }
     } finally {
       setShouldLoadMore(false);
-      setIsLoadingMore(false);
-      setIsFetching(false);
+      setListLoadingFlag('isLoadingMore', false);
+      if (isInitialLoad && !willContinueInitial) {
+        setListLoadingFlag('isFetching', false);
+      }
     }
   };
 
@@ -134,11 +170,13 @@ export function ThreadHistory({
     }
   }, [shouldLoadMore, isLoadingMore, threadHistory]);
 
+  const showThreadList = Boolean(threadHistory || isFetching || isLoadingMore);
+
   return (
     <SidebarContent onScroll={handleScroll} ref={scrollRef}>
       <SidebarGroup>
         <SidebarMenu>
-          {threadHistory ? (
+          {showThreadList ? (
             <div id="thread-history" className="flex-grow">
               <ThreadList
                 threadHistory={threadHistory}

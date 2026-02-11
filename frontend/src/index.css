@@ -1,3 +1,4 @@
+/* stylelint-disable at-rule-no-unknown -- Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -53,6 +54,7 @@ code {
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
   .dark {
     --background: 0 0% 13%;
     --foreground: 0 0% 93%;
@@ -91,10 +93,12 @@ code {
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
+
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
 
@@ -110,21 +114,17 @@ code {
 
 .loading-shimmer {
   background-position: -100% top;
-  text-fill-color: transparent;
   -webkit-text-fill-color: transparent;
   animation-delay: 0s;
   animation-duration: 4s;
   animation-iteration-count: infinite;
   animation-name: loading-shimmer;
-  background: hsl(var(--muted))
-    gradient(
-      linear,
+  background: hsl(var(--muted)) gradient(linear,
       100% 0,
       0 0,
       from(hsl(var(--muted))),
       color-stop(0.5, hsl(var(--foreground))),
-      to(hsl(var(--muted)))
-    );
+      to(hsl(var(--muted))));
   background: hsl(var(--muted)) -webkit-gradient(linear, 100% 0, 0 0, from(hsl(var(--muted))), color-stop(0.5, hsl(var(--foreground))), to(hsl(var(--muted))));
   background-clip: text;
   -webkit-background-clip: text;
@@ -161,19 +161,40 @@ code {
   background-color: hsl(var(--background));
 }
 
+/* Thread list item staggered reveal */
+@keyframes thread-item-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.thread-item-reveal {
+  animation: thread-item-reveal 0.15s ease-out forwards;
+}
+
 @keyframes task-highlight-blink {
   0% {
     background-color: hsl(var(--foreground));
   }
+
   25% {
     background-color: hsl(var(--foreground));
   }
+
   50% {
     background-color: transparent;
   }
+
   75% {
     background-color: hsl(var(--foreground));
   }
+
   100% {
     background-color: transparent;
   }
@@ -184,15 +205,19 @@ code {
   0% {
     transform: rotate3d(1, 1, 0, 0deg);
   }
+
   25% {
     transform: rotate3d(1, 1, 0, 90deg);
   }
+
   50% {
     transform: rotate3d(1, 1, 0, 180deg);
   }
+
   75% {
     transform: rotate3d(1, 1, 0, 270deg);
   }
+
   100% {
     transform: rotate3d(1, 1, 0, 360deg);
   }

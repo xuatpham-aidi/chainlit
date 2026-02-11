@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 import {
   ChainlitContext,
   ClientError,
-  ThreadHistory, // sessionIdState,
+  ThreadHistory,
   threadHistoryState,
   useChatInteract,
   useChatMessages,
@@ -196,13 +196,9 @@ export function ThreadList({
     // ShareDialog handles its own internal state; we just open it
   };
 
-  if (isFetching || (!threadHistory?.timeGroupedThreads && isLoadingMore)) {
-    return (
-      <div className="flex items-center justify-center p-2">
-        <Loader />
-      </div>
-    );
-  }
+  const hasNoThreads =
+    !threadHistory?.timeGroupedThreads ||
+    size(threadHistory.timeGroupedThreads) === 0;
 
   if (error) {
     return (
@@ -212,7 +208,15 @@ export function ThreadList({
     );
   }
 
-  if (!threadHistory || size(threadHistory?.timeGroupedThreads) === 0) {
+  if (hasNoThreads && (isFetching || isLoadingMore)) {
+    return (
+      <div className="flex items-center justify-center p-2">
+        <Loader />
+      </div>
+    );
+  }
+
+  if (hasNoThreads) {
     return (
       <Alert variant="info" className="m-3">
         <Translator path="threadHistory.sidebar.empty" />
@@ -470,7 +474,7 @@ export function ThreadList({
               >
                 <SidebarGroupContent className="min-h-0 overflow-hidden px-0">
                   <SidebarMenu className="gap-0.5">
-                    {items.map((thread) => {
+                    {items.map((thread, itemIndex) => {
                     const isResumed =
                       idToResume === thread.id &&
                       !threadHistory!.currentThreadId;
@@ -484,7 +488,8 @@ export function ThreadList({
                       <SidebarMenuItem
                         key={thread.id}
                         id={`thread-${thread.id}`}
-                        className="list-none"
+                        className="list-none thread-item-reveal"
+                        style={{ animationDelay: `${itemIndex * 40}ms` }}
                       >
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -555,7 +560,7 @@ export function ThreadList({
           );
         })}
       </TooltipProvider>
-      {isLoadingMore ? (
+      {(isFetching || isLoadingMore) ? (
         <div className="flex items-center justify-center p-2">
           <Loader />
         </div>
