@@ -20,7 +20,17 @@ import { ThreadList } from './ThreadList';
 const BATCH_SIZE = 35;
 let _scrollTop = 0;
 
-export function ThreadHistory() {
+interface ThreadHistoryProps {
+  collapsedGroups?: Set<string> | null;
+  setCollapsedGroups?: React.Dispatch<
+    React.SetStateAction<Set<string> | null>
+  >;
+}
+
+export function ThreadHistory({
+  collapsedGroups,
+  setCollapsedGroups
+}: ThreadHistoryProps = {}) {
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   const apiClient = useContext(ChainlitContext);
@@ -135,6 +145,8 @@ export function ThreadHistory() {
                 error={error}
                 isFetching={isFetching}
                 isLoadingMore={isLoadingMore}
+                collapsedGroups={collapsedGroups}
+                setCollapsedGroups={setCollapsedGroups}
               />
             </div>
           ) : null}

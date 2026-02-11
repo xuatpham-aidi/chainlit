@@ -1,7 +1,14 @@
 import { cn } from '@/lib/utils';
 import { size } from 'lodash';
-import { Share2 } from 'lucide-react';
-import { useContext, useMemo, useState } from 'react';
+import {
+  ChevronDown,
+  ChevronRight,
+  ChevronsDown,
+  ChevronsUp,
+  MessageSquare,
+  Share2
+} from 'lucide-react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSetRecoilState } from 'recoil';
@@ -58,20 +65,51 @@ import {
 } from '@/components/ui/tooltip';
 
 import { Translator } from '../i18n';
+import {
+  loadCollapsedGroups,
+  saveCollapsedGroups
+} from './ThreadCollapse';
 import ThreadOptions from './ThreadOptions';
+
+const TIME_GROUP_ORDER = [
+  'Today',
+  'Yesterday',
+  'Previous 7 days',
+  'Previous 30 days'
+];
+
+export function getSortedTimeGroupKeys(
+  timeGroupedThreads: Record<string, unknown[]> | undefined
+): string[] {
+  if (!timeGroupedThreads) return [];
+  return Object.keys(timeGroupedThreads).sort((a, b) => {
+    const aIndex = TIME_GROUP_ORDER.indexOf(a);
+    const bIndex = TIME_GROUP_ORDER.indexOf(b);
+    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+    if (aIndex !== -1) return -1;
+    if (bIndex !== -1) return 1;
+    return a.localeCompare(b);
+  });
+}
 
 interface ThreadListProps {
   threadHistory?: ThreadHistory;
   error?: string;
   isFetching: boolean;
   isLoadingMore: boolean;
+  collapsedGroups?: Set<string> | null;
+  setCollapsedGroups?: React.Dispatch<
+    React.SetStateAction<Set<string> | null>
+  >;
 }
 
 export function ThreadList({
   threadHistory,
   error,
   isFetching,
-  isLoadingMore
+  isLoadingMore,
+  collapsedGroups: controlledCollapsed,
+  setCollapsedGroups: setControlledCollapsed
 }: ThreadListProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -93,30 +131,70 @@ export function ThreadList({
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   // Share dialog state is centralized in ShareDialog; we only track which thread to share
 
+  const sortedTimeGroupKeys = useMemo(
+    () => getSortedTimeGroupKeys(threadHistory?.timeGroupedThreads),
+    [threadHistory?.timeGroupedThreads]
+  );
+
+  const [internalCollapsed, setInternalCollapsed] = useState<Set<string> | null>(
+    loadCollapsedGroups
+  );
+
+  const isControlled =
+    controlledCollapsed !== undefined && setControlledCollapsed !== undefined;
+  const collapsedGroups = isControlled ? controlledCollapsed : internalCollapsed;
+  const setCollapsedGroups = isControlled
+    ? setControlledCollapsed!
+    : setInternalCollapsed;
+
+  useEffect(() => {
+    if (isControlled) return;
+    if (collapsedGroups === null && sortedTimeGroupKeys.length > 0) {
+      const allCollapsed = new Set(sortedTimeGroupKeys);
+      setInternalCollapsed(allCollapsed);
+      saveCollapsedGroups(allCollapsed);
+    }
+  }, [isControlled, collapsedGroups, sortedTimeGroupKeys]);
+
+  const effectiveCollapsed =
+    collapsedGroups === null ? new Set(sortedTimeGroupKeys) : collapsedGroups;
+
+  const toggleGroup = useCallback(
+    (group: string) => {
+      setCollapsedGroups((prev) => {
+        const base = prev ?? new Set(sortedTimeGroupKeys);
+        const next = new Set(base);
+        if (next.has(group)) next.delete(group);
+        else next.add(group);
+        saveCollapsedGroups(next);
+        return next;
+      });
+    },
+    [setCollapsedGroups, sortedTimeGroupKeys]
+  );
+
+  const expandAllGroups = useCallback(() => {
+    setCollapsedGroups(() => {
+      const next = new Set<string>();
+      saveCollapsedGroups(next);
+      return next;
+    });
+  }, [setCollapsedGroups]);
+
+  const collapseAllGroups = useCallback(() => {
+    setCollapsedGroups(() => {
+      const next = new Set(sortedTimeGroupKeys);
+      saveCollapsedGroups(next);
+      return next;
+    });
+  }, [setCollapsedGroups, sortedTimeGroupKeys]);
+
   const handleShareThread = (threadId: string) => {
     if (!threadSharingReady) return;
     setThreadIdToShare(threadId);
     setIsShareDialogOpen(true);
     // ShareDialog handles its own internal state; we just open it
   };
-
-  const sortedTimeGroupKeys = useMemo(() => {
-    if (!threadHistory?.timeGroupedThreads) return [];
-    const fixedOrder = [
-      'Today',
-      'Yesterday',
-      'Previous 7 days',
-      'Previous 30 days'
-    ];
-    return Object.keys(threadHistory.timeGroupedThreads).sort((a, b) => {
-      const aIndex = fixedOrder.indexOf(a);
-      const bIndex = fixedOrder.indexOf(b);
-      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-      if (aIndex !== -1) return -1;
-      if (bIndex !== -1) return 1;
-      return a.localeCompare(b);
-    });
-  }, [threadHistory?.timeGroupedThreads]);
 
   if (isFetching || (!threadHistory?.timeGroupedThreads && isLoadingMore)) {
     return (
@@ -315,49 +393,131 @@ export function ThreadList({
         threadId={threadIdToShare || null}
       />
       <TooltipProvider delayDuration={300}>
-        {sortedTimeGroupKeys.map((group) => {
+        {sortedTimeGroupKeys.length > 1 && !isControlled ? (
+          <div className="px-2 pb-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={
+                    effectiveCollapsed.size === 0
+                      ? collapseAllGroups
+                      : expandAllGroups
+                  }
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
+                  aria-label={
+                    effectiveCollapsed.size === 0
+                      ? t('threadHistory.sidebar.collapseAll', 'Collapse all')
+                      : t('threadHistory.sidebar.expandAll', 'Expand all')
+                  }
+                >
+                  {effectiveCollapsed.size === 0 ? (
+                    <ChevronsUp className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <ChevronsDown className="h-4 w-4" aria-hidden />
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                {effectiveCollapsed.size === 0
+                  ? t('threadHistory.sidebar.collapseAll', 'Collapse all')
+                  : t('threadHistory.sidebar.expandAll', 'Expand all')}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        ) : null}
+        {sortedTimeGroupKeys.map((group, groupIndex) => {
           const items = threadHistory!.timeGroupedThreads![group];
+          const isCollapsed = effectiveCollapsed.has(group);
+          const count = items.length;
           return (
-            <SidebarGroup key={group}>
-              <SidebarGroupLabel>{getTimeGroupLabel(group)}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {items.map((thread) => {
+            <SidebarGroup
+              key={group}
+              className={cn(
+                'p-2',
+                groupIndex > 0 && 'mt-1 pt-3 border-t border-sidebar-border/60'
+              )}
+            >
+              <button
+                type="button"
+                onClick={() => toggleGroup(group)}
+                className={cn(
+                  'flex w-full items-center gap-1.5 rounded-md py-1.5 px-2 -mx-0.5',
+                  'text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/60',
+                  'hover:bg-sidebar-accent/50 hover:text-sidebar-foreground/80',
+                  'transition-colors outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring'
+                )}
+                aria-expanded={!isCollapsed}
+              >
+                {isCollapsed ? (
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                ) : (
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                )}
+                <span className="flex-1 text-left">
+                  {getTimeGroupLabel(group)}
+                </span>
+                <span className="text-[10px] font-normal tabular-nums text-sidebar-foreground/50">
+                  {count}
+                </span>
+              </button>
+              <div
+                className={cn(
+                  'grid transition-[grid-template-rows] duration-200 ease-out',
+                  isCollapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'
+                )}
+                aria-hidden={isCollapsed}
+              >
+                <SidebarGroupContent className="min-h-0 overflow-hidden px-0">
+                  <SidebarMenu className="gap-0.5">
+                    {items.map((thread) => {
                     const isResumed =
                       idToResume === thread.id &&
                       !threadHistory!.currentThreadId;
                     const isSelected =
                       isResumed || threadHistory!.currentThreadId === thread.id;
+                    const displayName =
+                      thread.name || (
+                        <Translator path="threadHistory.thread.untitled" />
+                      );
                     return (
                       <SidebarMenuItem
                         key={thread.id}
                         id={`thread-${thread.id}`}
+                        className="list-none"
                       >
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Link to={isResumed ? '' : `/thread/${thread.id}`}>
                               <SidebarMenuButton
                                 isActive={isSelected}
-                                className="relative h-9 group/thread"
+                                className={cn(
+                                  'relative h-10 min-h-10 group/thread rounded-lg px-2.5 transition-colors',
+                                  isSelected &&
+                                    'border-l-2 border-l-primary pl-[6px]'
+                                )}
                               >
-                                <span className="flex min-w-0 items-center gap-2">
+                                <span className="flex min-w-0 flex-1 items-center gap-2.5 pr-1">
                                   {thread.metadata?.is_shared ? (
                                     <Share2
                                       className="h-4 w-4 shrink-0 text-muted-foreground"
                                       aria-hidden="true"
                                     />
-                                  ) : null}
-                                  <span className="truncate">
-                                    {thread.name || (
-                                      <Translator path="threadHistory.thread.untitled" />
-                                    )}
+                                  ) : (
+                                    <MessageSquare
+                                      className={cn(
+                                        'h-4 w-4 shrink-0',
+                                        isSelected
+                                          ? 'text-sidebar-accent-foreground'
+                                          : 'text-muted-foreground'
+                                      )}
+                                      aria-hidden="true"
+                                    />
+                                  )}
+                                  <span className="truncate text-left">
+                                    {displayName}
                                   </span>
                                 </span>
-                                <div
-                                  className={cn(
-                                    'absolute w-10 bottom-0 top-0 right-0 bg-gradient-to-l from-[hsl(var(--sidebar-background))] to-transparent'
-                                  )}
-                                />
                                 <ThreadOptions
                                   onDelete={() =>
                                     setThreadIdToDelete(thread.id)
@@ -372,23 +532,25 @@ export function ThreadList({
                                       : undefined
                                   }
                                   className={cn(
-                                    'absolute z-20 bottom-0 top-0 right-0 bg-sidebar-accent hover:bg-sidebar-accent hover:text-primary flex opacity-0 group-hover/thread:opacity-100',
-                                    isSelected &&
-                                      'bg-sidebar-accent opacity-100'
+                                    'shrink-0 h-8 w-8 rounded-md flex opacity-0 group-hover/thread:opacity-100 transition-opacity',
+                                    isSelected && 'opacity-100'
                                   )}
                                 />
                               </SidebarMenuButton>
                             </Link>
                           </TooltipTrigger>
                           <TooltipContent side="right" align="center">
-                            <p>{thread.name}</p>
+                            <p className="max-w-xs truncate">
+                              {thread.name || t('threadHistory.thread.untitled')}
+                            </p>
                           </TooltipContent>
                         </Tooltip>
                       </SidebarMenuItem>
                     );
                   })}
                 </SidebarMenu>
-              </SidebarGroupContent>
+                </SidebarGroupContent>
+              </div>
             </SidebarGroup>
           );
         })}
