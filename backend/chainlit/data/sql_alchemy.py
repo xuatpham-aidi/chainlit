@@ -323,7 +323,9 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         columns = ", ".join(f'"{key}"' for key in parameters.keys())
         values = ", ".join(f":{key}" for key in parameters.keys())
         updates = ", ".join(
-            f'"{key}" = EXCLUDED."{key}"' for key in parameters.keys() if key != "id"
+            f'"{key}" = EXCLUDED."{key}"'
+            for key in parameters.keys()
+            if key not in ("id", "createdAt")
         )
         query = f"""
             INSERT INTO threads ({columns})
