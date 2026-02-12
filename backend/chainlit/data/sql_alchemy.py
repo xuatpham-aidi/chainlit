@@ -34,6 +34,8 @@ if TYPE_CHECKING:
     from chainlit.element import Element, ElementDict
     from chainlit.step import StepDict
 
+GROUP_ID_NOT_GIVEN = object()
+
 
 class SQLAlchemyDataLayer(BaseDataLayer):
     def __init__(
@@ -271,7 +273,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         user_id: Optional[str] = None,
         metadata: Optional[Dict] = None,
         tags: Optional[List[str]] = None,
-        group_id: Optional[str] = None,
+        group_id: Union[Optional[str], object] = GROUP_ID_NOT_GIVEN,
     ):
         if self.show_logger:
             logger.info(f"SQLAlchemy: update_thread, thread_id={thread_id}")
@@ -305,6 +307,16 @@ class SQLAlchemyDataLayer(BaseDataLayer):
             await self.get_current_timestamp() if metadata is None else None
         )
 
+        if group_id is GROUP_ID_NOT_GIVEN:
+            existing_row = await self.execute_sql(
+                query='SELECT "groupId" FROM threads WHERE "id" = :id',
+                parameters={"id": thread_id},
+            )
+            group_id = None
+            if isinstance(existing_row, list) and existing_row:
+                group_id = existing_row[0].get("groupId")
+            # Keep the same groupId so other update paths (metadata, name, etc.) never clear it
+
         data = {
             "id": thread_id,
             "createdAt": created_at_value,
@@ -319,7 +331,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
             key: value
             for key, value in data.items()
             if value is not None or key == "groupId"
-        }  # Remove keys with None except groupId (allow clearing group)
+        }
         columns = ", ".join(f'"{key}"' for key in parameters.keys())
         values = ", ".join(f":{key}" for key in parameters.keys())
         updates = ", ".join(

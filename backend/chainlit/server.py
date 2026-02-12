@@ -1169,11 +1169,12 @@ async def rename_thread(
 
     await is_thread_author(current_user.identifier, thread_id)
 
-    await data_layer.update_thread(
-        thread_id,
-        name=payload.name,
-        group_id=payload.groupId,
-    )
+    update_kwargs = {}
+    if "name" in payload.model_fields_set:
+        update_kwargs["name"] = payload.name
+    if "groupId" in payload.model_fields_set:
+        update_kwargs["group_id"] = payload.groupId
+    await data_layer.update_thread(thread_id, **update_kwargs)
 
     return JSONResponse(content={"success": True})
 
