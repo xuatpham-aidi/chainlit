@@ -269,6 +269,12 @@ export function ThreadHistory({
     };
   }, [threadHistory, threadsFilter]);
 
+  const currentThreadId = threadHistory?.currentThreadId ?? threadId ?? null;
+  const sectionContainsSelected = Boolean(
+    currentThreadId &&
+      displayedThreadHistory?.threads?.some((t) => t.id === currentThreadId)
+  );
+
   const sectionTitleNode =
     sectionTitle != null ? (
       typeof sectionTitle === 'string' ? (
@@ -328,7 +334,12 @@ export function ThreadHistory({
           onClick={() => setSectionExpanded(!sectionExpanded)}
           variant="ghost"
           size="default"
-          className="w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/60 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
+          className={cn(
+            'w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/60 transition-colors duration-150',
+            sectionContainsSelected
+              ? 'text-sidebar-foreground bg-neutral-600/30 hover:bg-neutral-600/40'
+              : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80'
+          )}
           aria-expanded={sectionExpanded}
         >
           <span className="min-w-0 flex-1 truncate text-left">

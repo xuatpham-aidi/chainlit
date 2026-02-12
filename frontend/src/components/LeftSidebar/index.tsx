@@ -53,6 +53,14 @@ export default function LeftSidebar({
     collapseAllGroups
   } = useThreadCollapseState(sortedTimeGroupKeys);
 
+  const initialCollapseDoneRef = useRef(false);
+  useEffect(() => {
+    if (initialCollapseDoneRef.current || sortedTimeGroupKeys.length === 0)
+      return;
+    initialCollapseDoneRef.current = true;
+    collapseAllGroups();
+  }, [sortedTimeGroupKeys, collapseAllGroups]);
+
   const allGroupsCollapsed =
     sortedTimeGroupKeys.length > 0 &&
     effectiveCollapsed.size === sortedTimeGroupKeys.length;

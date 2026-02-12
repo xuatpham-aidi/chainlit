@@ -96,6 +96,7 @@ interface SortableGroupRowProps {
   children: React.ReactNode;
   isDropTarget?: boolean;
   lastDraggedGroupIdRef?: React.MutableRefObject<string | null>;
+  containsSelectedThread?: boolean;
 }
 
 /**
@@ -110,7 +111,8 @@ function SortableGroupRow({
   onDelete,
   children,
   isDropTarget = false,
-  lastDraggedGroupIdRef
+  lastDraggedGroupIdRef,
+  containsSelectedThread = false
 }: SortableGroupRowProps) {
   const {
     attributes,
@@ -160,7 +162,8 @@ function SortableGroupRow({
             'bg-neutral-300/20 hover:bg-neutral-300/50 transition-colors duration-150',
             'border border-transparent',
             isDragging && 'opacity-60 shadow-md',
-            isDropTarget && 'ring-2 ring-sidebar-border ring-inset border-sidebar-border/60'
+            isDropTarget && 'ring-2 ring-sidebar-border ring-inset border-sidebar-border/60',
+            containsSelectedThread && 'bg-neutral-600/30 text-sidebar-foreground'
           )}
           aria-label="Drag to reorder group"
           aria-expanded={isExpanded}
@@ -271,7 +274,7 @@ export function GroupedChatSection({
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const lastDraggedGroupIdRef = useRef<string | null>(null);
 
-  const [internalExpanded, setInternalExpanded] = useState(true);
+  const [internalExpanded, setInternalExpanded] = useState(false);
   const sectionExpanded =
     sectionExpandedProp !== undefined ? sectionExpandedProp : internalExpanded;
   const setSectionExpanded =
@@ -314,6 +317,18 @@ export function GroupedChatSection({
     }
     return map;
   }, [threadHistory?.threads, threadGroups]);
+
+  const currentThreadId = threadHistory?.currentThreadId ?? null;
+  const sectionContainsSelected = useMemo(
+    () =>
+      Boolean(
+        currentThreadId &&
+          threadGroups.some((g) =>
+            (threadsByGroupId[g.id] ?? []).some((t) => t.id === currentThreadId)
+          )
+      ),
+    [currentThreadId, threadGroups, threadsByGroupId]
+  );
 
   const toggleGroup = useCallback((groupId: string) => {
     setExpandedGroups((prev) => {
@@ -462,7 +477,12 @@ export function GroupedChatSection({
         onClick={() => setSectionExpanded(!sectionExpanded)}
         variant="ghost"
         size="default"
-        className="w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/60 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
+        className={cn(
+          'w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/60 transition-colors duration-150',
+          sectionContainsSelected
+            ? 'text-sidebar-foreground bg-neutral-600/30 hover:bg-neutral-600/40'
+            : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80'
+        )}
         aria-expanded={sectionExpanded}
       >
         <span className="min-w-0 flex-1 truncate text-left">
@@ -519,6 +539,12 @@ export function GroupedChatSection({
                   const isExpanded = expandedGroups.has(group.id);
                   const isDropTarget =
                     dragOverId === group.id && dragActiveId !== group.id;
+                  const groupContainsSelected = Boolean(
+                    currentThreadId &&
+                      (threadsByGroupId[group.id] ?? []).some(
+                        (t) => t.id === currentThreadId
+                      )
+                  );
 
                   return (
                     <SortableGroupRow
@@ -526,6 +552,7 @@ export function GroupedChatSection({
                       group={group}
                       isExpanded={isExpanded}
                       onToggle={() => toggleGroup(group.id)}
+                      containsSelectedThread={groupContainsSelected}
                       onRename={() => {
                         setRenameGroupId(group.id);
                         setRenameGroupName(group.name);
