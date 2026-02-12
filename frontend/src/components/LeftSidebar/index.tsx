@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo } from 'react';
+import { useContext, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 
@@ -16,9 +16,8 @@ import { Sidebar, SidebarHeader } from '@/components/ui/sidebar';
 
 import NewChatButton from '../header/NewChat';
 import SearchChats from './Search';
-import { GroupedChatSection } from './GroupedChatSection';
+import { ChatHistorySection } from './ChatHistorySection';
 import { useThreadCollapseState } from './ThreadCollapse';
-import { ThreadHistory } from './ThreadHistory';
 import { getSortedTimeGroupKeys } from './ThreadList';
 
 export default function LeftSidebar({
@@ -51,13 +50,14 @@ export default function LeftSidebar({
     collapsedGroups,
     setCollapsedGroups,
     effectiveCollapsed,
-    collapseAllGroups,
-    showButton
+    collapseAllGroups
   } = useThreadCollapseState(sortedTimeGroupKeys);
 
   const allGroupsCollapsed =
     sortedTimeGroupKeys.length > 0 &&
     effectiveCollapsed.size === sortedTimeGroupKeys.length;
+
+  const historyScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!dataPersistence || !apiClient?.listThreadGroups) return;
@@ -104,18 +104,22 @@ export default function LeftSidebar({
           className="flex flex-1 flex-col min-h-0 border-t border-sidebar-border/60 pt-4 gap-4 overflow-hidden"
           aria-label="Chat history"
         >
-          <GroupedChatSection />
-          <div className="flex flex-1 flex-col min-h-0">
-            <ThreadHistory
-              collapsedGroups={collapsedGroups}
-              setCollapsedGroups={setCollapsedGroups}
-              hideScrollbar={allGroupsCollapsed}
-              showCollapseButton={showButton}
-              onCollapseAll={collapseAllGroups}
-              threadsFilter={(t) => t.groupId == null || t.groupId === ''}
-              sectionTitle="threadHistory.sidebar.ungroupedChat"
-            />
-          </div>
+          <ChatHistorySection
+            historyScrollRef={historyScrollRef}
+            onHistoryScroll={() => {}}
+            registerScrollHandler={() => {}}
+            collapsedGroups={collapsedGroups}
+            setCollapsedGroups={setCollapsedGroups}
+            onCollapseAll={collapseAllGroups}
+            hideScrollbar={allGroupsCollapsed}
+            invalidateKey={
+              collapsedGroups
+                ? Array.from(collapsedGroups).sort().join(',')
+                : ''
+            }
+            threadsFilter={(t) => t.groupId == null || t.groupId === ''}
+            ungroupedSectionTitle="threadHistory.sidebar.ungroupedChat"
+          />
         </section>
       </div>
     </Sidebar>

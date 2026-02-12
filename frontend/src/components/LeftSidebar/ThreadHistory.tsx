@@ -18,6 +18,9 @@ import {
   SidebarGroup,
   SidebarMenu
 } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 import { Loader } from '@/components/Loader';
 import { CustomScrollbar } from '@/components/CustomScrollbar';
@@ -47,6 +50,8 @@ interface ThreadHistoryProps {
   onCollapseAll?: () => void;
   threadsFilter?: (thread: IThread) => boolean;
   sectionTitle?: React.ReactNode;
+  sectionExpanded?: boolean;
+  onSectionExpandedChange?: (expanded: boolean) => void;
 }
 
 export function ThreadHistory({
@@ -56,8 +61,21 @@ export function ThreadHistory({
   showCollapseButton = false,
   onCollapseAll,
   threadsFilter,
-  sectionTitle
+  sectionTitle,
+  sectionExpanded: sectionExpandedProp,
+  onSectionExpandedChange
 }: ThreadHistoryProps = {}) {
+  const [internalSectionExpanded, setInternalSectionExpanded] = useState(true);
+  const sectionExpanded =
+    sectionExpandedProp !== undefined
+      ? sectionExpandedProp
+      : internalSectionExpanded;
+  const setSectionExpanded =
+    onSectionExpandedChange !== undefined
+      ? (v: boolean) => onSectionExpandedChange(v)
+      : setInternalSectionExpanded;
+  const useChevronToggle =
+    sectionExpandedProp !== undefined && onSectionExpandedChange !== undefined;
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   const apiClient = useContext(ChainlitContext);
@@ -251,37 +269,24 @@ export function ThreadHistory({
     };
   }, [threadHistory, threadsFilter]);
 
-  return (
-    <SidebarContent className="flex min-h-0 flex-1 flex-col gap-0 p-0 overflow-hidden">
-      <header className="flex shrink-0 pb-2" aria-label="History section">
-        <div className="flex w-full items-center justify-between gap-2 rounded-lg h-9 border border-sidebar-border/60 bg-transparent px-3 text-sidebar-foreground/60 select-none transition-colors duration-150">
-          <p className="min-w-0 flex-1 truncate text-left text-sm font-medium tracking-tight">
-            {sectionTitle != null ? (
-              typeof sectionTitle === 'string' ? (
-                <Translator path={sectionTitle} />
-              ) : (
-                sectionTitle
-              )
-            ) : (
-              <Translator path="threadHistory.sidebar.title" />
-            )}
-          </p>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-            {isLoading ? (
-              <Loader />
-            ) : showCollapseButton && onCollapseAll ? (
-              <ThreadCollapseButton
-                visible
-                onCollapseAll={onCollapseAll}
-              />
-            ) : (
-              <span className="size-4 shrink-0" aria-hidden />
-            )}
-          </div>
-        </div>
-      </header>
-      <div className="flex flex-1 flex-col min-h-0" role="region" aria-label="Chat history list">
-        <CustomScrollbar
+  const sectionTitleNode =
+    sectionTitle != null ? (
+      typeof sectionTitle === 'string' ? (
+        <Translator path={sectionTitle} />
+      ) : (
+        sectionTitle
+      )
+    ) : (
+      <Translator path="threadHistory.sidebar.title" />
+    );
+
+  const listContent = (
+    <div
+      className="flex flex-1 flex-col min-h-0"
+      role="region"
+      aria-label="Chat history list"
+    >
+      <CustomScrollbar
         ref={scrollRef}
         onScroll={handleScroll}
         className="flex-1 min-h-0"
@@ -310,7 +315,72 @@ export function ThreadHistory({
           </SidebarMenu>
         </SidebarGroup>
       </CustomScrollbar>
-      </div>
+    </div>
+  );
+
+  if (useChevronToggle) {
+    return (
+      <section
+        className="shrink-0 flex flex-col gap-2"
+        aria-label="Recent chat section"
+      >
+        <Button
+          onClick={() => setSectionExpanded(!sectionExpanded)}
+          variant="ghost"
+          size="default"
+          className="w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/60 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
+          aria-expanded={sectionExpanded}
+        >
+          <span className="min-w-0 flex-1 truncate text-left">
+            {sectionTitleNode}
+          </span>
+          <div className="flex items-center gap-1 shrink-0">
+            {isLoading ? (
+              <Loader />
+            ) : (
+              sectionExpanded ? (
+                <ChevronDown className="size-4" />
+              ) : (
+                <ChevronRight className="size-4" />
+              )
+            )}
+          </div>
+        </Button>
+        <div
+          className={cn(
+            'grid transition-[grid-template-rows] duration-200 ease-out min-h-0 overflow-hidden',
+            sectionExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+          )}
+          aria-hidden={!sectionExpanded}
+        >
+          <div className="min-h-0 overflow-hidden">{listContent}</div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <SidebarContent className="flex min-h-0 flex-1 flex-col gap-0 p-0 overflow-hidden">
+      <header className="flex shrink-0 pb-2" aria-label="History section">
+        <div className="flex w-full items-center justify-between gap-2 rounded-lg h-9 border border-sidebar-border/60 bg-transparent px-3 text-sidebar-foreground/60 select-none transition-colors duration-150">
+          <p className="min-w-0 flex-1 truncate text-left text-sm font-medium tracking-tight">
+            {sectionTitleNode}
+          </p>
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+            {isLoading ? (
+              <Loader />
+            ) : showCollapseButton && onCollapseAll ? (
+              <ThreadCollapseButton
+                visible
+                onCollapseAll={onCollapseAll}
+              />
+            ) : (
+              <span className="size-4 shrink-0" aria-hidden />
+            )}
+          </div>
+        </div>
+      </header>
+      {listContent}
     </SidebarContent>
   );
 }

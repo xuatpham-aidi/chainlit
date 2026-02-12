@@ -37,6 +37,9 @@ import {
   useConfig
 } from '@chainlit/react-client';
 
+import { threadListLoadingState } from '@/state/project';
+import { Loader } from '@/components/Loader';
+
 import { buttonVariants } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -243,7 +246,19 @@ function DragStateSync({ setActiveId, setOverId }: DragStateSyncProps) {
   return null;
 }
 
-export function GroupedChatSection() {
+export interface GroupedChatSectionProps {
+  sectionExpanded?: boolean;
+  onSectionExpandedChange?: (expanded: boolean) => void;
+  expandedGroups?: Set<string>;
+  onExpandedGroupsChange?: (set: React.SetStateAction<Set<string>>) => void;
+}
+
+export function GroupedChatSection({
+  sectionExpanded: sectionExpandedProp,
+  onSectionExpandedChange,
+  expandedGroups: expandedGroupsProp,
+  onExpandedGroupsChange
+}: GroupedChatSectionProps = {}) {
   const { t } = useTranslation();
   const { config } = useConfig();
   const dataPersistence = config?.dataPersistence;
@@ -256,6 +271,14 @@ export function GroupedChatSection() {
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const lastDraggedGroupIdRef = useRef<string | null>(null);
 
+  const [internalExpanded, setInternalExpanded] = useState(true);
+  const sectionExpanded =
+    sectionExpandedProp !== undefined ? sectionExpandedProp : internalExpanded;
+  const setSectionExpanded =
+    onSectionExpandedChange !== undefined
+      ? (v: boolean) => onSectionExpandedChange(v)
+      : setInternalExpanded;
+
   const threadGroups = useMemo(
     () =>
       [...threadGroupsRaw].sort((a, b) => {
@@ -267,8 +290,16 @@ export function GroupedChatSection() {
     [threadGroupsRaw]
   );
 
-  const [sectionExpanded, setSectionExpanded] = useState(true);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [internalExpandedGroups, setInternalExpandedGroups] =
+    useState<Set<string>>(new Set());
+  const expandedGroups =
+    expandedGroupsProp !== undefined ? expandedGroupsProp : internalExpandedGroups;
+  const setExpandedGroups =
+    onExpandedGroupsChange !== undefined
+      ? onExpandedGroupsChange
+      : setInternalExpandedGroups;
+  const listLoading = useRecoilValue(threadListLoadingState);
+  const isLoading = listLoading?.isFetching || listLoading?.isLoadingMore;
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [renameGroupId, setRenameGroupId] = useState<string | null>(null);
@@ -428,7 +459,7 @@ export function GroupedChatSection() {
   return (
     <section className="shrink-0 flex flex-col gap-2" aria-label="Grouped chat">
       <Button
-        onClick={() => setSectionExpanded((prev) => !prev)}
+        onClick={() => setSectionExpanded(!sectionExpanded)}
         variant="ghost"
         size="default"
         className="w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/60 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
@@ -437,12 +468,15 @@ export function GroupedChatSection() {
         <span className="min-w-0 flex-1 truncate text-left">
           <Translator path="threadHistory.sidebar.groupedChat" />
         </span>
-
-        {sectionExpanded ? (
-          <ChevronDown className="size-4 shrink-0" />
-        ) : (
-          <ChevronRight className="size-4 shrink-0" />
-        )}
+        <div className="flex items-center gap-1 shrink-0">
+          {isLoading ? (
+            <Loader />
+          ) : sectionExpanded ? (
+            <ChevronDown className="size-4" />
+          ) : (
+            <ChevronRight className="size-4" />
+          )}
+        </div>
       </Button>
 
       <div
