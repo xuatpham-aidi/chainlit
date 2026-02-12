@@ -1285,12 +1285,17 @@ async def create_thread_group(
     payload: CreateThreadGroupRequest,
     current_user: UserParam,
 ):
-    """Create a thread group."""
+    """Create a thread group. Group name must be unique per user."""
     data_layer = get_data_layer()
     if not data_layer:
         raise HTTPException(status_code=400, detail="Data persistence is not enabled")
     user_id = await _get_user_id_for_data_layer(data_layer, current_user)
-    group = await data_layer.create_thread_group(user_id, payload.name)
+    try:
+        group = await data_layer.create_thread_group(user_id, payload.name)
+    except ValueError as e:
+        if "already exists" in str(e).lower() or "required" in str(e).lower():
+            raise HTTPException(status_code=409, detail=str(e)) from e
+        raise
     return JSONResponse(content=group)
 
 
@@ -1300,7 +1305,7 @@ async def update_thread_group(
     payload: UpdateThreadGroupRequest,
     current_user: UserParam,
 ):
-    """Update a thread group (rename and/or display order)."""
+    """Update a thread group (rename and/or display order). Group name must be unique per user."""
     data_layer = get_data_layer()
     if not data_layer:
         raise HTTPException(status_code=400, detail="Data persistence is not enabled")
@@ -1309,11 +1314,16 @@ async def update_thread_group(
     group_ids = {g["id"] for g in groups}
     if payload.groupId not in group_ids:
         raise HTTPException(status_code=404, detail="Thread group not found")
-    await data_layer.update_thread_group(
-        payload.groupId,
-        name=payload.name,
-        display_order=payload.displayOrder,
-    )
+    try:
+        await data_layer.update_thread_group(
+            payload.groupId,
+            name=payload.name,
+            display_order=payload.displayOrder,
+        )
+    except ValueError as e:
+        if "already exists" in str(e).lower():
+            raise HTTPException(status_code=409, detail=str(e)) from e
+        raise
     return JSONResponse(content={"success": True})
 
 
@@ -1349,6 +1359,11 @@ async def reorder_thread_groups(
     user_id = await _get_user_id_for_data_layer(data_layer, current_user)
     groups = await data_layer.list_thread_groups(user_id)
     group_ids = {g["id"] for g in groups}
+    if len(payload.orderedGroupIds) != len(groups):
+        raise HTTPException(
+            status_code=400,
+            detail="orderedGroupIds must contain all thread groups exactly once",
+        )
     for gid in payload.orderedGroupIds:
         if gid not in group_ids:
             raise HTTPException(

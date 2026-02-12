@@ -144,9 +144,6 @@ function SortableGroupRow({
             <ChevronRight className="h-3.5 w-3.5 shrink-0" />
           )}
           <span className="flex-1 truncate">{group.name}</span>
-          <span className="text-sidebar-foreground/45 text-sm shrink-0">
-            {threads.length}
-          </span>
         </button>
         <div
           className="flex items-center shrink-0 bg-neutral-300/20 opacity-0 group-hover/row:opacity-100 transition-opacity"
@@ -166,7 +163,13 @@ function SortableGroupRow({
                 <Ellipsis className="h-3.5 w-3.5" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[8rem]">
+            <DropdownMenuContent
+                    className="min-w-[8rem] rounded-xl border-sidebar-border/80 shadow-lg"
+                    side="right"      // Changed from default (bottom) to right
+                    align="start"     // Aligns to the start of the trigger
+                    forceMount
+                    sideOffset={20}
+            >
               <DropdownMenuItem onClick={onRename}>
                 <Translator path="threadHistory.thread.menu.rename" />
                 <Pencil className="ml-auto h-4 w-4 opacity-60" />
@@ -193,10 +196,21 @@ export function GroupedChatSection() {
   const { config } = useConfig();
   const dataPersistence = config?.dataPersistence;
   const apiClient = useContext(ChainlitContext);
-  const threadGroups = useRecoilValue(threadGroupsState) ?? [];
+  const threadGroupsRaw = useRecoilValue(threadGroupsState) ?? [];
   const setThreadGroups = useSetRecoilState(threadGroupsState);
   const threadHistory = useRecoilValue(threadHistoryState);
   const setThreadHistory = useSetRecoilState(threadHistoryState);
+
+  const threadGroups = useMemo(
+    () =>
+      [...threadGroupsRaw].sort((a, b) => {
+        const orderA = a.displayOrder ?? 0;
+        const orderB = b.displayOrder ?? 0;
+        if (orderA !== orderB) return orderA - orderB;
+        return (a.createdAt ?? '').localeCompare(b.createdAt ?? '');
+      }),
+    [threadGroupsRaw]
+  );
 
   const [sectionExpanded, setSectionExpanded] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -227,39 +241,72 @@ export function GroupedChatSection() {
   const handleCreateGroup = useCallback(() => {
     const name = newGroupName.trim();
     if (!name || !apiClient.createThreadGroup) return;
+    const nameLower = name.toLowerCase();
+    const isDuplicate = (threadGroupsRaw ?? []).some(
+      (g) => (g.name || '').trim().toLowerCase() === nameLower
+    );
+    if (isDuplicate) {
+      toast.error(
+        t('threadHistory.sidebar.createGroup.duplicateName', 'Group name already exists')
+      );
+      return;
+    }
     toast.promise(apiClient.createThreadGroup(name), {
       loading: <Translator path="threadHistory.sidebar.createGroup.inProgress" />,
       success: (created) => {
-        setThreadGroups((prev) => [...(prev ?? []), created]);
+        const newGroupAtTop = { ...created, displayOrder: 0 };
+        const shifted = (threadGroupsRaw ?? []).map((g) => ({
+          ...g,
+          displayOrder: (g.displayOrder ?? 0) + 1
+        }));
+        setThreadGroups([newGroupAtTop, ...shifted]);
         setNewGroupName('');
         setCreateDialogOpen(false);
         return <Translator path="threadHistory.sidebar.createGroup.success" />;
       },
       error: (err) => {
-        if (err instanceof ClientError) return <span>{err.message}</span>;
+        if (err instanceof ClientError) {
+          const msg = err.detail ?? err.message;
+          return <span>{msg}</span>;
+        }
         return <Translator path="threadHistory.sidebar.createGroup.error" />;
       }
     });
-  }, [apiClient, newGroupName, setThreadGroups]);
+  }, [apiClient, newGroupName, setThreadGroups, threadGroupsRaw, t]);
 
   const handleRenameGroup = useCallback(async () => {
     if (!renameGroupId || !renameGroupName.trim() || !apiClient.updateThreadGroup)
       return;
+    const name = renameGroupName.trim();
+    const nameLower = name.toLowerCase();
+    const isDuplicate = (threadGroupsRaw ?? []).some(
+      (g) =>
+        g.id !== renameGroupId &&
+        (g.name || '').trim().toLowerCase() === nameLower
+    );
+    if (isDuplicate) {
+      toast.error(
+        t('threadHistory.sidebar.createGroup.duplicateName', 'Group name already exists')
+      );
+      return;
+    }
     try {
-      await apiClient.updateThreadGroup(renameGroupId, {
-        name: renameGroupName.trim()
-      });
+      await apiClient.updateThreadGroup(renameGroupId, { name });
       setThreadGroups((prev) =>
         (prev ?? []).map((g) =>
-          g.id === renameGroupId ? { ...g, name: renameGroupName.trim() } : g
+          g.id === renameGroupId ? { ...g, name } : g
         )
       );
       setRenameGroupId(null);
       setRenameGroupName('');
-    } catch {
-      toast.error('Failed to rename group');
+    } catch (err) {
+      const msg =
+        err instanceof ClientError
+          ? err.detail ?? err.message
+          : 'Failed to rename group';
+      toast.error(msg);
     }
-  }, [apiClient, renameGroupId, renameGroupName, setThreadGroups]);
+  }, [apiClient, renameGroupId, renameGroupName, setThreadGroups, threadGroupsRaw, t]);
 
   const handleDeleteGroup = useCallback(() => {
     if (!deleteGroupId || !apiClient.deleteThreadGroup) return;
@@ -300,16 +347,21 @@ export function GroupedChatSection() {
       );
       if (oldIndex < 0 || newIndex < 0) return;
       const reordered = arrayMove(threadGroups, oldIndex, newIndex);
-      const orderedIds = reordered.map((g: IThreadGroup) => g.id);
-      setThreadGroups(reordered);
+      const withNewOrder = reordered.map((g: IThreadGroup, i: number) => ({
+        ...g,
+        displayOrder: i
+      }));
+      const orderedIds = withNewOrder.map((g: IThreadGroup) => g.id);
+      const previous = threadGroupsRaw;
+      setThreadGroups(withNewOrder);
       try {
         await apiClient.reorderThreadGroups(orderedIds);
       } catch {
-        setThreadGroups(threadGroups);
+        setThreadGroups(previous);
         toast.error('Failed to reorder groups');
       }
     },
-    [apiClient, threadGroups, setThreadGroups]
+    [apiClient, threadGroups, threadGroupsRaw, setThreadGroups]
   );
 
   if (!dataPersistence || !apiClient.listThreadGroups) return null;

@@ -136,6 +136,21 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                 logger.warning(f"An unexpected error occurred: {e}")
                 return None
 
+    async def execute_sql_multi(
+        self, statements: List[tuple]
+    ) -> None:
+        """Run multiple (query, parameters) in a single transaction. Commits only if all succeed."""
+        async with self.async_session() as session:
+            try:
+                await session.begin()
+                for query, parameters in statements:
+                    await session.execute(text(query), parameters)
+                await session.commit()
+            except (SQLAlchemyError, Exception) as e:
+                await session.rollback()
+                logger.warning("execute_sql_multi failed: %s", e)
+                raise
+
     async def get_current_timestamp(self) -> str:
         return datetime.now(timezone.utc).isoformat()
 
@@ -505,6 +520,17 @@ class SQLAlchemyDataLayer(BaseDataLayer):
             data=paginated_threads,
         )
 
+    def _row_val(self, r: Dict[str, Any], key: str, *alt_keys: str):
+        """Get value from row, trying key and alternate keys; fallback to case-insensitive match."""
+        for k in (key,) + alt_keys:
+            if k in r and r[k] is not None:
+                return r[k]
+        key_lower = key.lower()
+        for k, v in r.items():
+            if k is not None and k.lower() == key_lower and v is not None:
+                return v
+        return None
+
     ###### Thread groups ######
     async def list_thread_groups(self, user_id: str) -> List[ThreadGroupDict]:
         query = """
@@ -518,15 +544,16 @@ class SQLAlchemyDataLayer(BaseDataLayer):
             return []
         result = []
         for r in rows:
-            created_at = r.get("createdAt")
+            created_at = self._row_val(r, "createdAt", "created_at")
             if hasattr(created_at, "isoformat"):
                 created_at = created_at.isoformat()
+            display_order = self._row_val(r, "displayOrder", "display_order")
             result.append(
                 ThreadGroupDict(
-                    id=str(r["id"]),
-                    userId=str(r["userId"]),
-                    name=r["name"],
-                    displayOrder=int(r.get("displayOrder") or 0),
+                    id=str(self._row_val(r, "id") or r.get("id")),
+                    userId=str(self._row_val(r, "userId", "user_id") or r.get("userId")),
+                    name=self._row_val(r, "name") or r.get("name"),
+                    displayOrder=int(display_order if display_order is not None else 0),
                     createdAt=created_at,
                 )
             )
@@ -535,25 +562,45 @@ class SQLAlchemyDataLayer(BaseDataLayer):
     async def create_thread_group(
         self, user_id: str, name: str
     ) -> ThreadGroupDict:
+        """Create a new thread group and place it at the top of the order (displayOrder=0).
+        Existing groups are shifted down (displayOrder += 1). Persisted to DB.
+        Raises ValueError if a group with the same name already exists for this user."""
+        name_trimmed = (name or "").strip()
+        if not name_trimmed:
+            raise ValueError("Group name is required")
+        check_query = """
+            SELECT 1 FROM thread_groups
+            WHERE "userId" = :user_id AND LOWER(TRIM("name")) = LOWER(:name)
+        """
+        existing = await self.execute_sql(
+            check_query, {"user_id": user_id, "name": name_trimmed}
+        )
+        if isinstance(existing, list) and len(existing) > 0:
+            raise ValueError("Group name already exists")
         group_id = str(uuid.uuid4())
         now = await self.get_current_timestamp()
-        query = """
+        shift_query = """
+            UPDATE thread_groups SET "displayOrder" = "displayOrder" + 1
+            WHERE "userId" = :user_id
+        """
+        insert_query = """
             INSERT INTO thread_groups ("id", "userId", "name", "displayOrder", "createdAt")
             VALUES (:id, :user_id, :name, 0, :created_at)
         """
-        await self.execute_sql(
-            query,
-            {
-                "id": group_id,
-                "user_id": user_id,
-                "name": name,
-                "created_at": now,
-            },
-        )
+        insert_params = {
+            "id": group_id,
+            "user_id": user_id,
+            "name": name_trimmed,
+            "created_at": now,
+        }
+        await self.execute_sql_multi([
+            (shift_query, {"user_id": user_id}),
+            (insert_query, insert_params),
+        ])
         return ThreadGroupDict(
             id=group_id,
             userId=user_id,
-            name=name,
+            name=name_trimmed,
             displayOrder=0,
             createdAt=now,
         )
@@ -568,8 +615,23 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         updates = []
         params: Dict[str, Any] = {"id": group_id}
         if name is not None:
+            name_trimmed = name.strip()
+            if not name_trimmed:
+                raise ValueError("Group name is required")
+            check_query = """
+                SELECT 1 FROM thread_groups g
+                WHERE g."userId" = (SELECT "userId" FROM thread_groups WHERE "id" = :group_id)
+                  AND LOWER(TRIM(g."name")) = LOWER(:name)
+                  AND g."id" != :group_id
+            """
+            existing = await self.execute_sql(
+                check_query,
+                {"group_id": group_id, "name": name_trimmed},
+            )
+            if isinstance(existing, list) and len(existing) > 0:
+                raise ValueError("Group name already exists")
             updates.append('"name" = :name')
-            params["name"] = name
+            params["name"] = name_trimmed
         if display_order is not None:
             updates.append('"displayOrder" = :display_order')
             params["display_order"] = display_order
@@ -587,21 +649,27 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         rows = await self.execute_sql(thread_ids_query, {"group_id": group_id})
         if isinstance(rows, list):
             for r in rows:
-                await self.delete_thread(str(r["id"]))
+                thread_id = self._row_val(r, "id")
+                if thread_id is not None:
+                    await self.delete_thread(str(thread_id))
         delete_query = """DELETE FROM thread_groups WHERE "id" = :group_id"""
         await self.execute_sql(delete_query, {"group_id": group_id})
 
     async def reorder_thread_groups(
         self, user_id: str, ordered_group_ids: List[str]
     ) -> None:
-        for index, gid in enumerate(ordered_group_ids):
-            await self.execute_sql(
+        statements = [
+            (
                 """
                 UPDATE thread_groups SET "displayOrder" = :display_order
                 WHERE "id" = :id AND "userId" = :user_id
                 """,
                 {"display_order": index, "id": gid, "user_id": user_id},
             )
+            for index, gid in enumerate(ordered_group_ids)
+        ]
+        if statements:
+            await self.execute_sql_multi(statements)
 
     ###### Steps ######
     @queue_until_user_message()

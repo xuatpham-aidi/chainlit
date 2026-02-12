@@ -63,7 +63,15 @@ export default function LeftSidebar({
     if (!dataPersistence || !apiClient?.listThreadGroups) return;
     apiClient
       .listThreadGroups()
-      .then(setThreadGroups)
+      .then((groups) => {
+        const byDisplayOrder = [...groups].sort((a, b) => {
+          const oa = a.displayOrder ?? 0;
+          const ob = b.displayOrder ?? 0;
+          if (oa !== ob) return oa - ob;
+          return (a.createdAt ?? '').localeCompare(b.createdAt ?? '');
+        });
+        setThreadGroups(byDisplayOrder);
+      })
       .catch(() => setThreadGroups([]));
   }, [dataPersistence, apiClient, setThreadGroups]);
 
