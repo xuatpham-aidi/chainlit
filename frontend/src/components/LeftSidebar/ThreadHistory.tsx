@@ -13,11 +13,7 @@ import { groupByDate } from '@chainlit/react-client';
 
 import { threadListLoadingState } from '@/state/project';
 
-import {
-  SidebarContent,
-  SidebarGroup,
-  SidebarMenu
-} from '@/components/ui/sidebar';
+import { SidebarContent } from '@/components/ui/sidebar';
 
 import { CustomScrollbar } from '@/components/CustomScrollbar';
 import { Loader } from '@/components/Loader';
@@ -39,6 +35,10 @@ const BATCH_FETCH_DELAY_MS = 500;
 let scrollTopCache = 0;
 
 interface ThreadHistoryProps {
+  /** When provided, list is in main scroll (no inner scroll); used for load-more and scroll cache. */
+  historyScrollRef?: React.RefObject<HTMLDivElement | null>;
+  /** When using main scroll, register this so parent calls it on scroll. */
+  registerScrollHandler?: (handler: (() => void) | null) => void;
   collapsedGroups: Set<string> | null;
   setCollapsedGroups: React.Dispatch<
     React.SetStateAction<Set<string> | null>
@@ -53,6 +53,8 @@ interface ThreadHistoryProps {
 }
 
 export function ThreadHistory({
+  historyScrollRef: historyScrollRefProp,
+  registerScrollHandler,
   collapsedGroups,
   setCollapsedGroups,
   hideScrollbar = false,
@@ -75,7 +77,8 @@ export function ThreadHistory({
   const useChevronToggle =
     sectionExpandedProp !== undefined && onSectionExpandedChange !== undefined;
   const navigate = useNavigate();
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const innerScrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = historyScrollRefProp ?? innerScrollRef;
   const apiClient = useContext(ChainlitContext);
   const { firstInteraction, messages, threadId } = useChatMessages();
   const [threadHistory, setThreadHistory] = useRecoilState(threadHistoryState);
@@ -88,8 +91,11 @@ export function ThreadHistory({
   const setListLoadingFlag = (key: 'isFetching' | 'isLoadingMore', value: boolean) =>
     setListLoading((prev) => ({ ...prev, [key]: value }));
 
+  const useMainScroll = Boolean(historyScrollRefProp);
+
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollTopCache;
+    const el = scrollRef.current;
+    if (el) el.scrollTop = scrollTopCache;
   }, []);
 
   // On first interaction (new chat): prepend a stub thread so the sidebar shows it
@@ -160,12 +166,19 @@ export function ThreadHistory({
     });
   }, [threadId, messages, setThreadHistory]);
 
-  const handleScroll = () => {
-    if (!scrollRef.current) return;
-    const { scrollHeight, clientHeight, scrollTop } = scrollRef.current;
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const { scrollHeight, clientHeight, scrollTop } = el;
     scrollTopCache = scrollTop;
     setShouldLoadMore(scrollTop + clientHeight >= scrollHeight - 10);
-  };
+  }, [scrollRef]);
+
+  useEffect(() => {
+    if (!useMainScroll || !registerScrollHandler) return;
+    registerScrollHandler(handleScroll);
+    return () => registerScrollHandler(null);
+  }, [useMainScroll, registerScrollHandler, handleScroll]);
 
   const fetchThreads = async (
     cursor?: string | number,
@@ -195,14 +208,12 @@ export function ThreadHistory({
 
       setError(undefined);
 
-      let mergedLength = 0;
       setThreadHistory((prev) => {
         const prevThreads = prev?.threads ?? [];
         const merged = uniqBy(
           cursor ? prevThreads.concat(data) : data,
           'id'
         );
-        mergedLength = merged.length;
         return { ...prev, pageInfo, threads: merged };
       });
 
@@ -284,14 +295,33 @@ export function ThreadHistory({
       <Translator path="threadHistory.sidebar.title" />
     );
 
-  const listContent = (
+  const listContent = useMainScroll ? (
+    showThreadList ? (
+      <div
+        id="thread-history"
+        className="flex flex-col min-h-0"
+        role="region"
+        aria-label="Chat history list"
+      >
+        <ThreadList
+          threadHistory={displayedThreadHistory}
+          error={error}
+          isFetching={isFetching}
+          isLoadingMore={isLoadingMore}
+          collapsedGroups={collapsedGroups}
+          setCollapsedGroups={setCollapsedGroups}
+          stickyTopOffset="top-9"
+        />
+      </div>
+    ) : null
+  ) : (
     <div
       className="flex flex-1 flex-col min-h-0"
       role="region"
       aria-label="Chat history list"
     >
       <CustomScrollbar
-        ref={scrollRef}
+        ref={innerScrollRef}
         onScroll={handleScroll}
         className="flex-1 min-h-0"
         variant="sidebar"
@@ -302,22 +332,19 @@ export function ThreadHistory({
             : ''
         }
       >
-        <SidebarGroup>
-          <SidebarMenu>
-            {showThreadList ? (
-              <div id="thread-history" className="flex-grow">
-                <ThreadList
-                  threadHistory={displayedThreadHistory}
-                  error={error}
-                  isFetching={isFetching}
-                  isLoadingMore={isLoadingMore}
-                  collapsedGroups={collapsedGroups}
-                  setCollapsedGroups={setCollapsedGroups}
-                />
-              </div>
-            ) : null}
-          </SidebarMenu>
-        </SidebarGroup>
+        {showThreadList ? (
+          <div id="thread-history" className="flex flex-col min-h-0">
+            <ThreadList
+              threadHistory={displayedThreadHistory}
+              error={error}
+              isFetching={isFetching}
+              isLoadingMore={isLoadingMore}
+              collapsedGroups={collapsedGroups}
+              setCollapsedGroups={setCollapsedGroups}
+              stickyTopOffset="top-0"
+            />
+          </div>
+        ) : null}
       </CustomScrollbar>
     </div>
   );

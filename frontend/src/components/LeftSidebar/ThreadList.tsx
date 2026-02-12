@@ -90,6 +90,8 @@ interface ThreadListProps {
   setCollapsedGroups: React.Dispatch<
     React.SetStateAction<Set<string> | null>
   >;
+  /** When set, time group headers stick at this offset (e.g. top-18) below parent headers. */
+  stickyTopOffset?: string;
 }
 
 export function ThreadList({
@@ -98,7 +100,8 @@ export function ThreadList({
   isFetching,
   isLoadingMore,
   collapsedGroups,
-  setCollapsedGroups
+  setCollapsedGroups,
+  stickyTopOffset = 'top-0'
 }: ThreadListProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -387,10 +390,15 @@ export function ThreadList({
                 key={group}
                 className={cn(
                   'px-3 py-2',
-                  groupIndex > 0 && 'mt-0 border-t border-sidebar-border/50'
+                  groupIndex > 0 && 'mt-0'
                 )}
               >
-                <div className="sticky top-0 z-[5] bg-sidebar">
+                <div
+                  className={cn(
+                    'sticky z-[5] !bg-sidebar border-b border-sidebar-border/30',
+                    stickyTopOffset
+                  )}
+                >
                   <CollapsibleGroupRow
                     label={getTimeGroupLabel(group)}
                     count={count}

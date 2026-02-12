@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useRecoilState } from 'recoil';
 
 import {
@@ -35,7 +35,6 @@ const DEFAULT_UNGROUPED_TITLE = 'threadHistory.sidebar.recent';
 export function ChatHistorySection({
   historyScrollRef,
   onHistoryScroll,
-  registerScrollHandler,
   collapsedGroups,
   setCollapsedGroups,
   onCollapseAll,
@@ -62,6 +61,15 @@ export function ChatHistorySection({
     onCollapseAll();
   }, [onCollapseAll]);
 
+  const registeredScrollHandlerRef = useRef<(() => void) | null>(null);
+  const registerThreadHistoryScroll = useCallback((handler: (() => void) | null) => {
+    registeredScrollHandlerRef.current = handler;
+  }, []);
+  const handleHistoryScroll = useCallback(() => {
+    onHistoryScroll();
+    registeredScrollHandlerRef.current?.();
+  }, [onHistoryScroll]);
+
   return (
     <div className="flex flex-1 flex-col min-h-0" aria-label="Chat history">
       <header className="flex shrink-0 items-center justify-between pb-2 pr-1">
@@ -78,7 +86,7 @@ export function ChatHistorySection({
       </header>
       <CustomScrollbar
         ref={historyScrollRef}
-        onScroll={onHistoryScroll}
+        onScroll={handleHistoryScroll}
         className="flex-1 min-h-0"
         variant="sidebar"
         hideScrollbar={hideScrollbar}
@@ -92,6 +100,8 @@ export function ChatHistorySection({
             onExpandedGroupsChange={setExpandedGroupsInSection}
           />
           <ThreadHistory
+            historyScrollRef={historyScrollRef}
+            registerScrollHandler={registerThreadHistoryScroll}
             collapsedGroups={collapsedGroups}
             setCollapsedGroups={setCollapsedGroups}
             threadsFilter={threadsFilter}

@@ -122,7 +122,7 @@ export default function LeftSidebar({
         </section>
 
         <section
-          className="flex flex-1 flex-col min-h-0 pt-8 gap-4 overflow-hidden"
+          className="flex flex-1 flex-col min-h-0 pt-8 gap-4 overflow-clip"
           aria-label="Chat history"
         >
           <ChatHistorySection

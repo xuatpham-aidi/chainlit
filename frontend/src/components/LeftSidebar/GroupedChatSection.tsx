@@ -491,7 +491,7 @@ export function GroupedChatSection({
       ariaLabel="Grouped chat"
       stickyHeader
     >
-      <div className="min-h-0 overflow-hidden">
+      <div className="min-h-0 overflow-clip">
         <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
           <DragStateSync setActiveId={setDragActiveId} setOverId={setDragOverId} />
           <SortableContext
@@ -554,8 +554,8 @@ export function GroupedChatSection({
                       )}
                       aria-hidden={!isExpanded}
                     >
-                      <div className="min-h-0 overflow-hidden">
-                        <SidebarGroupContent className="min-h-0 overflow-hidden">
+                      <div className="min-h-0 overflow-clip">
+                        <SidebarGroupContent className="min-h-0 overflow-clip">
                           <SidebarMenu className="gap-0">
                             {sortedKeys.length > 0 && (
                               <ThreadList
@@ -575,6 +575,7 @@ export function GroupedChatSection({
                                         : updater
                                   }))
                                 }
+                                stickyTopOffset="top-18"
                               />
                             )}
                           </SidebarMenu>

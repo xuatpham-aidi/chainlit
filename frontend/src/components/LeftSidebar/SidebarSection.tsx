@@ -72,12 +72,12 @@ export function SidebarSection({
       </Button>
       <div
         className={cn(
-          'grid transition-[grid-template-rows] duration-200 ease-out min-h-0 overflow-hidden',
+          'grid transition-[grid-template-rows] duration-200 ease-out min-h-0 overflow-clip',
           expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
         )}
         aria-hidden={!expanded}
       >
-        <div className="min-h-0 overflow-hidden">{children}</div>
+        <div className="min-h-0 overflow-clip">{children}</div>
       </div>
     </section>
   );
