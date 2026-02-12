@@ -1,9 +1,13 @@
-import { useCallback, useState } from 'react';
-import { useRecoilValue } from 'recoil';
+import { useCallback } from 'react';
+import { useRecoilState } from 'recoil';
+
+import {
+  sidebarTopicsSectionExpandedState,
+  sidebarRecentSectionExpandedState,
+  sidebarTopicGroupExpandedState
+} from '@/state/sidebar';
 
 import { CustomScrollbar } from '@/components/CustomScrollbar';
-import { Loader } from '@/components/Loader';
-import { threadListLoadingState } from '@/state/project';
 
 import { Translator } from '../i18n';
 import { ThreadCollapseButton } from './ThreadCollapse';
@@ -41,19 +45,20 @@ export function ChatHistorySection({
   ungroupedSectionTitle = DEFAULT_UNGROUPED_TITLE,
   hasUncollapsedRecentGroups = false
 }: ChatHistorySectionProps) {
-  const [topicsExpanded, setTopicsExpanded] = useState(false);
-  const [recentExpanded, setRecentExpanded] = useState(true);
-  const [expandedGroupsInSection, setExpandedGroupsInSection] = useState<
-    Set<string>
-  >(new Set());
-  const listLoading = useRecoilValue(threadListLoadingState);
-  const isLoading = listLoading?.isFetching || listLoading?.isLoadingMore;
+  const [topicsExpanded, setTopicsExpanded] = useRecoilState(
+    sidebarTopicsSectionExpandedState
+  );
+  const [recentExpanded, setRecentExpanded] = useRecoilState(
+    sidebarRecentSectionExpandedState
+  );
+  const [expandedGroupsInSection, setExpandedGroupsInSection] = useRecoilState(
+    sidebarTopicGroupExpandedState
+  );
   const showCollapseButton =
     (topicsExpanded && expandedGroupsInSection.size > 0) ||
     (recentExpanded && hasUncollapsedRecentGroups);
 
   const handleCollapseAll = useCallback(() => {
-    setExpandedGroupsInSection(new Set());
     onCollapseAll();
   }, [onCollapseAll]);
 
@@ -64,13 +69,11 @@ export function ChatHistorySection({
           <Translator path="threadHistory.sidebar.title" />
         </p>
         <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-          {isLoading ? (
-            <Loader />
-          ) : showCollapseButton ? (
-            <ThreadCollapseButton visible onCollapseAll={handleCollapseAll} />
-          ) : (
-            <span className="size-4 shrink-0" aria-hidden />
-          )}
+          <ThreadCollapseButton
+            visible
+            onCollapseAll={handleCollapseAll}
+            disabled={!showCollapseButton}
+          />
         </div>
       </header>
       <CustomScrollbar

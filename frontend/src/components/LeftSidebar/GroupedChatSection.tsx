@@ -16,8 +16,6 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 import {
-  ChevronDown,
-  ChevronRight,
   Ellipsis,
   FolderPlus,
   Pencil,
@@ -25,7 +23,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { toast } from 'sonner';
 
 import {
@@ -37,6 +35,7 @@ import {
   useConfig
 } from '@chainlit/react-client';
 
+import { sidebarGroupTimeGroupCollapsedState } from '@/state/sidebar';
 import { threadListLoadingState } from '@/state/project';
 import { Loader } from '@/components/Loader';
 
@@ -73,6 +72,8 @@ import {
 import { Button } from '@/components/ui/button';
 
 import { Translator } from '../i18n';
+import { CollapsibleGroupRow } from './CollapsibleGroupRow';
+import { SidebarSection } from './SidebarSection';
 import { ThreadList } from './ThreadList';
 import { getSortedTimeGroupKeys } from './ThreadList';
 
@@ -168,20 +169,13 @@ function SortableGroupRow({
           aria-label="Drag to reorder group"
           aria-expanded={isExpanded}
         >
-          <div
-            className={cn(
-              'flex flex-1 min-w-0 items-center gap-2 py-1.5 pl-2.5 pr-2 text-left rounded-none pointer-events-none select-none',
-              'text-xs font-medium tracking-tight'
-            )}
-            aria-hidden
-          >
-            {isExpanded ? (
-              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-sidebar-foreground/80" />
-            ) : (
-              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-sidebar-foreground/80" />
-            )}
-            <span className="flex-1 truncate">{group.name}</span>
-          </div>
+          <CollapsibleGroupRow
+            label={<span className="truncate">{group.name}</span>}
+            isCollapsed={!isExpanded}
+            containsSelected={containsSelectedThread}
+            contentOnly
+            className="text-sidebar-foreground/80"
+          />
           <div
             className="flex items-center shrink-0 pr-1.5 opacity-0 group-hover/row:opacity-100 transition-opacity"
             onPointerDown={(e) => e.stopPropagation()}
@@ -301,6 +295,9 @@ export function GroupedChatSection({
     onExpandedGroupsChange !== undefined
       ? onExpandedGroupsChange
       : setInternalExpandedGroups;
+  const [groupTimeGroupCollapsed, setGroupTimeGroupCollapsed] = useRecoilState(
+    sidebarGroupTimeGroupCollapsedState
+  );
   const listLoading = useRecoilValue(threadListLoadingState);
   const isLoading = listLoading?.isFetching || listLoading?.isLoadingMore;
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -420,6 +417,11 @@ export function GroupedChatSection({
           ...prev,
           threads: prev?.threads?.filter((t) => t.groupId !== groupIdToDelete) ?? []
         }));
+        setGroupTimeGroupCollapsed((prev) => {
+          const next = { ...prev };
+          delete next[groupIdToDelete];
+          return next;
+        });
         setDeleteGroupId(null);
         return <Translator path="threadHistory.sidebar.deleteGroup.success" />;
       },
@@ -428,7 +430,7 @@ export function GroupedChatSection({
         return <Translator path="threadHistory.sidebar.deleteGroup.error" />;
       }
     });
-  }, [apiClient, deleteGroupId, setThreadGroups, setThreadHistory]);
+  }, [apiClient, deleteGroupId, setGroupTimeGroupCollapsed, setThreadGroups, setThreadHistory]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -472,41 +474,15 @@ export function GroupedChatSection({
   if (!dataPersistence || !apiClient.listThreadGroups) return null;
 
   return (
-    <section className="shrink-0 flex flex-col gap-2" aria-label="Grouped chat">
-      <Button
-        onClick={() => setSectionExpanded(!sectionExpanded)}
-        variant="ghost"
-        size="default"
-        className={cn(
-          'w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/60 transition-colors duration-150',
-          sectionContainsSelected
-            ? 'text-sidebar-foreground bg-neutral-600/30 hover:bg-neutral-600/40'
-            : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80'
-        )}
-        aria-expanded={sectionExpanded}
-      >
-        <span className="min-w-0 flex-1 truncate text-left">
-          <Translator path="threadHistory.sidebar.groupedChat" />
-        </span>
-        <div className="flex items-center gap-1 shrink-0">
-          {isLoading ? (
-            <Loader />
-          ) : sectionExpanded ? (
-            <ChevronDown className="size-4" />
-          ) : (
-            <ChevronRight className="size-4" />
-          )}
-        </div>
-      </Button>
-
-      <div
-        className={cn(
-          'grid transition-[grid-template-rows] duration-200 ease-out',
-          sectionExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-        )}
-        aria-hidden={!sectionExpanded}
-      >
-        <div className="min-h-0 overflow-hidden">
+    <SidebarSection
+      title={<Translator path="threadHistory.sidebar.groupedChat" />}
+      expanded={sectionExpanded}
+      onToggle={() => setSectionExpanded(!sectionExpanded)}
+      containsSelected={sectionContainsSelected}
+      isLoading={isLoading}
+      ariaLabel="Grouped chat"
+    >
+      <div className="min-h-0 overflow-hidden">
           <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
             <DragStateSync setActiveId={setDragActiveId} setOverId={setDragOverId} />
             <SortableContext
@@ -577,8 +553,18 @@ export function GroupedChatSection({
                                   error={undefined}
                                   isFetching={false}
                                   isLoadingMore={false}
-                                  collapsedGroups={null}
-                                  setCollapsedGroups={undefined}
+                                  collapsedGroups={
+                                    groupTimeGroupCollapsed[group.id] ?? null
+                                  }
+                                  setCollapsedGroups={(updater) =>
+                                    setGroupTimeGroupCollapsed((prev) => ({
+                                      ...prev,
+                                      [group.id]:
+                                        typeof updater === 'function'
+                                          ? updater(prev[group.id] ?? null)
+                                          : updater
+                                    }))
+                                  }
                                 />
                               )}
                             </SidebarMenu>
@@ -591,7 +577,6 @@ export function GroupedChatSection({
               </div>
             </SortableContext>
           </DndContext>
-        </div>
       </div>
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
@@ -670,8 +655,8 @@ export function GroupedChatSection({
               <Translator path="common.actions.confirm" />
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogContent>
+          </AlertDialogContent>
       </AlertDialog>
-    </section>
+    </SidebarSection>
   );
 }

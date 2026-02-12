@@ -6,21 +6,23 @@ import Element from 'pages/Element';
 import Env from 'pages/Env';
 import Home from 'pages/Home';
 import Login from 'pages/Login';
+import MainLayout from 'pages/MainLayout';
 import Thread from 'pages/Thread';
 
-export const router = createBrowserRouter(
+export const router: ReturnType<typeof createBrowserRouter> = createBrowserRouter(
   [
     {
       path: '/',
-      element: <Home />
+      element: <MainLayout />,
+      children: [
+        { index: true, element: <Home /> },
+        { path: 'thread/:id?', element: <Thread /> },
+        { path: 'share/:id', element: <Thread /> }
+      ]
     },
     {
       path: '/env',
       element: <Env />
-    },
-    {
-      path: '/thread/:id?',
-      element: <Thread />
     },
     {
       path: '/element/:id',
@@ -33,10 +35,6 @@ export const router = createBrowserRouter(
     {
       path: '/login/callback',
       element: <AuthCallback />
-    },
-    {
-      path: '/share/:id',
-      element: <Thread />
     },
     {
       path: '*',

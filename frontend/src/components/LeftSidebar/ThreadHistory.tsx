@@ -18,16 +18,14 @@ import {
   SidebarGroup,
   SidebarMenu
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 
-import { Loader } from '@/components/Loader';
 import { CustomScrollbar } from '@/components/CustomScrollbar';
+import { Loader } from '@/components/Loader';
 
 import { Translator } from '../i18n';
 import { ThreadCollapseButton } from './ThreadCollapse';
 import { ThreadList } from './ThreadList';
+import { SidebarSection } from './SidebarSection';
 
 const MAX_THREAD_NAME_LENGTH = 40;
 
@@ -41,8 +39,8 @@ const BATCH_FETCH_DELAY_MS = 500;
 let scrollTopCache = 0;
 
 interface ThreadHistoryProps {
-  collapsedGroups?: Set<string> | null;
-  setCollapsedGroups?: React.Dispatch<
+  collapsedGroups: Set<string> | null;
+  setCollapsedGroups: React.Dispatch<
     React.SetStateAction<Set<string> | null>
   >;
   hideScrollbar?: boolean;
@@ -64,7 +62,7 @@ export function ThreadHistory({
   sectionTitle,
   sectionExpanded: sectionExpandedProp,
   onSectionExpandedChange
-}: ThreadHistoryProps = {}) {
+}: ThreadHistoryProps) {
   const [internalSectionExpanded, setInternalSectionExpanded] = useState(true);
   const sectionExpanded =
     sectionExpandedProp !== undefined
@@ -326,47 +324,16 @@ export function ThreadHistory({
 
   if (useChevronToggle) {
     return (
-      <section
-        className="shrink-0 flex flex-col gap-2"
-        aria-label="Recent chat section"
+      <SidebarSection
+        title={sectionTitleNode}
+        expanded={sectionExpanded}
+        onToggle={() => setSectionExpanded(!sectionExpanded)}
+        containsSelected={sectionContainsSelected}
+        isLoading={isLoading}
+        ariaLabel="Recent chat section"
       >
-        <Button
-          onClick={() => setSectionExpanded(!sectionExpanded)}
-          variant="ghost"
-          size="default"
-          className={cn(
-            'w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/60 transition-colors duration-150',
-            sectionContainsSelected
-              ? 'text-sidebar-foreground bg-neutral-600/30 hover:bg-neutral-600/40'
-              : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80'
-          )}
-          aria-expanded={sectionExpanded}
-        >
-          <span className="min-w-0 flex-1 truncate text-left">
-            {sectionTitleNode}
-          </span>
-          <div className="flex items-center gap-1 shrink-0">
-            {isLoading ? (
-              <Loader />
-            ) : (
-              sectionExpanded ? (
-                <ChevronDown className="size-4" />
-              ) : (
-                <ChevronRight className="size-4" />
-              )
-            )}
-          </div>
-        </Button>
-        <div
-          className={cn(
-            'grid transition-[grid-template-rows] duration-200 ease-out min-h-0 overflow-hidden',
-            sectionExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-          )}
-          aria-hidden={!sectionExpanded}
-        >
-          <div className="min-h-0 overflow-hidden">{listContent}</div>
-        </div>
-      </section>
+        {listContent}
+      </SidebarSection>
     );
   }
 

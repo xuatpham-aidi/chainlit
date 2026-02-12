@@ -2,8 +2,6 @@ import { useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useSetRecoilState } from 'recoil';
 
-import Page from 'pages/Page';
-
 import {
   threadHistoryState,
   useChatMessages,
@@ -31,34 +29,32 @@ export default function ThreadPage() {
       if (prev?.currentThreadId === id) return prev;
       return { ...prev, currentThreadId: id };
     });
-  }, [id]);
+  }, [id, setThreadHistory]);
 
   const isSharedRoute = location.pathname.startsWith('/share/');
 
   return (
-    <Page>
-      <>
-  {isSharedRoute ? <ReadOnlyThread id={id!} /> : null}
-        {config?.threadResumable && !isCurrentThread && !isSharedRoute ? (
-          <AutoResumeThread id={id!} />
-        ) : null}
-        {config?.threadResumable && !isSharedRoute ? (
-          isCurrentThread ? (
-            <Chat />
-          ) : (
-            <div className="flex flex-grow items-center justify-center">
-              <Loader className="!size-6" />
-            </div>
-          )
-        ) : null}
-        {config && !config.threadResumable && !isSharedRoute ? (
-          isCurrentThread ? (
-            <Chat />
-          ) : (
-            <ReadOnlyThread id={id!} />
-          )
-        ) : null}
-      </>
-    </Page>
+    <>
+      {isSharedRoute ? <ReadOnlyThread id={id!} /> : null}
+      {config?.threadResumable && !isCurrentThread && !isSharedRoute ? (
+        <AutoResumeThread id={id!} />
+      ) : null}
+      {config?.threadResumable && !isSharedRoute ? (
+        isCurrentThread ? (
+          <Chat />
+        ) : (
+          <div className="flex flex-grow items-center justify-center">
+            <Loader className="!size-6" />
+          </div>
+        )
+      ) : null}
+      {config && !config.threadResumable && !isSharedRoute ? (
+        isCurrentThread ? (
+          <Chat />
+        ) : (
+          <ReadOnlyThread id={id!} />
+        )
+      ) : null}
+    </>
   );
 }

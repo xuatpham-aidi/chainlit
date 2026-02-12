@@ -1,6 +1,6 @@
-import { useContext, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 
 import {
   ChainlitContext,
@@ -10,6 +10,11 @@ import {
   useConfig
 } from '@chainlit/react-client';
 
+import {
+  sidebarRecentTimeGroupCollapsedState,
+  sidebarTopicGroupExpandedState
+} from '@/state/sidebar';
+
 import { Logo } from '@/components/Logo';
 import SidebarTrigger from '@/components/header/SidebarTrigger';
 import { Sidebar, SidebarHeader } from '@/components/ui/sidebar';
@@ -17,7 +22,6 @@ import { Sidebar, SidebarHeader } from '@/components/ui/sidebar';
 import NewChatButton from '../header/NewChat';
 import SearchChats from './Search';
 import { ChatHistorySection } from './ChatHistorySection';
-import { useThreadCollapseState } from './ThreadCollapse';
 import { getSortedTimeGroupKeys } from './ThreadList';
 
 export default function LeftSidebar({
@@ -33,7 +37,8 @@ export default function LeftSidebar({
   const ungroupedThreads = useMemo(
     () =>
       (threadHistory?.threads ?? []).filter(
-        (t) => t.groupId == null || t.groupId === ''
+        (thread: { groupId?: string | null }) =>
+          thread.groupId == null || thread.groupId === ''
       ),
     [threadHistory?.threads]
   );
@@ -46,20 +51,25 @@ export default function LeftSidebar({
     [ungroupedTimeGrouped]
   );
 
-  const {
-    collapsedGroups,
-    setCollapsedGroups,
-    effectiveCollapsed,
-    collapseAllGroups
-  } = useThreadCollapseState(sortedTimeGroupKeys);
+  const [collapsedGroups, setCollapsedGroups] = useRecoilState(
+    sidebarRecentTimeGroupCollapsedState
+  );
+  const setSidebarTopicGroupExpanded = useSetRecoilState(
+    sidebarTopicGroupExpandedState
+  );
 
-  const initialCollapseDoneRef = useRef(false);
-  useEffect(() => {
-    if (initialCollapseDoneRef.current || sortedTimeGroupKeys.length === 0)
-      return;
-    initialCollapseDoneRef.current = true;
-    collapseAllGroups();
-  }, [sortedTimeGroupKeys, collapseAllGroups]);
+  const effectiveCollapsed = useMemo(
+    () =>
+      collapsedGroups === null
+        ? new Set(sortedTimeGroupKeys)
+        : collapsedGroups,
+    [collapsedGroups, sortedTimeGroupKeys]
+  );
+
+  const collapseAllGroups = useCallback(() => {
+    setCollapsedGroups(new Set(sortedTimeGroupKeys));
+    setSidebarTopicGroupExpanded(new Set());
+  }, [sortedTimeGroupKeys, setCollapsedGroups, setSidebarTopicGroupExpanded]);
 
   const allGroupsCollapsed =
     sortedTimeGroupKeys.length > 0 &&

@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { size } from 'lodash';
-import { ChevronDown, ChevronRight, MessageSquare, Share2 } from 'lucide-react';
+import { MessageSquare, Share2 } from 'lucide-react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
@@ -57,10 +57,7 @@ import {
 } from '@/components/ui/tooltip';
 
 import { Translator } from '../i18n';
-import {
-  loadCollapsedGroups,
-  saveCollapsedGroups
-} from './ThreadCollapse';
+import { CollapsibleGroupRow } from './CollapsibleGroupRow';
 import ThreadOptions from './ThreadOptions';
 
 const TIME_GROUP_ORDER = [
@@ -89,8 +86,8 @@ interface ThreadListProps {
   error?: string;
   isFetching: boolean;
   isLoadingMore: boolean;
-  collapsedGroups?: Set<string> | null;
-  setCollapsedGroups?: React.Dispatch<
+  collapsedGroups: Set<string> | null;
+  setCollapsedGroups: React.Dispatch<
     React.SetStateAction<Set<string> | null>
   >;
 }
@@ -100,8 +97,8 @@ export function ThreadList({
   error,
   isFetching,
   isLoadingMore,
-  collapsedGroups: controlledCollapsed,
-  setCollapsedGroups: setControlledCollapsed
+  collapsedGroups,
+  setCollapsedGroups
 }: ThreadListProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -160,37 +157,19 @@ export function ThreadList({
     [threadHistory?.timeGroupedThreads]
   );
 
-  const [internalCollapsed, setInternalCollapsed] = useState<Set<string> | null>(
-    loadCollapsedGroups
-  );
-
-  const isControlled =
-    controlledCollapsed !== undefined && setControlledCollapsed !== undefined;
-  const collapsedGroups = isControlled ? controlledCollapsed : internalCollapsed;
-  const setCollapsedGroups = isControlled
-    ? setControlledCollapsed!
-    : setInternalCollapsed;
-
-  useEffect(() => {
-    if (isControlled) return;
-    if (collapsedGroups === null && sortedTimeGroupKeys.length > 0) {
-      const allCollapsed = new Set(sortedTimeGroupKeys);
-      setInternalCollapsed(allCollapsed);
-      saveCollapsedGroups(allCollapsed);
-    }
-  }, [isControlled, collapsedGroups, sortedTimeGroupKeys]);
-
   const effectiveCollapsed =
-    collapsedGroups === null ? new Set(sortedTimeGroupKeys) : collapsedGroups;
+    collapsedGroups === null
+      ? new Set(sortedTimeGroupKeys)
+      : collapsedGroups;
 
   const toggleGroup = useCallback(
     (group: string) => {
       setCollapsedGroups((prev) => {
-        const base = prev ?? new Set(sortedTimeGroupKeys);
+        const base =
+          prev ?? new Set(sortedTimeGroupKeys);
         const next = new Set(base);
         if (next.has(group)) next.delete(group);
         else next.add(group);
-        saveCollapsedGroups(next);
         return next;
       });
     },
@@ -412,40 +391,13 @@ export function ThreadList({
                 )}
               >
                 <div className="sticky top-0 z-10 bg-sidebar ">
-                  <button
-                    type="button"
-                    onClick={() => toggleGroup(group)}
-                    className={cn(
-                      'flex w-full items-center gap-2 rounded-lg py-1.5 pl-2 pr-2',
-                      'text-xs font-medium tracking-tight bg-neutral-300/20',
-                      'hover:scale-105',
-                      'transition-colors duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
-                      groupContainsSelected
-                        ? 'bg-neutral-600/30 text-sidebar-foreground'
-                        : 'hover:bg-neutral-300/50 hover:text-sidebar-foreground/90'
-                    )}
-                    aria-expanded={!isCollapsed}
-                    data-active={groupContainsSelected || undefined}
-                  >
-                    {isCollapsed ? (
-                      <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                    ) : (
-                      <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                    )}
-                    <span className="flex-1 text-left">
-                      {getTimeGroupLabel(group)}
-                    </span>
-                    <span
-                      className={cn(
-                        'text-sm font-normal rounded-full px-1.5 text-center',
-                        groupContainsSelected
-                          ? 'bg-neutral-600/20 font-medium'
-                          : 'text-sidebar-foreground/45 bg-sidebar-foreground/10'
-                      )}
-                    >
-                      {count}
-                    </span>
-                  </button>
+                  <CollapsibleGroupRow
+                    label={getTimeGroupLabel(group)}
+                    count={count}
+                    isCollapsed={isCollapsed}
+                    onToggle={() => toggleGroup(group)}
+                    containsSelected={groupContainsSelected}
+                  />
                 </div>
                 <div
                   className={cn(
