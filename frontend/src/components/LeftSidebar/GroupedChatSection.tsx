@@ -541,20 +541,22 @@ export function GroupedChatSection({
                         )}
                         aria-hidden={!isExpanded}
                       >
-                        <SidebarGroupContent className="min-h-0 overflow-hidden">
-                          <SidebarMenu className="gap-0">
-                            {isExpanded && sortedKeys.length > 0 && (
-                              <ThreadList
-                                threadHistory={groupHistory}
-                                error={undefined}
-                                isFetching={false}
-                                isLoadingMore={false}
-                                collapsedGroups={null}
-                                setCollapsedGroups={undefined}
-                              />
-                            )}
-                          </SidebarMenu>
-                        </SidebarGroupContent>
+                        <div className="min-h-0 overflow-hidden">
+                          <SidebarGroupContent className="min-h-0 overflow-hidden">
+                            <SidebarMenu className="gap-0">
+                              {sortedKeys.length > 0 && (
+                                <ThreadList
+                                  threadHistory={groupHistory}
+                                  error={undefined}
+                                  isFetching={false}
+                                  isLoadingMore={false}
+                                  collapsedGroups={null}
+                                  setCollapsedGroups={undefined}
+                                />
+                              )}
+                            </SidebarMenu>
+                          </SidebarGroupContent>
+                        </div>
                       </div>
                     </SortableGroupRow>
                   );

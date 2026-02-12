@@ -56,6 +56,9 @@ export default function LeftSidebar({
   const allGroupsCollapsed =
     sortedTimeGroupKeys.length > 0 &&
     effectiveCollapsed.size === sortedTimeGroupKeys.length;
+  const hasUncollapsedRecentGroups =
+    sortedTimeGroupKeys.length > 0 &&
+    effectiveCollapsed.size < sortedTimeGroupKeys.length;
 
   const historyScrollRef = useRef<HTMLDivElement>(null);
 
@@ -101,13 +104,13 @@ export default function LeftSidebar({
         </section>
 
         <section
-          className="flex flex-1 flex-col min-h-0 border-t border-sidebar-border/60 pt-4 gap-4 overflow-hidden"
+          className="flex flex-1 flex-col min-h-0 pt-8 gap-4 overflow-hidden"
           aria-label="Chat history"
         >
           <ChatHistorySection
             historyScrollRef={historyScrollRef}
-            onHistoryScroll={() => {}}
-            registerScrollHandler={() => {}}
+            onHistoryScroll={() => { }}
+            registerScrollHandler={() => { }}
             collapsedGroups={collapsedGroups}
             setCollapsedGroups={setCollapsedGroups}
             onCollapseAll={collapseAllGroups}
@@ -119,6 +122,7 @@ export default function LeftSidebar({
             }
             threadsFilter={(t) => t.groupId == null || t.groupId === ''}
             ungroupedSectionTitle="threadHistory.sidebar.ungroupedChat"
+            hasUncollapsedRecentGroups={hasUncollapsedRecentGroups}
           />
         </section>
       </div>

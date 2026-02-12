@@ -23,6 +23,7 @@ export interface ChatHistorySectionProps {
   invalidateKey: string;
   threadsFilter: (thread: { groupId?: string | null }) => boolean;
   ungroupedSectionTitle?: string;
+  hasUncollapsedRecentGroups?: boolean;
 }
 
 const DEFAULT_UNGROUPED_TITLE = 'threadHistory.sidebar.recent';
@@ -37,16 +38,19 @@ export function ChatHistorySection({
   hideScrollbar,
   invalidateKey,
   threadsFilter,
-  ungroupedSectionTitle = DEFAULT_UNGROUPED_TITLE
+  ungroupedSectionTitle = DEFAULT_UNGROUPED_TITLE,
+  hasUncollapsedRecentGroups = false
 }: ChatHistorySectionProps) {
-  const [topicsExpanded, setTopicsExpanded] = useState(true);
+  const [topicsExpanded, setTopicsExpanded] = useState(false);
   const [recentExpanded, setRecentExpanded] = useState(true);
   const [expandedGroupsInSection, setExpandedGroupsInSection] = useState<
     Set<string>
   >(new Set());
   const listLoading = useRecoilValue(threadListLoadingState);
   const isLoading = listLoading?.isFetching || listLoading?.isLoadingMore;
-  const showCollapseButton = topicsExpanded || recentExpanded;
+  const showCollapseButton =
+    (topicsExpanded && expandedGroupsInSection.size > 0) ||
+    (recentExpanded && hasUncollapsedRecentGroups);
 
   const handleCollapseAll = useCallback(() => {
     setExpandedGroupsInSection(new Set());
@@ -55,7 +59,7 @@ export function ChatHistorySection({
 
   return (
     <div className="flex flex-1 flex-col min-h-0" aria-label="Chat history">
-      <header className="flex shrink-0 items-center justify-between gap-2 pb-2 px-0">
+      <header className="flex shrink-0 items-center justify-between pb-2 pr-1">
         <p className="min-w-0 flex-1 truncate text-left text-xs font-medium text-sidebar-foreground/60 tracking-tight">
           <Translator path="threadHistory.sidebar.title" />
         </p>
@@ -77,7 +81,7 @@ export function ChatHistorySection({
         hideScrollbar={hideScrollbar}
         invalidateKey={invalidateKey}
       >
-        <div className="flex flex-col gap-4 px-0 min-h-0">
+        <div className="flex flex-col gap-0 px-0 min-h-0">
           <GroupedChatSection
             sectionExpanded={topicsExpanded}
             onSectionExpandedChange={setTopicsExpanded}
