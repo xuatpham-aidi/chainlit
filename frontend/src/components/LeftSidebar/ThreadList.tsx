@@ -111,6 +111,12 @@ export function ThreadList({
   const [threadIdToDelete, setThreadIdToDelete] = useState<string>();
   const [threadIdToRename, setThreadIdToRename] = useState<string>();
   const [threadNewName, setThreadNewName] = useState<string>();
+  const [openTooltipThreadId, setOpenTooltipThreadId] = useState<string | null>(
+    null
+  );
+  const [openDropdownThreadId, setOpenDropdownThreadId] = useState<
+    string | null
+  >(null);
   const setThreadHistory = useSetRecoilState(threadHistoryState);
   const threadGroups = useRecoilValue(threadGroupsState) ?? [];
   const apiClient = useContext(ChainlitContext);
@@ -390,157 +396,177 @@ export function ThreadList({
         {!error &&
           !hasNoThreads &&
           sortedTimeGroupKeys.map((group, groupIndex) => {
-          const items = threadHistory!.timeGroupedThreads![group];
-          const currentId = threadHistory!.currentThreadId ?? idToResume;
-          const groupContainsSelected = Boolean(
-            currentId && items.some((t) => t.id === currentId)
-          );
-          const isCollapsed = effectiveCollapsed.has(group);
-          const count = items.length;
-          return (
-            <SidebarGroup
-              key={group}
-              className={cn(
-                'px-3 py-2',
-                groupIndex > 0 && 'mt-0 border-t border-sidebar-border/50'
-              )}
-            >
-              <div className="sticky top-0 z-10 bg-sidebar ">
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(group)}
-                  className={cn(
-                    'flex w-full items-center gap-2 rounded-lg py-1.5 pl-2 pr-2',
-                    'text-xs font-medium tracking-tight bg-neutral-300/20',
-                    'hover:scale-105',
-                    'transition-colors duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
-                    groupContainsSelected
-                      ? 'bg-neutral-600/30 text-sidebar-foreground'
-                      : 'hover:bg-neutral-300/50 hover:text-sidebar-foreground/90'
-                  )}
-                  aria-expanded={!isCollapsed}
-                  data-active={groupContainsSelected || undefined}
-                >
-                  {isCollapsed ? (
-                    <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                  ) : (
-                    <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                  )}
-                  <span className="flex-1 text-left">
-                    {getTimeGroupLabel(group)}
-                  </span>
-                  <span
-                    className={cn(
-                      'text-sm font-normal rounded-full px-1.5 text-center',
-                      groupContainsSelected
-                        ? 'bg-neutral-600/20 font-medium'
-                        : 'text-sidebar-foreground/45 bg-sidebar-foreground/10'
-                    )}
-                  >
-                    {count}
-                  </span>
-                </button>
-              </div>
-              <div
+            const items = threadHistory!.timeGroupedThreads![group];
+            const currentId = threadHistory!.currentThreadId ?? idToResume;
+            const groupContainsSelected = Boolean(
+              currentId && items.some((t) => t.id === currentId)
+            );
+            const isCollapsed = effectiveCollapsed.has(group);
+            const count = items.length;
+            return (
+              <SidebarGroup
+                key={group}
                 className={cn(
-                  'grid transition-[grid-template-rows] duration-200 ease-out',
-                  isCollapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'
+                  'px-3 py-2',
+                  groupIndex > 0 && 'mt-0 border-t border-sidebar-border/50'
                 )}
-                aria-hidden={isCollapsed}
               >
-                <SidebarGroupContent className="min-h-0 overflow-hidden px-0">
-                  <SidebarMenu className="gap-0.5">
-                    {items.map((thread, itemIndex) => {
-                    const isResumed =
-                      idToResume === thread.id &&
-                      !threadHistory!.currentThreadId;
-                    const isSelected =
-                      isResumed || threadHistory!.currentThreadId === thread.id;
-                    const displayName =
-                      thread.name || (
-                        <Translator path="threadHistory.thread.untitled" />
-                      );
-                    return (
-                      <SidebarMenuItem
-                        key={thread.id}
-                        id={`thread-${thread.id}`}
-                        className="list-none thread-item-reveal"
-                        style={{ animationDelay: `${itemIndex * 35}ms` }}
-                      >
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Link to={isResumed ? '' : `/thread/${thread.id}`}>
-                              <SidebarMenuButton
-                                isActive={isSelected}
-                                className={cn(
-                                  'relative group/thread transition-all duration-150 ease-out',
-                                  'rounded-xl pl-3 my-0.5',
-                                  'hover:bg-neutral-600/10',
-                                  'data-[active=true]:!bg-neutral-600/20'
-                                )}
-                              >
-                                <span className="flex pl-3 min-w-0 flex-1 items-center gap-2">
-                                  {thread.metadata?.is_shared ? (
-                                    <Share2
-                                      className="h-4 w-4 shrink-0 text-sidebar-foreground/70"
-                                      aria-hidden="true"
-                                    />
-                                  ) : (
-                                    <MessageSquare
-                                      className={cn(
-                                        'h-4 w-4 shrink-0',
-                                        isSelected
-                                          ? 'text-blue-600'
-                                          : ''
+                <div className="sticky top-0 z-10 bg-sidebar ">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group)}
+                    className={cn(
+                      'flex w-full items-center gap-2 rounded-lg py-1.5 pl-2 pr-2',
+                      'text-xs font-medium tracking-tight bg-neutral-300/20',
+                      'hover:scale-105',
+                      'transition-colors duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
+                      groupContainsSelected
+                        ? 'bg-neutral-600/30 text-sidebar-foreground'
+                        : 'hover:bg-neutral-300/50 hover:text-sidebar-foreground/90'
+                    )}
+                    aria-expanded={!isCollapsed}
+                    data-active={groupContainsSelected || undefined}
+                  >
+                    {isCollapsed ? (
+                      <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    ) : (
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    )}
+                    <span className="flex-1 text-left">
+                      {getTimeGroupLabel(group)}
+                    </span>
+                    <span
+                      className={cn(
+                        'text-sm font-normal rounded-full px-1.5 text-center',
+                        groupContainsSelected
+                          ? 'bg-neutral-600/20 font-medium'
+                          : 'text-sidebar-foreground/45 bg-sidebar-foreground/10'
+                      )}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                </div>
+                <div
+                  className={cn(
+                    'grid transition-[grid-template-rows] duration-200 ease-out',
+                    isCollapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'
+                  )}
+                  aria-hidden={isCollapsed}
+                >
+                  <SidebarGroupContent className="min-h-0 overflow-hidden px-0">
+                    <SidebarMenu className="gap-0.5">
+                      {items.map((thread, itemIndex) => {
+                        const isResumed =
+                          idToResume === thread.id &&
+                          !threadHistory!.currentThreadId;
+                        const isSelected =
+                          isResumed || threadHistory!.currentThreadId === thread.id;
+                        const displayName =
+                          thread.name || (
+                            <Translator path="threadHistory.thread.untitled" />
+                          );
+                        return (
+                          <SidebarMenuItem
+                            key={thread.id}
+                            id={`thread-${thread.id}`}
+                            className="list-none thread-item-reveal"
+                            style={{ animationDelay: `${itemIndex * 35}ms` }}
+                          >
+                            <Tooltip
+                              open={
+                                openTooltipThreadId === thread.id &&
+                                openDropdownThreadId !== thread.id
+                              }
+                              onOpenChange={(open) =>
+                                setOpenTooltipThreadId((prev) =>
+                                  open ? thread.id : prev === thread.id ? null : prev
+                                )
+                              }
+                            >
+                              <TooltipTrigger asChild>
+                                <Link to={isResumed ? '' : `/thread/${thread.id}`}>
+                                  <SidebarMenuButton
+                                    isActive={isSelected}
+                                    className={cn(
+                                      'relative group/thread transition-all duration-150 ease-out',
+                                      'rounded-xl pl-3 my-0.5',
+                                      'hover:bg-neutral-600/10',
+                                      'data-[active=true]:!bg-neutral-600/20',
+                                      (openDropdownThreadId === thread.id ||
+                                        threadIdToDelete === thread.id ||
+                                        threadIdToRename === thread.id ||
+                                        (threadIdToShare === thread.id &&
+                                          isShareDialogOpen)) &&
+                                      !isSelected &&
+                                      'bg-neutral-600/10'
+                                    )}
+                                  >
+                                    <span className="flex pl-3 min-w-0 flex-1 items-center gap-2">
+                                      {thread.metadata?.is_shared ? (
+                                        <Share2
+                                          className="h-4 w-4 shrink-0 text-sidebar-foreground/70"
+                                          aria-hidden="true"
+                                        />
+                                      ) : (
+                                        <MessageSquare
+                                          className={cn(
+                                            'h-4 w-4 shrink-0',
+                                            isSelected
+                                              ? 'text-blue-600'
+                                              : ''
+                                          )}
+                                          aria-hidden="true"
+                                        />
                                       )}
-                                      aria-hidden="true"
+                                      <span className="truncate text-left text-sm">
+                                        {displayName}
+                                      </span>
+                                    </span>
+                                    <ThreadOptions
+                                      threadId={thread.id}
+                                      threadGroupId={thread.groupId}
+                                      threadGroups={threadGroups}
+                                      onMoveToGroup={handleMoveToGroup}
+                                      onDelete={() =>
+                                        setThreadIdToDelete(thread.id)
+                                      }
+                                      onRename={() => {
+                                        setThreadIdToRename(thread.id);
+                                        setThreadNewName(thread.name);
+                                      }}
+                                      onShare={
+                                        dataPersistence && threadSharingReady
+                                          ? () => handleShareThread(thread.id)
+                                          : undefined
+                                      }
+                                      onDropdownOpenChange={(open) =>
+                                        setOpenDropdownThreadId(open ? thread.id : null)
+                                      }
+                                      disabled={isLoading}
+                                      className={cn(
+                                        'shrink-0 h-8 w-8 rounded-lg flex opacity-0 group-hover/thread:opacity-100 transition-opacity duration-150',
+                                        isSelected && 'opacity-100'
+                                      )}
                                     />
-                                  )}
-                                  <span className="truncate text-left text-sm">
-                                    {displayName}
-                                  </span>
-                                </span>
-                                <ThreadOptions
-                                  threadId={thread.id}
-                                  threadGroupId={thread.groupId}
-                                  threadGroups={threadGroups}
-                                  onMoveToGroup={handleMoveToGroup}
-                                  onDelete={() =>
-                                    setThreadIdToDelete(thread.id)
-                                  }
-                                  onRename={() => {
-                                    setThreadIdToRename(thread.id);
-                                    setThreadNewName(thread.name);
-                                  }}
-                                  onShare={
-                                    dataPersistence && threadSharingReady
-                                      ? () => handleShareThread(thread.id)
-                                      : undefined
-                                  }
-                                  disabled={isLoading}
-                                  className={cn(
-                                    'shrink-0 h-8 w-8 rounded-lg flex opacity-0 group-hover/thread:opacity-100 transition-opacity duration-150',
-                                    isSelected && 'opacity-100'
-                                  )}
-                                />
-                              </SidebarMenuButton>
-                            </Link>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" align="center">
-                            <p className="max-w-xs truncate">
-                              {thread.name || t('threadHistory.thread.untitled')}
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-                </SidebarGroupContent>
-              </div>
-            </SidebarGroup>
-          );
-        })}
+                                  </SidebarMenuButton>
+                                </Link>
+                              </TooltipTrigger>
+                              <TooltipContent side="right" align="center">
+                                <p className="max-w-xs truncate">
+                                  {thread.name || t('threadHistory.thread.untitled')}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </SidebarMenuItem>
+                        );
+                      })}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </div>
+              </SidebarGroup>
+            );
+          })}
       </TooltipProvider>
     </>
   );

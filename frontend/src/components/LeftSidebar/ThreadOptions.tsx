@@ -31,6 +31,7 @@ interface Props {
   onDelete: () => void;
   onRename: () => void;
   onShare?: () => void;
+  onDropdownOpenChange?: (open: boolean) => void;
   className?: string;
   disabled?: boolean;
 }
@@ -43,6 +44,7 @@ export default function ThreadOptions({
   onDelete,
   onRename,
   onShare,
+  onDropdownOpenChange,
   className,
   disabled = false
 }: Props) {
@@ -58,7 +60,7 @@ export default function ThreadOptions({
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={onDropdownOpenChange}>
       <DropdownMenuTrigger asChild>
         <div
           onClick={(e) => {
