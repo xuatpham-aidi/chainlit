@@ -1,7 +1,9 @@
 import {
   DndContext,
   DragEndEvent,
+  DragOverlay,
   PointerSensor,
+  useDndMonitor,
   useSensor,
   useSensors
 } from '@dnd-kit/core';
@@ -18,11 +20,10 @@ import {
   ChevronRight,
   Ellipsis,
   FolderPlus,
-  GripVertical,
   Pencil,
   Trash2
 } from 'lucide-react';
-import { useCallback, useContext, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { toast } from 'sonner';
@@ -72,6 +73,9 @@ import { Translator } from '../i18n';
 import { ThreadList } from './ThreadList';
 import { getSortedTimeGroupKeys } from './ThreadList';
 
+const DRAG_ACTIVATION_DISTANCE_PX = 6;
+const CLICK_AFTER_DRAG_SUPPRESS_MS = 300;
+
 interface IThreadGroup {
   id: string;
   userId: string;
@@ -82,22 +86,28 @@ interface IThreadGroup {
 
 interface SortableGroupRowProps {
   group: IThreadGroup;
-  threads: Array<{ id: string; groupId?: string | null }>;
   isExpanded: boolean;
   onToggle: () => void;
   onRename: () => void;
   onDelete: () => void;
   children: React.ReactNode;
+  isDropTarget?: boolean;
+  lastDraggedGroupIdRef?: React.MutableRefObject<string | null>;
 }
 
+/**
+ * Single group row: click to expand/collapse, hold and move to drag and reorder.
+ * Options menu (ellipsis) does not start drag (stopPropagation).
+ */
 function SortableGroupRow({
   group,
-  threads,
   isExpanded,
   onToggle,
   onRename,
   onDelete,
-  children
+  children,
+  isDropTarget = false,
+  lastDraggedGroupIdRef
 }: SortableGroupRowProps) {
   const {
     attributes,
@@ -111,85 +121,127 @@ function SortableGroupRow({
     transform: CSS.Transform.toString(transform),
     transition
   };
+  const handleToggleClick = useCallback(() => {
+    if (lastDraggedGroupIdRef?.current === group.id) {
+      lastDraggedGroupIdRef.current = null;
+      return;
+    }
+    onToggle();
+  }, [group.id, lastDraggedGroupIdRef, onToggle]);
+
+  const handleRowKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleToggleClick();
+      }
+    },
+    [handleToggleClick]
+  );
   return (
     <SidebarGroup className="px-0 py-0 group/row">
       <div
         ref={setNodeRef}
         style={style}
-        {...listeners}
-        {...attributes}
-        className={cn(
-          'flex items-center gap-0 w-full rounded-lg overflow-hidden cursor-grab active:cursor-grabbing touch-none',
-          isDragging && 'opacity-60 z-10 shadow-md'
-        )}
-        aria-label="Drag to reorder group"
+        className={cn(isDragging && 'z-10')}
       >
-        <div className="p-1 shrink-0 text-sidebar-foreground/50 rounded-l-md pointer-events-none">
-          <GripVertical className="h-3.5 w-3.5" aria-hidden />
-        </div>
-        <button
-          type="button"
-          onClick={onToggle}
-          onPointerDown={(e) => e.stopPropagation()}
+        <div
+          {...listeners}
+          {...attributes}
+          role="button"
+          tabIndex={0}
+          onClick={handleToggleClick}
+          onKeyDown={handleRowKeyDown}
           className={cn(
-            'flex flex-1 min-w-0 items-center gap-2 rounded-r-lg py-1.5 pl-2 pr-2 text-left',
-            'text-xs font-medium tracking-tight bg-neutral-300/20',
-            'hover:bg-neutral-300/50 transition-colors duration-150'
+            'flex items-center gap-0 w-full rounded-lg overflow-hidden cursor-grab active:cursor-grabbing touch-none',
+            'bg-neutral-300/20 hover:bg-neutral-300/50 transition-colors duration-150',
+            'border border-transparent',
+            isDragging && 'opacity-60 shadow-md',
+            isDropTarget && 'ring-2 ring-sidebar-border ring-inset border-sidebar-border/60'
           )}
+          aria-label="Drag to reorder group"
           aria-expanded={isExpanded}
         >
-          {isExpanded ? (
-            <ChevronDown className="h-3.5 w-3.5 shrink-0" />
-          ) : (
-            <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-          )}
-          <span className="flex-1 truncate">{group.name}</span>
-        </button>
-        <div
-          className="flex items-center shrink-0 bg-neutral-300/20 opacity-0 group-hover/row:opacity-100 transition-opacity"
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                onClick={(e) => e.stopPropagation()}
-                className={cn(
-                  buttonVariants({ variant: 'ghost', size: 'icon' }),
-                  'h-7 w-7 rounded-r-lg'
-                )}
-                aria-label="Group options"
+          <div
+            className={cn(
+              'flex flex-1 min-w-0 items-center gap-2 py-1.5 pl-2.5 pr-2 text-left rounded-none pointer-events-none select-none',
+              'text-xs font-medium tracking-tight'
+            )}
+            aria-hidden
+          >
+            {isExpanded ? (
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-sidebar-foreground/80" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-sidebar-foreground/80" />
+            )}
+            <span className="flex-1 truncate">{group.name}</span>
+          </div>
+          <div
+            className="flex items-center shrink-0 pr-1.5 opacity-0 group-hover/row:opacity-100 transition-opacity"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  onClick={(e) => e.stopPropagation()}
+                  className={cn(
+                    buttonVariants({ variant: 'ghost', size: 'icon' }),
+                    'h-7 w-7 rounded-md'
+                  )}
+                  aria-label="Group options"
+                >
+                  <Ellipsis className="h-3.5 w-3.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="min-w-[8rem] rounded-xl border-sidebar-border/80 shadow-lg"
+                side="right"
+                align="start"
+                forceMount
+                sideOffset={20}
               >
-                <Ellipsis className="h-3.5 w-3.5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-                    className="min-w-[8rem] rounded-xl border-sidebar-border/80 shadow-lg"
-                    side="right"      // Changed from default (bottom) to right
-                    align="start"     // Aligns to the start of the trigger
-                    forceMount
-                    sideOffset={20}
-            >
-              <DropdownMenuItem onClick={onRename}>
-                <Translator path="threadHistory.thread.menu.rename" />
-                <Pencil className="ml-auto h-4 w-4 opacity-60" />
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-red-600 focus:text-red-600 dark:text-red-400"
-                onClick={onDelete}
-              >
-                <Translator path="threadHistory.thread.menu.delete" />
-                <Trash2 className="ml-auto h-4 w-4 opacity-60" />
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem className="cursor-pointer" onClick={onRename}>
+                  <Translator path="threadHistory.thread.menu.rename" />
+                  <Pencil className="ml-auto h-4 w-4 opacity-60" />
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-red-600 focus:text-red-600 dark:text-red-400 cursor-pointer"
+                  onClick={onDelete}
+                >
+                  <Translator path="threadHistory.thread.menu.delete" />
+                  <Trash2 className="ml-auto h-4 w-4 opacity-60" />
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
+        {!isDragging && children}
       </div>
-      {children}
     </SidebarGroup>
   );
 }
 
+
+interface DragStateSyncProps {
+  setActiveId: (id: string | null) => void;
+  setOverId: (id: string | null) => void;
+}
+
+function DragStateSync({ setActiveId, setOverId }: DragStateSyncProps) {
+  const clearDragState = useCallback(() => {
+    setActiveId(null);
+    setOverId(null);
+  }, [setActiveId, setOverId]);
+
+  useDndMonitor({
+    onDragStart: (e) => setActiveId(String(e.active.id)),
+    onDragOver: (e) => setOverId(e.over ? String(e.over.id) : null),
+    onDragEnd: clearDragState,
+    onDragCancel: clearDragState
+  });
+  return null;
+}
 
 export function GroupedChatSection() {
   const { t } = useTranslation();
@@ -200,6 +252,9 @@ export function GroupedChatSection() {
   const setThreadGroups = useSetRecoilState(threadGroupsState);
   const threadHistory = useRecoilValue(threadHistoryState);
   const setThreadHistory = useSetRecoilState(threadHistoryState);
+  const [dragActiveId, setDragActiveId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const lastDraggedGroupIdRef = useRef<string | null>(null);
 
   const threadGroups = useMemo(
     () =>
@@ -331,28 +386,32 @@ export function GroupedChatSection() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 }
+      activationConstraint: { distance: DRAG_ACTIVATION_DISTANCE_PX }
     })
   );
 
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
       const { active, over } = event;
+      const activeId = String(active.id);
+
+      lastDraggedGroupIdRef.current = activeId;
+      setTimeout(() => {
+        lastDraggedGroupIdRef.current = null;
+      }, CLICK_AFTER_DRAG_SUPPRESS_MS);
+
       if (!over || active.id === over.id) return;
-      const oldIndex = threadGroups.findIndex(
-        (g: IThreadGroup) => g.id === String(active.id)
-      );
-      const newIndex = threadGroups.findIndex(
-        (g: IThreadGroup) => g.id === String(over.id)
-      );
+      const overId = String(over.id);
+
+      const oldIndex = threadGroups.findIndex((g) => g.id === activeId);
+      const newIndex = threadGroups.findIndex((g) => g.id === overId);
       if (oldIndex < 0 || newIndex < 0) return;
+
       const reordered = arrayMove(threadGroups, oldIndex, newIndex);
-      const withNewOrder = reordered.map((g: IThreadGroup, i: number) => ({
-        ...g,
-        displayOrder: i
-      }));
-      const orderedIds = withNewOrder.map((g: IThreadGroup) => g.id);
+      const withNewOrder = reordered.map((g, i) => ({ ...g, displayOrder: i }));
+      const orderedIds = withNewOrder.map((g) => g.id);
       const previous = threadGroupsRaw;
+
       setThreadGroups(withNewOrder);
       try {
         await apiClient.reorderThreadGroups(orderedIds);
@@ -384,9 +443,7 @@ export function GroupedChatSection() {
         ) : (
           <ChevronRight className="size-4 shrink-0" />
         )}
-
       </Button>
-
 
       <div
         className={cn(
@@ -397,8 +454,9 @@ export function GroupedChatSection() {
       >
         <div className="min-h-0 overflow-hidden">
           <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
+            <DragStateSync setActiveId={setDragActiveId} setOverId={setDragOverId} />
             <SortableContext
-              items={threadGroups.map((g: IThreadGroup) => g.id)}
+              items={threadGroups.map((g) => g.id)}
               strategy={verticalListSortingStrategy}
             >
               <div className="flex flex-col gap-1">
@@ -425,11 +483,13 @@ export function GroupedChatSection() {
                     currentThreadId: threadHistory?.currentThreadId
                   };
                   const isExpanded = expandedGroups.has(group.id);
+                  const isDropTarget =
+                    dragOverId === group.id && dragActiveId !== group.id;
+
                   return (
                     <SortableGroupRow
                       key={group.id}
                       group={group}
-                      threads={threads}
                       isExpanded={isExpanded}
                       onToggle={() => toggleGroup(group.id)}
                       onRename={() => {
@@ -437,6 +497,8 @@ export function GroupedChatSection() {
                         setRenameGroupName(group.name);
                       }}
                       onDelete={() => setDeleteGroupId(group.id)}
+                      isDropTarget={isDropTarget}
+                      lastDraggedGroupIdRef={lastDraggedGroupIdRef}
                     >
                       <div
                         className={cn(
