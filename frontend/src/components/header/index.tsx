@@ -86,7 +86,7 @@ const Header = memo(() => {
       <div />
       <div className="flex items-center gap-1">
         <ShareButton />
-        <ReadmeButton />
+        {/* <ReadmeButton /> */}
         <ApiKeys />
         {links &&
           links.map((link, index) => (
@@ -118,7 +118,7 @@ const Header = memo(() => {
           </Tooltip>
         )}
         <ThemeToggle />
-        <UserNav />
+        {/* <UserNav /> */}
       </div>
     </div>
   );
