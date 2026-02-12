@@ -95,6 +95,7 @@ interface SortableGroupRowProps {
   onRename: () => void;
   onDelete: () => void;
   children: React.ReactNode;
+  hasChildren?: boolean;
   isDropTarget?: boolean;
   lastDraggedGroupIdRef?: React.MutableRefObject<string | null>;
   containsSelectedThread?: boolean;
@@ -111,6 +112,7 @@ function SortableGroupRow({
   onRename,
   onDelete,
   children,
+  hasChildren = true,
   isDropTarget = false,
   lastDraggedGroupIdRef,
   containsSelectedThread = false
@@ -128,21 +130,23 @@ function SortableGroupRow({
     transition
   };
   const handleToggleClick = useCallback(() => {
+    if (!hasChildren) return;
     if (lastDraggedGroupIdRef?.current === group.id) {
       lastDraggedGroupIdRef.current = null;
       return;
     }
     onToggle();
-  }, [group.id, lastDraggedGroupIdRef, onToggle]);
+  }, [group.id, hasChildren, lastDraggedGroupIdRef, onToggle]);
 
   const handleRowKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (!hasChildren) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         handleToggleClick();
       }
     },
-    [handleToggleClick]
+    [hasChildren, handleToggleClick]
   );
   return (
     <SidebarGroup className="px-0 py-0 group/row">
@@ -154,20 +158,23 @@ function SortableGroupRow({
         <div
           {...listeners}
           {...attributes}
-          role="button"
-          tabIndex={0}
+          role={hasChildren ? 'button' : undefined}
+          tabIndex={hasChildren ? 0 : undefined}
           onClick={handleToggleClick}
           onKeyDown={handleRowKeyDown}
           className={cn(
-            'flex items-center gap-0 w-full rounded-lg overflow-hidden cursor-grab active:cursor-grabbing touch-none',
+            'flex items-center gap-0 w-full rounded-lg overflow-hidden touch-none',
+            hasChildren
+              ? 'cursor-grab active:cursor-grabbing'
+              : 'cursor-default',
             'bg-neutral-300/20 hover:bg-neutral-300/50 transition-colors duration-150',
             'border border-transparent',
             isDragging && 'opacity-60 shadow-md',
             isDropTarget && 'ring-2 ring-sidebar-border ring-inset border-sidebar-border/60',
             containsSelectedThread && 'bg-neutral-600/30 text-sidebar-foreground'
           )}
-          aria-label="Drag to reorder group"
-          aria-expanded={isExpanded}
+          aria-label={hasChildren ? 'Drag to reorder group' : undefined}
+          aria-expanded={hasChildren ? isExpanded : undefined}
         >
           <CollapsibleGroupRow
             label={<span className="truncate">{group.name}</span>}
@@ -320,9 +327,9 @@ export function GroupedChatSection({
     () =>
       Boolean(
         currentThreadId &&
-          threadGroups.some((g) =>
-            (threadsByGroupId[g.id] ?? []).some((t) => t.id === currentThreadId)
-          )
+        threadGroups.some((g) =>
+          (threadsByGroupId[g.id] ?? []).some((t) => t.id === currentThreadId)
+        )
       ),
     [currentThreadId, threadGroups, threadsByGroupId]
   );
@@ -483,100 +490,101 @@ export function GroupedChatSection({
       ariaLabel="Grouped chat"
     >
       <div className="min-h-0 overflow-hidden">
-          <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
-            <DragStateSync setActiveId={setDragActiveId} setOverId={setDragOverId} />
-            <SortableContext
-              items={threadGroups.map((g) => g.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="flex flex-col gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start gap-2 h-8 px-2 rounded-md text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80"
-                  onClick={() => setCreateDialogOpen(true)}
-                  aria-label={t('threadHistory.sidebar.createGroupTitle')}
-                >
-                  <FolderPlus className="size-4 shrink-0" />
-                  <span className="truncate text-sm font-medium">
-                    <Translator path="threadHistory.sidebar.createGroupTitle" />
-                  </span>
-                </Button>
-                {threadGroups.map((group) => {
-                  const threads = threadsByGroupId[group.id] ?? [];
-                  const timeGrouped = groupByDate(threads);
-                  const sortedKeys = getSortedTimeGroupKeys(timeGrouped);
-                  const groupHistory = {
-                    ...threadHistory,
-                    threads,
-                    timeGroupedThreads: timeGrouped,
-                    currentThreadId: threadHistory?.currentThreadId
-                  };
-                  const isExpanded = expandedGroups.has(group.id);
-                  const isDropTarget =
-                    dragOverId === group.id && dragActiveId !== group.id;
-                  const groupContainsSelected = Boolean(
-                    currentThreadId &&
-                      (threadsByGroupId[group.id] ?? []).some(
-                        (t) => t.id === currentThreadId
-                      )
-                  );
+        <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
+          <DragStateSync setActiveId={setDragActiveId} setOverId={setDragOverId} />
+          <SortableContext
+            items={threadGroups.map((g) => g.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="flex flex-col gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start gap-2 h-8 px-2 rounded-md text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80"
+                onClick={() => setCreateDialogOpen(true)}
+                aria-label={t('threadHistory.sidebar.createGroupTitle')}
+              >
+                <FolderPlus className="size-4 shrink-0" />
+                <span className="truncate text-sm font-medium">
+                  <Translator path="threadHistory.sidebar.createGroupTitle" />
+                </span>
+              </Button>
+              {threadGroups.map((group) => {
+                const threads = threadsByGroupId[group.id] ?? [];
+                const timeGrouped = groupByDate(threads);
+                const sortedKeys = getSortedTimeGroupKeys(timeGrouped);
+                const groupHistory = {
+                  ...threadHistory,
+                  threads,
+                  timeGroupedThreads: timeGrouped,
+                  currentThreadId: threadHistory?.currentThreadId
+                };
+                const isExpanded = expandedGroups.has(group.id);
+                const isDropTarget =
+                  dragOverId === group.id && dragActiveId !== group.id;
+                const groupContainsSelected = Boolean(
+                  currentThreadId &&
+                  (threadsByGroupId[group.id] ?? []).some(
+                    (t) => t.id === currentThreadId
+                  )
+                );
 
-                  return (
-                    <SortableGroupRow
-                      key={group.id}
-                      group={group}
-                      isExpanded={isExpanded}
-                      onToggle={() => toggleGroup(group.id)}
-                      containsSelectedThread={groupContainsSelected}
-                      onRename={() => {
-                        setRenameGroupId(group.id);
-                        setRenameGroupName(group.name);
-                      }}
-                      onDelete={() => setDeleteGroupId(group.id)}
-                      isDropTarget={isDropTarget}
-                      lastDraggedGroupIdRef={lastDraggedGroupIdRef}
+                return (
+                  <SortableGroupRow
+                    key={group.id}
+                    group={group}
+                    isExpanded={isExpanded}
+                    hasChildren={threads.length > 0}
+                    onToggle={() => toggleGroup(group.id)}
+                    containsSelectedThread={groupContainsSelected}
+                    onRename={() => {
+                      setRenameGroupId(group.id);
+                      setRenameGroupName(group.name);
+                    }}
+                    onDelete={() => setDeleteGroupId(group.id)}
+                    isDropTarget={isDropTarget}
+                    lastDraggedGroupIdRef={lastDraggedGroupIdRef}
+                  >
+                    <div
+                      className={cn(
+                        'grid transition-[grid-template-rows] duration-200 ease-out',
+                        isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                      )}
+                      aria-hidden={!isExpanded}
                     >
-                      <div
-                        className={cn(
-                          'grid transition-[grid-template-rows] duration-200 ease-out',
-                          isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-                        )}
-                        aria-hidden={!isExpanded}
-                      >
-                        <div className="min-h-0 overflow-hidden">
-                          <SidebarGroupContent className="min-h-0 overflow-hidden">
-                            <SidebarMenu className="gap-0">
-                              {sortedKeys.length > 0 && (
-                                <ThreadList
-                                  threadHistory={groupHistory}
-                                  error={undefined}
-                                  isFetching={false}
-                                  isLoadingMore={false}
-                                  collapsedGroups={
-                                    groupTimeGroupCollapsed[group.id] ?? null
-                                  }
-                                  setCollapsedGroups={(updater) =>
-                                    setGroupTimeGroupCollapsed((prev) => ({
-                                      ...prev,
-                                      [group.id]:
-                                        typeof updater === 'function'
-                                          ? updater(prev[group.id] ?? null)
-                                          : updater
-                                    }))
-                                  }
-                                />
-                              )}
-                            </SidebarMenu>
-                          </SidebarGroupContent>
-                        </div>
+                      <div className="min-h-0 overflow-hidden">
+                        <SidebarGroupContent className="min-h-0 overflow-hidden">
+                          <SidebarMenu className="gap-0">
+                            {sortedKeys.length > 0 && (
+                              <ThreadList
+                                threadHistory={groupHistory}
+                                error={undefined}
+                                isFetching={false}
+                                isLoadingMore={false}
+                                collapsedGroups={
+                                  groupTimeGroupCollapsed[group.id] ?? null
+                                }
+                                setCollapsedGroups={(updater) =>
+                                  setGroupTimeGroupCollapsed((prev) => ({
+                                    ...prev,
+                                    [group.id]:
+                                      typeof updater === 'function'
+                                        ? updater(prev[group.id] ?? null)
+                                        : updater
+                                  }))
+                                }
+                              />
+                            )}
+                          </SidebarMenu>
+                        </SidebarGroupContent>
                       </div>
-                    </SortableGroupRow>
-                  );
-                })}
-              </div>
-            </SortableContext>
-          </DndContext>
+                    </div>
+                  </SortableGroupRow>
+                );
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
@@ -655,7 +663,7 @@ export function GroupedChatSection({
               <Translator path="common.actions.confirm" />
             </AlertDialogAction>
           </AlertDialogFooter>
-          </AlertDialogContent>
+        </AlertDialogContent>
       </AlertDialog>
     </SidebarSection>
   );
