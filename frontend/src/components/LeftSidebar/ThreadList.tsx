@@ -390,7 +390,7 @@ export function ThreadList({
                   groupIndex > 0 && 'mt-0 border-t border-sidebar-border/50'
                 )}
               >
-                <div className="sticky top-0 z-10 bg-sidebar ">
+                <div className="sticky top-0 z-[5] bg-sidebar">
                   <CollapsibleGroupRow
                     label={getTimeGroupLabel(group)}
                     count={count}

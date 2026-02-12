@@ -331,6 +331,7 @@ export function ThreadHistory({
         containsSelected={sectionContainsSelected}
         isLoading={isLoading}
         ariaLabel="Recent chat section"
+        stickyHeader
       >
         {listContent}
       </SidebarSection>

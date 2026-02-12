@@ -153,7 +153,7 @@ function SortableGroupRow({
       <div
         ref={setNodeRef}
         style={style}
-        className={cn(isDragging && 'z-10')}
+        className={cn(isDragging && 'z-30')}
       >
         <div
           {...listeners}
@@ -164,6 +164,7 @@ function SortableGroupRow({
           onKeyDown={handleRowKeyDown}
           className={cn(
             'flex items-center gap-0 w-full rounded-lg overflow-hidden touch-none',
+            'sticky top-9 z-10 !bg-sidebar border-b border-sidebar-border/40',
             hasChildren
               ? 'cursor-grab active:cursor-grabbing'
               : 'cursor-default',
@@ -488,6 +489,7 @@ export function GroupedChatSection({
       containsSelected={sectionContainsSelected}
       isLoading={isLoading}
       ariaLabel="Grouped chat"
+      stickyHeader
     >
       <div className="min-h-0 overflow-hidden">
         <DndContext onDragEnd={handleDragEnd} sensors={sensors}>

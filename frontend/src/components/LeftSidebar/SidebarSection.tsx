@@ -13,6 +13,8 @@ export interface SidebarSectionProps {
   isLoading?: boolean;
   rightSlot?: React.ReactNode;
   ariaLabel?: string;
+  /** When true, section header sticks at top while scrolling (for use inside scroll container). */
+  stickyHeader?: boolean;
 }
 
 /**
@@ -27,7 +29,8 @@ export function SidebarSection({
   containsSelected = false,
   isLoading = false,
   rightSlot,
-  ariaLabel = 'Section'
+  ariaLabel = 'Section',
+  stickyHeader = false
 }: SidebarSectionProps) {
   return (
     <section
@@ -40,9 +43,17 @@ export function SidebarSection({
         size="default"
         className={cn(
           'w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/60 transition-colors duration-150',
+          stickyHeader && 'sticky top-0 z-20 !bg-sidebar',
           containsSelected
-            ? 'text-sidebar-foreground bg-neutral-600/30 hover:bg-neutral-600/40'
-            : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80'
+            ? 'text-sidebar-foreground'
+            : 'text-sidebar-foreground/60 hover:text-sidebar-foreground',
+          containsSelected
+            ? stickyHeader
+              ? '!bg-sidebar-accent hover:!bg-sidebar-accent'
+              : 'bg-neutral-600/30 hover:bg-neutral-600/40'
+            : stickyHeader
+              ? 'hover:!bg-sidebar-accent'
+              : 'hover:bg-sidebar-accent/80'
         )}
         aria-expanded={expanded}
       >
