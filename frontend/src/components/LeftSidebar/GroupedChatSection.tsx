@@ -575,7 +575,7 @@ export function GroupedChatSection({
                                         : updater
                                   }))
                                 }
-                                stickyTopOffset="top-18"
+                                stickyTopOffset="top-[4.1rem]"
                               />
                             )}
                           </SidebarMenu>
