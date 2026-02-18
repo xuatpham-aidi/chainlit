@@ -1,10 +1,11 @@
 import { useCallback, useRef } from 'react';
-import { useRecoilState } from 'recoil';
+import { useRecoilState, useRecoilValue } from 'recoil';
 
 import {
   sidebarTopicsSectionExpandedState,
   sidebarRecentSectionExpandedState,
-  sidebarTopicGroupExpandedState
+  sidebarTopicGroupExpandedState,
+  sidebarGroupTimeGroupCollapsedState
 } from '@/state/sidebar';
 
 import { CustomScrollbar } from '@/components/CustomScrollbar';
@@ -53,9 +54,23 @@ export function ChatHistorySection({
   const [expandedGroupsInSection, setExpandedGroupsInSection] = useRecoilState(
     sidebarTopicGroupExpandedState
   );
+  const groupTimeGroupCollapsed = useRecoilValue(
+    sidebarGroupTimeGroupCollapsedState
+  );
   const showCollapseButton =
     (topicsExpanded && expandedGroupsInSection.size > 0) ||
     (recentExpanded && hasUncollapsedRecentGroups);
+
+  const groupTimeKey =
+    Object.keys(groupTimeGroupCollapsed)
+      .sort()
+      .map(
+        (groupId) =>
+          `${groupId}:${groupTimeGroupCollapsed[groupId] == null ? 'n' : Array.from(groupTimeGroupCollapsed[groupId]!).sort().join(',')}`
+      )
+      .join(';') || '';
+  const scrollInvalidateKey = `${invalidateKey}|topics:${topicsExpanded}|groups:${expandedGroupsInSection.size > 0 ? Array.from(expandedGroupsInSection).sort().join(',') : ''}|recent:${recentExpanded}|groupTime:${groupTimeKey}`;
+  const effectiveHideScrollbar = hideScrollbar && !topicsExpanded;
 
   const handleCollapseAll = useCallback(() => {
     onCollapseAll();
@@ -89,8 +104,8 @@ export function ChatHistorySection({
         onScroll={handleHistoryScroll}
         className="flex-1 min-h-0"
         variant="sidebar"
-        hideScrollbar={hideScrollbar}
-        invalidateKey={invalidateKey}
+        hideScrollbar={effectiveHideScrollbar}
+        invalidateKey={scrollInvalidateKey}
       >
         <div className="flex flex-col gap-0 px-0 min-h-0">
           <GroupedChatSection

@@ -12,13 +12,15 @@ const MIN_THUMB_HEIGHT = 24;
 
 const SCROLLBAR_VARIANT_CLASSES = {
   sidebar: {
-    track: 'w-1 pr-0.5',
+    scrollPadding: 'pr-2',
+    track: 'w-1 pr-0.5 bg-sidebar-foreground/5 rounded-full z-10',
     trackInset: 'top-1 bottom-1',
     thumb: 'w-1',
     thumbColor:
       'bg-sidebar-foreground/25 hover:bg-sidebar-foreground/45 active:bg-sidebar-foreground/55'
   },
   chat: {
+    scrollPadding: '',
     track: 'w-2.5 pr-1',
     trackInset: 'top-4 bottom-4',
     thumb: 'w-1.5',
@@ -110,7 +112,10 @@ const CustomScrollbar = forwardRef<HTMLDivElement | null, CustomScrollbarProps>(
       const ro = new ResizeObserver(runUpdate);
       ro.observe(el);
       const firstChild = el.firstElementChild;
-      if (firstChild) ro.observe(firstChild);
+      if (firstChild) {
+        ro.observe(firstChild);
+        Array.from(firstChild.children).forEach((child) => ro.observe(child));
+      }
       const track = trackRef.current;
       if (track) ro.observe(track);
       const mo = new MutationObserver(runUpdate);
@@ -125,8 +130,28 @@ const CustomScrollbar = forwardRef<HTMLDivElement | null, CustomScrollbarProps>(
 
     useEffect(() => {
       if (invalidateKey === undefined) return;
-      const t = requestAnimationFrame(updateThumb);
-      return () => cancelAnimationFrame(t);
+      const rafId = requestAnimationFrame(updateThumb);
+      const delays = [0, 50, 100, 180, 280, 400, 550, 800, 1200, 1600];
+      const timeoutIds = delays.map((ms) => setTimeout(updateThumb, ms));
+      let cancelled = false;
+      let rafHandle: number;
+      const maxRaf = 24;
+      let rafCount = 0;
+      const runNextFrame = () => {
+        if (cancelled) return;
+        updateThumb();
+        rafCount += 1;
+        if (rafCount < maxRaf) {
+          rafHandle = requestAnimationFrame(runNextFrame);
+        }
+      };
+      rafHandle = requestAnimationFrame(runNextFrame);
+      return () => {
+        cancelled = true;
+        cancelAnimationFrame(rafId);
+        cancelAnimationFrame(rafHandle);
+        timeoutIds.forEach(clearTimeout);
+      };
     }, [invalidateKey, updateThumb]);
 
     const handleThumbMouseDown = useCallback(
@@ -181,7 +206,10 @@ const CustomScrollbar = forwardRef<HTMLDivElement | null, CustomScrollbarProps>(
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="custom-scrollbar-native-hidden h-full min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
+          className={cn(
+            'custom-scrollbar-native-hidden h-full min-h-0 flex-1 overflow-y-auto overflow-x-hidden',
+            variantClasses.scrollPadding
+          )}
         >
           {children}
         </div>
@@ -189,7 +217,7 @@ const CustomScrollbar = forwardRef<HTMLDivElement | null, CustomScrollbarProps>(
           <div
             ref={trackRef}
             className={cn(
-              'absolute right-0 shrink-0',
+              'absolute right-0 shrink-0 pointer-events-auto',
               variantClasses.track,
               variantClasses.trackInset
             )}
