@@ -72,13 +72,26 @@ export function ChatHistorySection({
     groupTimeGroupKey
   ].join('|');
 
-  const showCollapseButton =
+  const hasUncollapsedChildren =
     (topicsExpanded && expandedGroupsInSection.size > 0) ||
     (recentExpanded && hasUncollapsedRecentGroups);
+  const showCollapseButton = topicsExpanded || recentExpanded;
 
   const handleCollapseAll = useCallback(() => {
-    onCollapseAll();
-  }, [onCollapseAll]);
+    if (hasUncollapsedChildren) {
+      setExpandedGroupsInSection(new Set());
+      onCollapseAll();
+    } else {
+      setTopicsExpanded(false);
+      setRecentExpanded(false);
+    }
+  }, [
+    hasUncollapsedChildren,
+    onCollapseAll,
+    setTopicsExpanded,
+    setRecentExpanded,
+    setExpandedGroupsInSection
+  ]);
 
   const registeredScrollHandlerRef = useRef<(() => void) | null>(null);
   const registerThreadHistoryScroll = useCallback((handler: (() => void) | null) => {
