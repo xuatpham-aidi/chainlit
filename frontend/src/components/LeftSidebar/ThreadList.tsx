@@ -416,7 +416,10 @@ export function ThreadList({
                   aria-hidden={isCollapsed}
                 >
                   <SidebarGroupContent className="min-h-0 overflow-hidden px-0">
-                    <SidebarMenu className="gap-0.5">
+                    <SidebarMenu
+                      key={`${group}-${isCollapsed}`}
+                      className="gap-0.5"
+                    >
                       {items.map((thread, itemIndex) => {
                         const isResumed =
                           idToResume === thread.id &&
