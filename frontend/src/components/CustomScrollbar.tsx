@@ -131,26 +131,15 @@ const CustomScrollbar = forwardRef<HTMLDivElement | null, CustomScrollbarProps>(
     useEffect(() => {
       if (invalidateKey === undefined) return;
       const rafId = requestAnimationFrame(updateThumb);
-      const delays = [0, 50, 100, 180, 280, 400, 550, 800, 1200, 1600];
+      const delays = [0, 50, 100, 180, 280, 400, 550];
       const timeoutIds = delays.map((ms) => setTimeout(updateThumb, ms));
-      let cancelled = false;
-      let rafHandle: number;
-      const maxRaf = 24;
-      let rafCount = 0;
-      const runNextFrame = () => {
-        if (cancelled) return;
-        updateThumb();
-        rafCount += 1;
-        if (rafCount < maxRaf) {
-          rafHandle = requestAnimationFrame(runNextFrame);
-        }
-      };
-      rafHandle = requestAnimationFrame(runNextFrame);
+      const intervalId = setInterval(updateThumb, 100);
+      const stopInterval = setTimeout(() => clearInterval(intervalId), 650);
       return () => {
-        cancelled = true;
         cancelAnimationFrame(rafId);
-        cancelAnimationFrame(rafHandle);
         timeoutIds.forEach(clearTimeout);
+        clearInterval(intervalId);
+        clearTimeout(stopInterval);
       };
     }, [invalidateKey, updateThumb]);
 

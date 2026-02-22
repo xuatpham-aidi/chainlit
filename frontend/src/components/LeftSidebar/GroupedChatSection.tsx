@@ -168,11 +168,11 @@ function SortableGroupRow({
             hasChildren
               ? 'cursor-grab active:cursor-grabbing'
               : 'cursor-default',
-            'bg-neutral-300/20 hover:bg-neutral-300/50 transition-colors duration-150',
+            'bg-sidebar-foreground/5 hover:bg-sidebar-foreground/10 transition-colors duration-150',
             'border border-transparent',
+            containsSelectedThread && 'border-l-[3px] border-l-sidebar-foreground/40 bg-sidebar-foreground/10 text-sidebar-foreground',
             isDragging && 'opacity-60 shadow-md',
-            isDropTarget && 'ring-2 ring-sidebar-border ring-inset border-sidebar-border/60',
-            containsSelectedThread && 'bg-neutral-600/30 text-sidebar-foreground'
+            isDropTarget && 'ring-2 ring-sidebar-border ring-inset border-sidebar-border/60'
           )}
           aria-label={hasChildren ? 'Drag to reorder group' : undefined}
           aria-expanded={hasChildren ? isExpanded : undefined}
@@ -182,6 +182,7 @@ function SortableGroupRow({
             isCollapsed={!isExpanded}
             containsSelected={containsSelectedThread}
             contentOnly
+            showChevron={hasChildren}
             className="text-sidebar-foreground/80"
           />
           <div

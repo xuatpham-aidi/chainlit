@@ -17,7 +17,7 @@ import { ThreadHistory } from './ThreadHistory';
 
 export interface ChatHistorySectionProps {
   historyScrollRef: React.RefObject<HTMLDivElement | null>;
-  onHistoryScroll: () => void;
+  onHistoryScroll?: () => void;
   registerScrollHandler?: (handler: (() => void) | null) => void;
   collapsedGroups: Set<string> | null;
   setCollapsedGroups: React.Dispatch<
@@ -25,7 +25,6 @@ export interface ChatHistorySectionProps {
   >;
   onCollapseAll: () => void;
   hideScrollbar: boolean;
-  invalidateKey: string;
   threadsFilter: (thread: { groupId?: string | null }) => boolean;
   ungroupedSectionTitle?: string;
   hasUncollapsedRecentGroups?: boolean;
@@ -40,7 +39,6 @@ export function ChatHistorySection({
   setCollapsedGroups,
   onCollapseAll,
   hideScrollbar,
-  invalidateKey,
   threadsFilter,
   ungroupedSectionTitle = DEFAULT_UNGROUPED_TITLE,
   hasUncollapsedRecentGroups = false
@@ -57,20 +55,26 @@ export function ChatHistorySection({
   const groupTimeGroupCollapsed = useRecoilValue(
     sidebarGroupTimeGroupCollapsedState
   );
+
+  const groupTimeGroupKey = Object.entries(groupTimeGroupCollapsed ?? {})
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(
+      ([groupId, set]) =>
+        `${groupId}:${set ? Array.from(set).sort().join(',') : 'n'}`
+    )
+    .join(';');
+
+  const invalidateKey = [
+    topicsExpanded ? '1' : '0',
+    recentExpanded ? '1' : '0',
+    expandedGroupsInSection ? Array.from(expandedGroupsInSection).sort().join(',') : '',
+    collapsedGroups ? Array.from(collapsedGroups).sort().join(',') : '',
+    groupTimeGroupKey
+  ].join('|');
+
   const showCollapseButton =
     (topicsExpanded && expandedGroupsInSection.size > 0) ||
     (recentExpanded && hasUncollapsedRecentGroups);
-
-  const groupTimeKey =
-    Object.keys(groupTimeGroupCollapsed)
-      .sort()
-      .map(
-        (groupId) =>
-          `${groupId}:${groupTimeGroupCollapsed[groupId] == null ? 'n' : Array.from(groupTimeGroupCollapsed[groupId]!).sort().join(',')}`
-      )
-      .join(';') || '';
-  const scrollInvalidateKey = `${invalidateKey}|topics:${topicsExpanded}|groups:${expandedGroupsInSection.size > 0 ? Array.from(expandedGroupsInSection).sort().join(',') : ''}|recent:${recentExpanded}|groupTime:${groupTimeKey}`;
-  const effectiveHideScrollbar = hideScrollbar && !topicsExpanded;
 
   const handleCollapseAll = useCallback(() => {
     onCollapseAll();
@@ -81,7 +85,7 @@ export function ChatHistorySection({
     registeredScrollHandlerRef.current = handler;
   }, []);
   const handleHistoryScroll = useCallback(() => {
-    onHistoryScroll();
+    onHistoryScroll?.();
     registeredScrollHandlerRef.current?.();
   }, [onHistoryScroll]);
 
@@ -104,8 +108,8 @@ export function ChatHistorySection({
         onScroll={handleHistoryScroll}
         className="flex-1 min-h-0"
         variant="sidebar"
-        hideScrollbar={effectiveHideScrollbar}
-        invalidateKey={scrollInvalidateKey}
+        hideScrollbar={hideScrollbar}
+        invalidateKey={invalidateKey}
       >
         <div className="flex flex-col gap-0 px-0 min-h-0">
           <GroupedChatSection

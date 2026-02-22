@@ -54,6 +54,7 @@ export default function LeftSidebar({
   const [collapsedGroups, setCollapsedGroups] = useRecoilState(
     sidebarRecentTimeGroupCollapsedState
   );
+  const expandedTopicGroups = useRecoilValue(sidebarTopicGroupExpandedState);
   const setSidebarTopicGroupExpanded = useSetRecoilState(
     sidebarTopicGroupExpandedState
   );
@@ -74,6 +75,9 @@ export default function LeftSidebar({
   const allGroupsCollapsed =
     sortedTimeGroupKeys.length > 0 &&
     effectiveCollapsed.size === sortedTimeGroupKeys.length;
+  const hasExpandedTopicGroups = expandedTopicGroups.size > 0;
+  const hideScrollbar =
+    allGroupsCollapsed && !hasExpandedTopicGroups;
   const hasUncollapsedRecentGroups =
     sortedTimeGroupKeys.length > 0 &&
     effectiveCollapsed.size < sortedTimeGroupKeys.length;
@@ -97,7 +101,7 @@ export default function LeftSidebar({
   }, [dataPersistence, apiClient, setThreadGroups]);
 
   const barClassName =
-    'w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/60 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150 flex items-center';
+    'w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/50 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150 flex items-center';
 
   return (
     <Sidebar {...props} className="border-none bg-sidebar flex flex-col" >
@@ -127,17 +131,10 @@ export default function LeftSidebar({
         >
           <ChatHistorySection
             historyScrollRef={historyScrollRef}
-            onHistoryScroll={() => { }}
-            registerScrollHandler={() => { }}
             collapsedGroups={collapsedGroups}
             setCollapsedGroups={setCollapsedGroups}
             onCollapseAll={collapseAllGroups}
-            hideScrollbar={allGroupsCollapsed}
-            invalidateKey={
-              collapsedGroups
-                ? Array.from(collapsedGroups).sort().join(',')
-                : ''
-            }
+            hideScrollbar={hideScrollbar}
             threadsFilter={(t) => t.groupId == null || t.groupId === ''}
             ungroupedSectionTitle="threadHistory.sidebar.ungroupedChat"
             hasUncollapsedRecentGroups={hasUncollapsedRecentGroups}

@@ -395,8 +395,9 @@ export function ThreadList({
               >
                 <div
                   className={cn(
-                    'sticky z-[5] !bg-sidebar border-b border-sidebar-border/30',
-                    stickyTopOffset
+                    'sticky z-[5] !bg-sidebar border-b border-sidebar-border/40 transition-colors duration-150',
+                    stickyTopOffset,
+                    groupContainsSelected && 'border-l-[3px] border-l-sidebar-foreground/40 bg-sidebar-foreground/10'
                   )}
                 >
                   <CollapsibleGroupRow
@@ -449,17 +450,17 @@ export function ThreadList({
                                   <SidebarMenuButton
                                     isActive={isSelected}
                                     className={cn(
-                                      'relative group/thread transition-all duration-150 ease-out',
-                                      'rounded-xl pl-3 my-0.5',
-                                      'hover:bg-neutral-600/10',
-                                      'data-[active=true]:!bg-neutral-600/20',
+                                      'relative group/thread transition-colors duration-150 ease-out',
+                                      'rounded-lg pl-3 my-0.5',
+                                      'hover:bg-sidebar-foreground/10',
+                                      'data-[active=true]:!bg-sidebar-foreground/15',
                                       (openDropdownThreadId === thread.id ||
                                         threadIdToDelete === thread.id ||
                                         threadIdToRename === thread.id ||
                                         (threadIdToShare === thread.id &&
                                           isShareDialogOpen)) &&
                                       !isSelected &&
-                                      'bg-neutral-600/10'
+                                      'bg-sidebar-foreground/10'
                                     )}
                                   >
                                     <span className="flex pl-3 min-w-0 flex-1 items-center gap-2">
@@ -473,8 +474,8 @@ export function ThreadList({
                                           className={cn(
                                             'h-4 w-4 shrink-0',
                                             isSelected
-                                              ? 'text-blue-600'
-                                              : ''
+                                              ? 'text-sidebar-foreground'
+                                              : 'text-sidebar-foreground/60'
                                           )}
                                           aria-hidden="true"
                                         />

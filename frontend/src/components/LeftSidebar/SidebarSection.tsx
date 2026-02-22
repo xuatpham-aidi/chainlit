@@ -42,18 +42,14 @@ export function SidebarSection({
         variant="ghost"
         size="default"
         className={cn(
-          'w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/60 transition-colors duration-150',
+          'w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/50 transition-colors duration-150',
           stickyHeader && 'sticky top-0 z-20 !bg-sidebar',
+          containsSelected && 'border-l-[3px] border-l-sidebar-foreground/40 bg-sidebar-foreground/10 hover:bg-sidebar-foreground/15',
           containsSelected
             ? 'text-sidebar-foreground'
             : 'text-sidebar-foreground/60 hover:text-sidebar-foreground',
-          containsSelected
-            ? stickyHeader
-              ? '!bg-sidebar-accent hover:!bg-sidebar-accent'
-              : 'bg-neutral-600/30 hover:bg-neutral-600/40'
-            : stickyHeader
-              ? 'hover:!bg-sidebar-accent'
-              : 'hover:bg-sidebar-accent/80'
+          !containsSelected && stickyHeader && 'hover:bg-sidebar-accent/80',
+          !containsSelected && !stickyHeader && 'hover:bg-sidebar-accent/60'
         )}
         aria-expanded={expanded}
       >
