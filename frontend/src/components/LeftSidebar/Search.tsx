@@ -96,11 +96,22 @@ export default function SearchChats({
     };
   }, [searchQuery, debouncedSearch]);
 
+  const handleSearchTriggerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setOpen((open) => !open);
+  };
+
+  const handleSearchPointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+  };
+
   const trigger =
     triggerVariant === 'bar' ? (
       <Button
         id="search-chats-button"
-        onClick={() => setOpen(!open)}
+        onClick={handleSearchTriggerClick}
+        onPointerDown={handleSearchPointerDown}
         variant="ghost"
         size="default"
         className={SIDEBAR_ACTION_SECONDARY}
@@ -113,7 +124,8 @@ export default function SearchChats({
     ) : (
       <Button
         id="search-chats-button"
-        onClick={() => setOpen(!open)}
+        onClick={handleSearchTriggerClick}
+        onPointerDown={handleSearchPointerDown}
         size="icon"
         variant="ghost"
         className="h-9 w-9 rounded-xl text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-foreground/[0.06] dark:hover:bg-sidebar-foreground/[0.08] transition-colors duration-200 ease-out"

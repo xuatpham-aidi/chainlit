@@ -121,12 +121,17 @@ export function ChatHistorySection({
         )}
       >
         <header
-          className={cn(SIDEBAR_SECTION_HEADER, SIDEBAR_SECTION_HEADER_HOVER)}
+          className={cn(SIDEBAR_SECTION_HEADER, SIDEBAR_SECTION_HEADER_HOVER, "select-none")}
         >
           <p className={SIDEBAR_SECTION_HEADER_TITLE}>
             <Translator path="threadHistory.sidebar.title" />
           </p>
-          <div className="flex h-9 w-9 shrink-0 items-center justify-end">
+          <div
+            className="flex h-9 w-9 min-w-9 shrink-0 items-center justify-end"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            role="presentation"
+          >
             <ThreadCollapseButton
               visible
               onCollapseAll={handleCollapseAll}

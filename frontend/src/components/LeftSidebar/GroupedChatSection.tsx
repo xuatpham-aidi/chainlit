@@ -201,11 +201,18 @@ function SortableGroupRow({
             {...attributes}
             role={hasChildren ? 'button' : undefined}
             tabIndex={hasChildren ? 0 : undefined}
-            onClick={handleToggleClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleClick();
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => {
+              if (e.button === 0) e.preventDefault();
+            }}
             onKeyDown={handleRowKeyDown}
             style={stickyRowStyle}
             className={cn(
-              'flex items-center gap-0 w-full rounded-2xl overflow-hidden touch-none pr-3',
+              'flex items-center gap-0 w-full rounded-2xl overflow-hidden touch-none pr-3 select-none',
               SIDEBAR_TOPIC_ROW_STICKY_TOP,
             'sticky',
             SIDEBAR_GROUP_ROW_STICKY,

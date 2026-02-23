@@ -44,10 +44,20 @@ export function SidebarSection({
   ariaLabel = 'Section',
   stickyHeader = false
 }: SidebarSectionProps) {
+  const handleToggleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onToggle();
+  };
+
   const sectionContent = (
     <>
         <Button
-        onClick={onToggle}
+        onClick={handleToggleClick}
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => {
+          if (e.button === 0) e.preventDefault();
+        }}
         variant="ghost"
         size="default"
         className={cn(

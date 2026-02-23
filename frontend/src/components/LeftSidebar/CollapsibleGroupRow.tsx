@@ -82,6 +82,15 @@ export function CollapsibleGroupRow({
     className
   );
 
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggle?.();
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button === 0) e.preventDefault();
+  };
+
   if (contentOnly) {
     return (
       <div
@@ -101,7 +110,9 @@ export function CollapsibleGroupRow({
     return (
       <button
         type="button"
-        onClick={onToggle!}
+        onClick={handleToggle}
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={handleMouseDown}
         className={rowClassName}
         aria-expanded={!isCollapsed}
         data-active={containsSelected || undefined}
@@ -115,11 +126,13 @@ export function CollapsibleGroupRow({
     <div
       role="button"
       tabIndex={0}
-      onClick={onToggle!}
+      onClick={handleToggle}
+      onPointerDown={(e) => e.stopPropagation()}
+      onMouseDown={handleMouseDown}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onToggle!();
+          onToggle?.();
         }
       }}
       className={rowClassName}

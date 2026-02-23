@@ -73,18 +73,18 @@ export const SIDEBAR_SECTION_WRAPPER_SELECTED =
 
 export const SIDEBAR_SECTION_LEFT_BAR_PADDING = 'pl-[3px]';
 
-/** Major section (Topics / Recent): one tap target, friendly height. */
+/** Major section (Topics / Recent): one tap target, friendly height. Prevent text selection on double-click. */
 export const SIDEBAR_MAJOR_SECTION_HEADER =
-  'flex items-center gap-3 w-full h-12 min-h-[3rem] pl-4 pr-3 py-0 rounded-2xl transition-colors duration-200 ease-in-out text-[13px] font-medium tracking-wide';
+  'flex items-center gap-3 w-full h-12 min-h-[3rem] pl-4 pr-3 py-0 rounded-2xl transition-colors duration-200 ease-in-out text-[13px] font-medium tracking-wide select-none';
 
 export const SIDEBAR_MAJOR_SECTION_HEADER_DEFAULT = 'text-sidebar-foreground/78';
 
 export const SIDEBAR_MAJOR_SECTION_HEADER_HOVER =
   'hover:bg-sidebar-foreground/[0.06] hover:text-sidebar-foreground';
 
-/** Group/topic row base – comfortable tap target. */
+/** Group/topic row base – comfortable tap target. Prevent text selection on double-click. */
 export const SIDEBAR_GROUP_ROW =
-  'flex w-full items-center gap-3 py-2.5 pl-4 pr-3 min-h-[2.75rem] text-[13px] font-medium tracking-wide transition-colors duration-200 ease-in-out rounded-2xl';
+  'flex w-full items-center gap-3 py-2.5 pl-4 pr-3 min-h-[2.75rem] text-[13px] font-medium tracking-wide transition-colors duration-200 ease-in-out rounded-2xl select-none';
 
 export const SIDEBAR_GROUP_ROW_DEFAULT = 'text-sidebar-foreground/88 bg-transparent';
 

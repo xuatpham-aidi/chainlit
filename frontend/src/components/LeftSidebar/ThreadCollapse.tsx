@@ -85,9 +85,10 @@ export function ThreadCollapseButton({
         className={cn(
           iconClasses,
           'cursor-default opacity-50 hover:bg-transparent',
-          alignIcon === 'end' && 'justify-end'
+          alignIcon === 'end' && 'justify-end w-4 h-4'
         )}
         aria-hidden
+        onPointerDown={(e) => e.stopPropagation()}
       >
         <CopyMinus className="size-4" />
       </span>
@@ -96,20 +97,31 @@ export function ThreadCollapseButton({
 
   const tooltipText = t('threadHistory.sidebar.collapseAll', 'Collapse all');
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onCollapseAll();
+  };
+
+  const isEndAligned = alignIcon === 'end';
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          onClick={onCollapseAll}
+          onClick={handleClick}
+          onPointerDown={(e) => e.stopPropagation()}
           size="icon"
           variant="ghost"
           className={cn(
             SIDEBAR_ICON_BUTTON,
-            'h-9 w-9',
-            alignIcon === 'end' && 'justify-end'
+            'shrink-0',
+            isEndAligned
+              ? 'h-4 w-4 justify-center rounded-xl'
+              : 'h-9 w-9'
           )}
         >
-          <CopyMinus className="size-4" />
+          <CopyMinus className="size-4 shrink-0" />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="right" sideOffset={10} className="rounded-2xl">
