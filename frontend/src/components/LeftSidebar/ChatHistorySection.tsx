@@ -116,21 +116,22 @@ export function ChatHistorySection({
     <div className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden" aria-label="Chat history">
       <div
         className={cn(
-          'flex flex-1 flex-col min-h-0 min-w-0 rounded-xl overflow-hidden',
+          'flex flex-1 flex-col min-h-0 min-w-0 rounded-2xl overflow-hidden',
           SIDEBAR_HISTORY_ZONE_BG
         )}
       >
         <header
-          className={cn(SIDEBAR_SECTION_HEADER)}
+          className={cn(SIDEBAR_SECTION_HEADER, SIDEBAR_SECTION_HEADER_HOVER)}
         >
           <p className={SIDEBAR_SECTION_HEADER_TITLE}>
             <Translator path="threadHistory.sidebar.title" />
           </p>
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-end">
             <ThreadCollapseButton
               visible
               onCollapseAll={handleCollapseAll}
               disabled={!showCollapseButton}
+              alignIcon="end"
             />
           </div>
         </header>
@@ -144,7 +145,7 @@ export function ChatHistorySection({
         >
           <div
             className={cn(
-              'flex flex-1 flex-col min-h-0 min-w-0 py-4',
+              'flex flex-1 flex-col min-h-0 min-w-0 py-5',
               SIDEBAR_SECTION_GAP,
               SIDEBAR_CONTENT_PX
             )}

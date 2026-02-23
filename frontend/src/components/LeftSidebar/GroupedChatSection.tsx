@@ -196,17 +196,17 @@ function SortableGroupRow({
           containsSelectedThread && SIDEBAR_GROUP_BLOCK_SELECTED
         )}
       >
-        <div
-          {...listeners}
-          {...attributes}
-          role={hasChildren ? 'button' : undefined}
-          tabIndex={hasChildren ? 0 : undefined}
-          onClick={handleToggleClick}
-          onKeyDown={handleRowKeyDown}
-          style={stickyRowStyle}
-          className={cn(
-            'flex items-center gap-0 w-full rounded-xl overflow-hidden touch-none pr-3',
-            SIDEBAR_TOPIC_ROW_STICKY_TOP,
+          <div
+            {...listeners}
+            {...attributes}
+            role={hasChildren ? 'button' : undefined}
+            tabIndex={hasChildren ? 0 : undefined}
+            onClick={handleToggleClick}
+            onKeyDown={handleRowKeyDown}
+            style={stickyRowStyle}
+            className={cn(
+              'flex items-center gap-0 w-full rounded-2xl overflow-hidden touch-none pr-3',
+              SIDEBAR_TOPIC_ROW_STICKY_TOP,
             'sticky',
             SIDEBAR_GROUP_ROW_STICKY,
             hasChildren
@@ -255,7 +255,7 @@ function SortableGroupRow({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="min-w-[8rem] rounded-xl border-sidebar-border/80 shadow-lg"
+                className="min-w-[9rem] rounded-2xl border-sidebar-border/70 shadow-lg bg-sidebar dark:bg-sidebar"
                 side="right"
                 align="start"
                 forceMount

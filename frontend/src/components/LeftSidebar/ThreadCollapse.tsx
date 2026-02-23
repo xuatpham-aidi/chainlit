@@ -59,6 +59,8 @@ export interface ThreadCollapseButtonProps {
   visible: boolean;
   onCollapseAll: () => void;
   disabled?: boolean;
+  /** Align icon to 'end' (right) to line up with Search/NewChat icons in the sidebar. */
+  alignIcon?: 'center' | 'end';
 }
 
 /**
@@ -68,7 +70,8 @@ export interface ThreadCollapseButtonProps {
 export function ThreadCollapseButton({
   visible,
   onCollapseAll,
-  disabled = false
+  disabled = false,
+  alignIcon = 'center'
 }: ThreadCollapseButtonProps) {
   const { t } = useTranslation();
 
@@ -79,7 +82,11 @@ export function ThreadCollapseButton({
   if (disabled) {
     return (
       <span
-        className={`${iconClasses} cursor-default opacity-50 hover:bg-transparent`}
+        className={cn(
+          iconClasses,
+          'cursor-default opacity-50 hover:bg-transparent',
+          alignIcon === 'end' && 'justify-end'
+        )}
         aria-hidden
       >
         <CopyMinus className="size-4" />
@@ -96,12 +103,16 @@ export function ThreadCollapseButton({
           onClick={onCollapseAll}
           size="icon"
           variant="ghost"
-          className={cn(SIDEBAR_ICON_BUTTON, 'h-9 w-9')}
+          className={cn(
+            SIDEBAR_ICON_BUTTON,
+            'h-9 w-9',
+            alignIcon === 'end' && 'justify-end'
+          )}
         >
           <CopyMinus className="size-4" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="right" sideOffset={10} className="rounded-xl">
+      <TooltipContent side="right" sideOffset={10} className="rounded-2xl">
         {tooltipText}
       </TooltipContent>
     </Tooltip>

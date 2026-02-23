@@ -383,13 +383,13 @@ export function ThreadList({
       <TooltipProvider delayDuration={300}>
         {error ? (
           <div className="px-2 py-3">
-            <Alert variant="error" className="rounded-xl border-sidebar-border/80">
+            <Alert variant="error" className="rounded-2xl border-sidebar-border/70">
               {error}
             </Alert>
           </div>
         ) : hasNoThreads && !isLoading ? (
           <div className="px-2 py-4">
-            <Alert variant="info" className="rounded-xl border-sidebar-border/80 text-sidebar-foreground/90">
+            <Alert variant="info" className="rounded-2xl border-sidebar-border/70 text-sidebar-foreground/90">
               <Translator path="threadHistory.sidebar.empty" />
             </Alert>
           </div>
@@ -532,7 +532,7 @@ export function ThreadList({
                                       }
                                       disabled={isLoading}
                                       className={cn(
-                                        'shrink-0 h-8 w-8 rounded-xl flex opacity-0 group-hover/thread:opacity-100 transition-opacity duration-200',
+                                        'shrink-0 h-9 w-9 rounded-2xl flex opacity-0 group-hover/thread:opacity-100 transition-opacity duration-200',
                                         isSelected && 'opacity-100'
                                       )}
                                     />

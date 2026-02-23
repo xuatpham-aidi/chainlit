@@ -105,10 +105,10 @@ export default function LeftSidebar({
   return (
     <Sidebar
       {...props}
-      className="border-r border-sidebar-border/60 bg-sidebar flex flex-col min-w-0 overflow-hidden"
+      className="border-r border-sidebar-border/50 bg-sidebar flex flex-col min-w-0 overflow-hidden"
     >
-      <SidebarHeader className="sidebar-header-nbc flex flex-col gap-3 border-b border-sidebar-border/50 px-4 py-4 shrink-0">
-        <div className="flex items-center justify-between gap-2">
+      <SidebarHeader className="sidebar-header-nbc flex flex-col gap-4 border-b border-sidebar-border/40 px-4 py-5 shrink-0 bg-sidebar">
+        <div className="flex items-center justify-between gap-2 min-h-10">
           <Logo className="h-8 w-auto max-w-[140px] shrink-0" />
           <SidebarTrigger />
         </div>
@@ -116,7 +116,7 @@ export default function LeftSidebar({
 
       <div
         className={cn(
-          'flex flex-1 flex-col min-h-0 min-w-0 overflow-x-hidden py-4',
+          'flex flex-1 flex-col min-h-0 min-w-0 overflow-x-hidden py-5',
           SIDEBAR_CONTENT_PX,
           SIDEBAR_OUTER_GAP
         )}
@@ -135,7 +135,7 @@ export default function LeftSidebar({
 
         <section
           className={cn(
-            'flex flex-1 flex-col min-h-0 min-w-0 pt-3 rounded-xl overflow-hidden',
+            'flex flex-1 flex-col min-h-0 min-w-0 pt-1 rounded-2xl overflow-hidden',
             SIDEBAR_OUTER_GAP
           )}
           aria-label="Chat history"
