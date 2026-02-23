@@ -12,12 +12,19 @@ import {
 import { groupByDate } from '@chainlit/react-client';
 
 import { threadListLoadingState } from '@/state/project';
+import { cn } from '@/lib/utils';
 
 import { SidebarContent } from '@/components/ui/sidebar';
 
 import { CustomScrollbar } from '@/components/CustomScrollbar';
 import { Loader } from '@/components/Loader';
 
+import {
+  SIDEBAR_SECTION_HEADER,
+  SIDEBAR_SECTION_HEADER_TITLE,
+  SIDEBAR_SECTION_HEADER_HOVER,
+  SIDEBAR_SECTION_GAP
+} from './layout';
 import { Translator } from '../i18n';
 import { ThreadCollapseButton } from './ThreadCollapse';
 import { ThreadList } from './ThreadList';
@@ -366,24 +373,28 @@ export function ThreadHistory({
   }
 
   return (
-    <SidebarContent className="flex min-h-0 flex-1 flex-col gap-0 p-0 overflow-hidden">
-      <header className="flex shrink-0 pb-2" aria-label="History section">
-        <div className="flex w-full items-center justify-between gap-2 rounded-lg h-9 border border-sidebar-border/60 bg-transparent px-3 text-sidebar-foreground/60 select-none transition-colors duration-150">
-          <p className="min-w-0 flex-1 truncate text-left text-sm font-medium tracking-tight">
-            {sectionTitleNode}
-          </p>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-            {isLoading ? (
-              <Loader />
-            ) : showCollapseButton && onCollapseAll ? (
-              <ThreadCollapseButton
-                visible
-                onCollapseAll={onCollapseAll}
-              />
-            ) : (
-              <span className="size-4 shrink-0" aria-hidden />
-            )}
-          </div>
+    <SidebarContent
+      className={cn('flex min-h-0 flex-1 flex-col p-0 overflow-hidden', SIDEBAR_SECTION_GAP)}
+    >
+      <header
+        className={cn(
+          'flex shrink-0 items-center select-none',
+          SIDEBAR_SECTION_HEADER,
+          SIDEBAR_SECTION_HEADER_HOVER
+        )}
+        aria-label="History section"
+      >
+        <p className={cn('min-w-0 flex-1 truncate text-left', SIDEBAR_SECTION_HEADER_TITLE)}>
+          {sectionTitleNode}
+        </p>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+          {isLoading ? (
+            <Loader />
+          ) : showCollapseButton && onCollapseAll ? (
+            <ThreadCollapseButton visible onCollapseAll={onCollapseAll} />
+          ) : (
+            <span className="size-4 shrink-0" aria-hidden />
+          )}
         </div>
       </header>
       {listContent}

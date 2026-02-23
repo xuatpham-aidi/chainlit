@@ -18,7 +18,9 @@ import {
 import { Logo } from '@/components/Logo';
 import SidebarTrigger from '@/components/header/SidebarTrigger';
 import { Sidebar, SidebarHeader } from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
 
+import { SIDEBAR_SECTION_GAP, SIDEBAR_CONTENT_PX } from './layout';
 import NewChatButton from '../header/NewChat';
 import SearchChats from './Search';
 import { ChatHistorySection } from './ChatHistorySection';
@@ -112,7 +114,7 @@ export default function LeftSidebar({
         </div>
       </SidebarHeader>
 
-      <div className="flex flex-1 flex-col min-h-0 px-3 py-3 gap-4">
+      <div className={cn('flex flex-1 flex-col min-h-0 py-3', SIDEBAR_CONTENT_PX, SIDEBAR_SECTION_GAP)}>
         <section className="shrink-0" aria-label="New chat">
           <NewChatButton
             navigate={navigate}
@@ -126,7 +128,7 @@ export default function LeftSidebar({
         </section>
 
         <section
-          className="flex flex-1 flex-col min-h-0 pt-8 gap-4 overflow-clip"
+          className={cn('flex flex-1 flex-col min-h-0 pt-4 overflow-clip', SIDEBAR_SECTION_GAP)}
           aria-label="Chat history"
         >
           <ChatHistorySection

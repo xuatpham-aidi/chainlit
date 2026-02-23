@@ -4,6 +4,13 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Loader } from '@/components/Loader';
 import { Button } from '@/components/ui/button';
 
+import {
+  SIDEBAR_SECTION_HEADER,
+  SIDEBAR_SECTION_HEADER_SELECTED,
+  SIDEBAR_SECTION_HEADER_HOVER,
+  SIDEBAR_SECTION_GAP
+} from './layout';
+
 export interface SidebarSectionProps {
   title: React.ReactNode;
   expanded: boolean;
@@ -34,7 +41,7 @@ export function SidebarSection({
 }: SidebarSectionProps) {
   return (
     <section
-      className="shrink-0 flex flex-col gap-2"
+      className={cn('shrink-0 flex flex-col', SIDEBAR_SECTION_GAP)}
       aria-label={ariaLabel}
     >
       <Button
@@ -42,18 +49,18 @@ export function SidebarSection({
         variant="ghost"
         size="default"
         className={cn(
-          'w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/50 transition-colors duration-150',
+          SIDEBAR_SECTION_HEADER,
           stickyHeader && 'sticky top-0 z-20 !bg-sidebar',
-          containsSelected && 'border-l-[3px] border-l-sidebar-foreground/40 bg-sidebar-foreground/10 hover:bg-sidebar-foreground/15',
-          containsSelected
-            ? 'text-sidebar-foreground'
-            : 'text-sidebar-foreground/60 hover:text-sidebar-foreground',
-          !containsSelected && stickyHeader && 'hover:bg-sidebar-accent/80',
-          !containsSelected && !stickyHeader && 'hover:bg-sidebar-accent/60'
+          containsSelected && SIDEBAR_SECTION_HEADER_SELECTED,
+          containsSelected && 'hover:bg-sidebar-foreground/15 text-sidebar-foreground',
+          !containsSelected && 'text-sidebar-foreground/70 hover:text-sidebar-foreground',
+          !containsSelected && SIDEBAR_SECTION_HEADER_HOVER
         )}
         aria-expanded={expanded}
       >
-        <span className="min-w-0 flex-1 truncate text-left">{title}</span>
+        <span className="min-w-0 flex-1 truncate text-left text-xs font-medium tracking-tight">
+          {title}
+        </span>
         <div className="flex items-center gap-1 shrink-0">
           {rightSlot != null ? (
             rightSlot

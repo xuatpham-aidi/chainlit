@@ -56,6 +56,14 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 
+import {
+  SIDEBAR_GROUP_BLOCK_PADDING,
+  SIDEBAR_GROUP_ROW_STICKY,
+  SIDEBAR_THREAD_ITEM_PADDING,
+  SIDEBAR_THREAD_ITEM_TEXT,
+  SIDEBAR_THREAD_ITEM_ACTIVE,
+  SIDEBAR_THREAD_ICON_SIZE
+} from './layout';
 import { Translator } from '../i18n';
 import { CollapsibleGroupRow } from './CollapsibleGroupRow';
 import ThreadOptions from './ThreadOptions';
@@ -363,13 +371,13 @@ export function ThreadList({
       />
       <TooltipProvider delayDuration={300}>
         {error ? (
-          <div className="px-3 py-4">
+          <div className="px-2 py-3">
             <Alert variant="error" className="rounded-xl border-sidebar-border/80">
               {error}
             </Alert>
           </div>
         ) : hasNoThreads && !isLoading ? (
-          <div className="px-3 py-6">
+          <div className="px-2 py-4">
             <Alert variant="info" className="rounded-xl border-sidebar-border/80 text-sidebar-foreground/90">
               <Translator path="threadHistory.sidebar.empty" />
             </Alert>
@@ -388,18 +396,9 @@ export function ThreadList({
             return (
               <SidebarGroup
                 key={group}
-                className={cn(
-                  'px-3 py-2',
-                  groupIndex > 0 && 'mt-0'
-                )}
+                className={cn(SIDEBAR_GROUP_BLOCK_PADDING, groupIndex > 0 && 'mt-0')}
               >
-                <div
-                  className={cn(
-                    'sticky z-[5] !bg-sidebar border-b border-sidebar-border/40 transition-colors duration-150',
-                    stickyTopOffset,
-                    groupContainsSelected && 'border-l-[3px] border-l-sidebar-foreground/40 bg-sidebar-foreground/10'
-                  )}
-                >
+                <div className={cn(SIDEBAR_GROUP_ROW_STICKY, stickyTopOffset)}>
                   <CollapsibleGroupRow
                     label={getTimeGroupLabel(group)}
                     count={count}
@@ -454,28 +453,33 @@ export function ThreadList({
                                     isActive={isSelected}
                                     className={cn(
                                       'relative group/thread transition-colors duration-150 ease-out',
-                                      'rounded-lg pl-3 my-0.5',
-                                      'hover:bg-sidebar-foreground/10',
-                                      'data-[active=true]:!bg-sidebar-foreground/15',
+                                      SIDEBAR_THREAD_ITEM_PADDING,
+                                      'hover:bg-sidebar-foreground/[0.06]',
+                                      'data-[active=true]:border-l-[3px] data-[active=true]:border-l-sidebar-foreground data-[active=true]:rounded-md',
+                                      isSelected && SIDEBAR_THREAD_ITEM_ACTIVE,
                                       (openDropdownThreadId === thread.id ||
                                         threadIdToDelete === thread.id ||
                                         threadIdToRename === thread.id ||
                                         (threadIdToShare === thread.id &&
                                           isShareDialogOpen)) &&
-                                      !isSelected &&
-                                      'bg-sidebar-foreground/10'
+                                        !isSelected &&
+                                        'bg-sidebar-foreground/[0.06]'
                                     )}
                                   >
-                                    <span className="flex pl-3 min-w-0 flex-1 items-center gap-2">
+                                    <span className="flex min-w-0 flex-1 items-center gap-2 pl-0">
                                       {thread.metadata?.is_shared ? (
                                         <Share2
-                                          className="h-4 w-4 shrink-0 text-sidebar-foreground/70"
+                                          className={cn(
+                                            SIDEBAR_THREAD_ICON_SIZE,
+                                            'shrink-0 text-sidebar-foreground/70'
+                                          )}
                                           aria-hidden="true"
                                         />
                                       ) : (
                                         <MessageSquare
                                           className={cn(
-                                            'h-4 w-4 shrink-0',
+                                            SIDEBAR_THREAD_ICON_SIZE,
+                                            'shrink-0',
                                             isSelected
                                               ? 'text-sidebar-foreground'
                                               : 'text-sidebar-foreground/60'
@@ -483,7 +487,7 @@ export function ThreadList({
                                           aria-hidden="true"
                                         />
                                       )}
-                                      <span className="truncate text-left text-sm">
+                                      <span className={cn('truncate text-left', SIDEBAR_THREAD_ITEM_TEXT)}>
                                         {displayName}
                                       </span>
                                     </span>

@@ -10,6 +10,14 @@ import {
 
 import { CustomScrollbar } from '@/components/CustomScrollbar';
 
+import { cn } from '@/lib/utils';
+import {
+  SIDEBAR_SECTION_HEADER,
+  SIDEBAR_SECTION_HEADER_TITLE,
+  SIDEBAR_SECTION_HEADER_HOVER,
+  SIDEBAR_SECTION_GAP,
+  SIDEBAR_CONTENT_PX
+} from './layout';
 import { Translator } from '../i18n';
 import { ThreadCollapseButton } from './ThreadCollapse';
 import { GroupedChatSection } from './GroupedChatSection';
@@ -104,8 +112,8 @@ export function ChatHistorySection({
 
   return (
     <div className="flex flex-1 flex-col min-h-0" aria-label="Chat history">
-      <header className="flex shrink-0 items-center justify-between pb-2 pr-1">
-        <p className="min-w-0 flex-1 truncate text-left text-xs font-medium text-sidebar-foreground/60 tracking-tight">
+      <header className={cn('flex shrink-0 items-center', SIDEBAR_SECTION_HEADER, SIDEBAR_SECTION_HEADER_HOVER)}>
+        <p className={SIDEBAR_SECTION_HEADER_TITLE}>
           <Translator path="threadHistory.sidebar.title" />
         </p>
         <div className="flex h-8 w-8 shrink-0 items-center justify-center">
@@ -119,12 +127,12 @@ export function ChatHistorySection({
       <CustomScrollbar
         ref={historyScrollRef}
         onScroll={handleHistoryScroll}
-        className="flex-1 min-h-0"
+        className="flex-1 min-h-0 mt-3"
         variant="sidebar"
         hideScrollbar={hideScrollbar}
         invalidateKey={invalidateKey}
       >
-        <div className="flex flex-col gap-0 px-0 min-h-0">
+        <div className={cn('flex flex-col min-h-0', SIDEBAR_SECTION_GAP, SIDEBAR_CONTENT_PX)}>
           <GroupedChatSection
             sectionExpanded={topicsExpanded}
             onSectionExpandedChange={setTopicsExpanded}

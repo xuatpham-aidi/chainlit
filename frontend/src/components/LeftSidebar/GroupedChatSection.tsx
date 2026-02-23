@@ -71,6 +71,11 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 
+import {
+  SIDEBAR_GROUP_ROW_STICKY,
+  SIDEBAR_GROUP_ROW_SELECTED,
+  SIDEBAR_SECTION_GAP
+} from './layout';
 import { Translator } from '../i18n';
 import { CollapsibleGroupRow } from './CollapsibleGroupRow';
 import { SidebarSection } from './SidebarSection';
@@ -164,13 +169,14 @@ function SortableGroupRow({
           onKeyDown={handleRowKeyDown}
           className={cn(
             'flex items-center gap-0 w-full rounded-lg overflow-hidden touch-none',
-            'sticky top-9 z-10 !bg-sidebar border-b border-sidebar-border/40',
+            'sticky top-9 z-10',
+            SIDEBAR_GROUP_ROW_STICKY,
             hasChildren
               ? 'cursor-grab active:cursor-grabbing'
               : 'cursor-default',
-            'bg-sidebar-foreground/5 hover:bg-sidebar-foreground/10 transition-colors duration-150',
+            'bg-transparent hover:bg-sidebar-foreground/[0.06] transition-colors duration-150',
             'border border-transparent',
-            containsSelectedThread && 'border-l-[3px] border-l-sidebar-foreground/40 bg-sidebar-foreground/10 text-sidebar-foreground',
+            containsSelectedThread && SIDEBAR_GROUP_ROW_SELECTED,
             isDragging && 'opacity-60 shadow-md',
             isDropTarget && 'ring-2 ring-sidebar-border ring-inset border-sidebar-border/60'
           )}
@@ -499,16 +505,16 @@ export function GroupedChatSection({
             items={threadGroups.map((g) => g.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="flex flex-col gap-1">
+            <div className={cn('flex flex-col', SIDEBAR_SECTION_GAP)}>
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full justify-start gap-2 h-8 px-2 rounded-md text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80"
+                className="w-full justify-start gap-2 h-9 min-h-9 pl-3 pr-2 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-foreground/[0.06] transition-colors duration-150"
                 onClick={() => setCreateDialogOpen(true)}
                 aria-label={t('threadHistory.sidebar.createGroupTitle')}
               >
                 <FolderPlus className="size-4 shrink-0" />
-                <span className="truncate text-sm font-medium">
+                <span className="truncate text-xs font-semibold tracking-tight">
                   <Translator path="threadHistory.sidebar.createGroupTitle" />
                 </span>
               </Button>

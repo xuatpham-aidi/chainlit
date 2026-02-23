@@ -1,6 +1,13 @@
 import { cn } from '@/lib/utils';
 import { ChevronDown, ChevronRight, Folder } from 'lucide-react';
 
+import {
+  SIDEBAR_GROUP_ROW,
+  SIDEBAR_GROUP_ROW_BG,
+  SIDEBAR_GROUP_ROW_SELECTED,
+  SIDEBAR_GROUP_ICON_SIZE
+} from './layout';
+
 export interface CollapsibleGroupRowProps {
   label: React.ReactNode;
   count?: number;
@@ -31,12 +38,15 @@ export function CollapsibleGroupRow({
 }: CollapsibleGroupRowProps) {
   const leadingIcon = showChevron ? (
     isCollapsed ? (
-      <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+      <ChevronRight className={cn(SIDEBAR_GROUP_ICON_SIZE, 'shrink-0')} aria-hidden />
     ) : (
-      <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
+      <ChevronDown className={cn(SIDEBAR_GROUP_ICON_SIZE, 'shrink-0')} aria-hidden />
     )
   ) : (
-    <Folder className="h-3.5 w-3.5 shrink-0 text-sidebar-foreground/50" aria-hidden />
+    <Folder
+      className={cn(SIDEBAR_GROUP_ICON_SIZE, 'shrink-0 text-sidebar-foreground/50')}
+      aria-hidden
+    />
   );
   const content = (
     <>
@@ -45,7 +55,7 @@ export function CollapsibleGroupRow({
       {count !== undefined && (
         <span
           className={cn(
-            'text-sm font-normal rounded-full px-1.5 text-center',
+            'text-xs font-normal rounded-full px-1.5 text-center',
             containsSelected
               ? 'bg-sidebar-foreground/15 font-medium text-sidebar-foreground/90'
               : 'text-sidebar-foreground/50 bg-sidebar-foreground/10'
@@ -58,17 +68,26 @@ export function CollapsibleGroupRow({
   );
 
   const rowClassName = cn(
-    'flex w-full items-center gap-2 rounded-lg py-1.5 pl-2 pr-2',
-    'text-xs font-medium tracking-tight',
-    !contentOnly && 'bg-sidebar-foreground/5',
-    'transition-colors duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
-    !contentOnly && containsSelected && 'bg-sidebar-foreground/10 text-sidebar-foreground',
-    !contentOnly && !containsSelected && 'hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground/90',
+    SIDEBAR_GROUP_ROW,
+    !contentOnly && SIDEBAR_GROUP_ROW_BG,
+    'outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
+    !contentOnly && containsSelected && SIDEBAR_GROUP_ROW_SELECTED,
+    !contentOnly && !containsSelected && 'hover:text-sidebar-foreground/90',
     className
   );
 
   if (contentOnly) {
-    return <div className={cn('flex flex-1 min-w-0 items-center gap-2 py-1.5 pl-2.5 pr-2 text-left rounded-none pointer-events-none select-none text-xs font-medium tracking-tight', className)}>{content}</div>;
+    return (
+      <div
+        className={cn(
+          'flex flex-1 min-w-0 items-center gap-2 text-left rounded-none pointer-events-none select-none text-sidebar-foreground/80',
+          SIDEBAR_GROUP_ROW,
+          className
+        )}
+      >
+        {content}
+      </div>
+    );
   }
 
   if (asButton) {
