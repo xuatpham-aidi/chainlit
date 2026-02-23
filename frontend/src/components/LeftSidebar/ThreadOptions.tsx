@@ -105,7 +105,7 @@ export default function ThreadOptions({
               }}>
               <Translator path="threadHistory.thread.menu.moveToGroup" />
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="rounded-xl border-sidebar-border/60">
+            <DropdownMenuSubContent className="rounded-xl border-sidebar-border/60 max-w-[14rem]">
               {isInGroup && (
                 <DropdownMenuItem
                   className={SIDEBAR_MENU_ITEM}
@@ -117,10 +117,12 @@ export default function ThreadOptions({
               {otherGroups.map((g) => (
                 <DropdownMenuItem
                   key={g.id}
-                  className={SIDEBAR_MENU_ITEM}
+                  className={cn(SIDEBAR_MENU_ITEM, 'min-w-0')}
                   onClick={(e) => handleMoveToGroup(e, g.id)}
                 >
-                  {g.name}
+                  <span className="truncate block min-w-0" title={g.name}>
+                    {g.name}
+                  </span>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuSubContent>
