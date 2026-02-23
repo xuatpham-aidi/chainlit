@@ -212,7 +212,7 @@ function SortableGroupRow({
             onKeyDown={handleRowKeyDown}
             style={stickyRowStyle}
             className={cn(
-              'flex items-center gap-0 w-full rounded-xl overflow-hidden touch-none pr-3 select-none',
+              'flex items-center gap-0 w-full rounded-xl overflow-hidden touch-none pr-2 select-none',
               SIDEBAR_TOPIC_ROW_STICKY_TOP,
             'sticky',
             SIDEBAR_GROUP_ROW_STICKY,
@@ -549,6 +549,7 @@ export function GroupedChatSection({
       isLoading={isLoading}
       ariaLabel="Grouped chat"
       stickyHeader
+      sectionBackground="topics"
     >
       <div className="min-h-0 min-w-0 overflow-clip">
         <DndContext onDragEnd={handleDragEnd} sensors={sensors}>

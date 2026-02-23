@@ -366,6 +366,7 @@ export function ThreadHistory({
         isLoading={isLoading}
         ariaLabel="Recent chat section"
         stickyHeader
+        sectionBackground="recent"
       >
         {listContent}
       </SidebarSection>

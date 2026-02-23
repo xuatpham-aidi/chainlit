@@ -9,8 +9,10 @@
  * - Block A: New chat (solid Deep Blue/Teal) + Search (soft). Block B: Topics + Recent.
  */
 
-/** Horizontal padding for sidebar content (aligns list items and headers). */
-export const SIDEBAR_CONTENT_PX = 'px-4';
+/** Horizontal padding: left for hierarchy/alignment, right minimized to utilize width. */
+export const SIDEBAR_CONTENT_PL = 'pl-4';
+export const SIDEBAR_CONTENT_PR = 'pr-2';
+export const SIDEBAR_CONTENT_PX = 'pl-4 pr-2';
 
 /** Indentation for hierarchy: level 0 = topic/section, level 1 = time group, level 2 = thread under topic. */
 export const SIDEBAR_LEVEL_0_PL = 'pl-4';
@@ -23,10 +25,24 @@ export const SIDEBAR_ZONE_HEADER_RIGHT = 'pr-9';
 export const SIDEBAR_OUTER_GAP = 'gap-6';
 
 /** Vertical gap between sections inside history (Topics vs Recent). */
-export const SIDEBAR_SECTION_GAP = 'gap-5';
+export const SIDEBAR_SECTION_GAP = 'gap-4';
 
 /** Vertical gap between section header and its content. */
 export const SIDEBAR_SECTION_HEADER_TO_CONTENT_GAP = 'gap-3';
+
+/**
+ * Full-section background for expanded groups when no thread is selected.
+ * Covers entire group (header + content) for clear visual distinction.
+ * NBC: soft cards, rounded corners, subtle tint per block (Topics vs Recent).
+ */
+export const SIDEBAR_GROUP_SECTION_BG_TOPICS =
+  'rounded-2xl bg-sidebar-foreground/[0.04] dark:bg-sidebar-foreground/[0.07] transition-colors duration-200 ease-in-out';
+
+export const SIDEBAR_GROUP_SECTION_BG_RECENT =
+  'rounded-2xl bg-sidebar-foreground/[0.03] dark:bg-sidebar-foreground/[0.06] transition-colors duration-200 ease-in-out';
+
+/** Inner padding for group section content (when expanded). */
+export const SIDEBAR_GROUP_SECTION_INNER = 'px-3 pt-1 pb-3';
 
 /** Inner gap within a section. */
 export const SIDEBAR_SECTION_INNER_GAP = 'gap-2';
@@ -38,7 +54,7 @@ export const SIDEBAR_TIME_GROUP_ROW_STICKY_TOP = 'top-[5.25rem]';
 
 /** Chat history zone: soft card, rounded-2xl, very subtle background (generous white space). */
 export const SIDEBAR_HISTORY_ZONE_BG =
-  'bg-sidebar-foreground/[0.035] dark:bg-sidebar-foreground/[0.06] rounded-2xl overflow-hidden';
+  'bg-sidebar-foreground/[0.03] dark:bg-sidebar-foreground/[0.05] rounded-2xl overflow-hidden';
 
 export const SIDEBAR_STICKY_HEADER_BG =
   'bg-sidebar-foreground/[0.035] dark:bg-sidebar-foreground/[0.06]';
@@ -47,10 +63,10 @@ export const SIDEBAR_STICKY_SECTION_HEADER_BG = 'bg-sidebar';
 
 /** Main "Chat history" header inside zone – friendly height, clear typography. */
 export const SIDEBAR_SECTION_HEADER =
-  'w-full flex shrink-0 items-center justify-between gap-2 h-11 min-h-[2.75rem] pl-4 pr-3 py-0 rounded-t-2xl transition-colors duration-200 ease-in-out';
+  'w-full flex shrink-0 items-center justify-between gap-2 h-11 min-h-[2.75rem] pl-4 pr-2 py-0 rounded-t-2xl transition-colors duration-200 ease-in-out';
 
 export const SIDEBAR_SECTION_HEADER_TITLE =
-  'min-w-0 flex-1 truncate text-left text-[13px] font-medium tracking-wide text-sidebar-foreground/75';
+  'min-w-0 flex-1 truncate text-left text-[13px] font-medium tracking-[0.02em] text-sidebar-foreground/80';
 
 export const SIDEBAR_SECTION_HEADER_DEFAULT = '';
 
@@ -71,18 +87,18 @@ export const SIDEBAR_SECTION_WRAPPER_SELECTED =
 
 export const SIDEBAR_SECTION_LEFT_BAR_PADDING = 'pl-[3px]';
 
-/** Major section (Topics / Recent): one tap target, friendly height. */
+/** Major section (Topics / Recent): one tap target, friendly height, big-tech clarity. */
 export const SIDEBAR_MAJOR_SECTION_HEADER =
-  'flex items-center gap-3 w-full h-11 min-h-[2.75rem] pl-4 pr-3 py-0 rounded-xl transition-colors duration-200 ease-in-out text-[13px] font-medium tracking-wide select-none';
+  'flex items-center gap-3 w-full h-11 min-h-[2.75rem] pl-4 pr-2 py-0 rounded-xl transition-colors duration-200 ease-in-out text-[13px] font-medium tracking-[0.02em] select-none';
 
-export const SIDEBAR_MAJOR_SECTION_HEADER_DEFAULT = 'text-sidebar-foreground/75';
+export const SIDEBAR_MAJOR_SECTION_HEADER_DEFAULT = 'text-sidebar-foreground/80';
 
 export const SIDEBAR_MAJOR_SECTION_HEADER_HOVER =
-  'hover:bg-sidebar-foreground/[0.05] hover:text-sidebar-foreground';
+  'hover:bg-sidebar-foreground/[0.06] dark:hover:bg-sidebar-foreground/[0.08] hover:text-sidebar-foreground';
 
 /** Group/topic row base – comfortable tap target. */
 export const SIDEBAR_GROUP_ROW =
-  'flex w-full items-center gap-3 py-2.5 pl-4 pr-3 min-h-[2.75rem] text-[13px] font-medium tracking-wide transition-colors duration-200 ease-in-out rounded-xl select-none';
+  'flex w-full items-center gap-3 py-2.5 pl-4 pr-2 min-h-[2.75rem] text-[13px] font-medium tracking-wide transition-colors duration-200 ease-in-out rounded-xl select-none';
 
 export const SIDEBAR_GROUP_ROW_DEFAULT = 'text-sidebar-foreground/85 bg-transparent';
 
@@ -110,7 +126,7 @@ export const SIDEBAR_TIME_GROUP_ROW_WRAPPER = 'rounded-xl';
 
 /** Thread item: comfortable tap target, rounded, clear hierarchy. */
 export const SIDEBAR_THREAD_ITEM_PADDING =
-  'rounded-xl pl-4 pr-3 py-2.5 min-h-[2.75rem] my-0.5';
+  'rounded-xl pl-4 pr-2 py-2.5 min-h-[2.75rem] my-0.5';
 export const SIDEBAR_THREAD_ITEM_TEXT =
   'truncate text-left text-[13px] tracking-wide';
 
@@ -143,7 +159,7 @@ export const SIDEBAR_ACTION_SECONDARY =
 
 /** Create-group / secondary action button in Topics section. */
 export const SIDEBAR_ACTION_BUTTON =
-  'w-full justify-start gap-3 h-10 min-h-10 pl-4 pr-3 rounded-xl text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-foreground/[0.05] dark:hover:bg-sidebar-foreground/[0.09] transition-colors duration-200 ease-in-out text-[13px] font-medium tracking-wide focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar outline-none';
+  'w-full justify-start gap-3 h-10 min-h-10 pl-4 pr-2 rounded-xl text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-foreground/[0.05] dark:hover:bg-sidebar-foreground/[0.09] transition-colors duration-200 ease-in-out text-[13px] font-medium tracking-wide focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar outline-none';
 
 /** Count badge in collapsible group row (pill shape). */
 export const SIDEBAR_GROUP_COUNT_BADGE =

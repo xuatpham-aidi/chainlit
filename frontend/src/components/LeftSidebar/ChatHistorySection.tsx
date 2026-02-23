@@ -15,10 +15,8 @@ import {
   SIDEBAR_SECTION_HEADER,
   SIDEBAR_SECTION_HEADER_TITLE,
   SIDEBAR_SECTION_HEADER_HOVER,
-  SIDEBAR_SECTION_GAP,
   SIDEBAR_CONTENT_PX,
-  SIDEBAR_HISTORY_ZONE_BG,
-  SIDEBAR_ZONE_HEADER_RIGHT
+  SIDEBAR_HISTORY_ZONE_BG
 } from './layout';
 import { Translator } from '../i18n';
 import { ThreadCollapseButton } from './ThreadCollapse';
@@ -150,8 +148,7 @@ export function ChatHistorySection({
         >
           <div
             className={cn(
-              'flex flex-1 flex-col min-h-0 min-w-0 py-4',
-              SIDEBAR_SECTION_GAP,
+              'flex flex-1 flex-col min-h-0 min-w-0 py-5 gap-5',
               SIDEBAR_CONTENT_PX
             )}
           >

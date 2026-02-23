@@ -13,8 +13,12 @@ import {
   SIDEBAR_SECTION_HEADER_TO_CONTENT_GAP,
   SIDEBAR_SECTION_WRAPPER_SELECTED,
   SIDEBAR_SECTION_LEFT_BAR_PADDING,
-  SIDEBAR_STICKY_SECTION_HEADER_BG
+  SIDEBAR_STICKY_SECTION_HEADER_BG,
+  SIDEBAR_GROUP_SECTION_BG_TOPICS,
+  SIDEBAR_GROUP_SECTION_BG_RECENT
 } from './layout';
+
+export type SidebarSectionBackgroundVariant = 'topics' | 'recent' | 'none';
 
 export interface SidebarSectionProps {
   title: React.ReactNode;
@@ -27,6 +31,8 @@ export interface SidebarSectionProps {
   ariaLabel?: string;
   /** When true, section header sticks at top while scrolling (for use inside scroll container). */
   stickyHeader?: boolean;
+  /** Full-section background when expanded (covers entire group for visual distinction). */
+  sectionBackground?: SidebarSectionBackgroundVariant;
 }
 
 /**
@@ -42,7 +48,8 @@ export function SidebarSection({
   isLoading = false,
   rightSlot,
   ariaLabel = 'Section',
-  stickyHeader = false
+  stickyHeader = false,
+  sectionBackground = 'none'
 }: SidebarSectionProps) {
   const handleToggleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -50,9 +57,18 @@ export function SidebarSection({
     onToggle();
   };
 
+  const hasSectionBg =
+    sectionBackground !== 'none' && expanded;
+  const sectionBgClass =
+    sectionBackground === 'topics'
+      ? SIDEBAR_GROUP_SECTION_BG_TOPICS
+      : sectionBackground === 'recent'
+        ? SIDEBAR_GROUP_SECTION_BG_RECENT
+        : '';
+
   const sectionContent = (
     <>
-        <Button
+      <Button
         onClick={handleToggleClick}
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => {
@@ -108,7 +124,8 @@ export function SidebarSection({
       className={cn(
         'flex min-w-0 shrink-0 flex-col',
         expanded ? SIDEBAR_SECTION_HEADER_TO_CONTENT_GAP : 'gap-0',
-        containsSelected && SIDEBAR_SECTION_WRAPPER_SELECTED
+        containsSelected && SIDEBAR_SECTION_WRAPPER_SELECTED,
+        hasSectionBg && sectionBgClass
       )}
       aria-label={ariaLabel}
       aria-current={containsSelected ? 'true' : undefined}

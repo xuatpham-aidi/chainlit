@@ -107,7 +107,7 @@ export default function LeftSidebar({
       {...props}
       className="border-r border-sidebar-border/40 bg-sidebar flex flex-col min-w-0 overflow-hidden"
     >
-      <SidebarHeader className="sidebar-header-nbc flex flex-col gap-5 border-b border-sidebar-border/30 px-4 py-5 shrink-0 bg-sidebar">
+      <SidebarHeader className="sidebar-header-nbc flex flex-col gap-5 border-b border-sidebar-border/30 pl-4 pr-2 py-5 shrink-0 bg-sidebar">
         <div className="flex items-center justify-between gap-2 min-h-10">
           <Logo className="h-8 w-auto max-w-[140px] shrink-0" />
           <SidebarTrigger />
