@@ -288,7 +288,7 @@ export function ThreadHistory({
   const currentThreadId = threadHistory?.currentThreadId ?? threadId ?? null;
   const sectionContainsSelected = Boolean(
     currentThreadId &&
-      displayedThreadHistory?.threads?.some((t) => t.id === currentThreadId)
+    displayedThreadHistory?.threads?.some((t) => t.id === currentThreadId)
   );
 
   const sectionTitleNode =
@@ -318,6 +318,8 @@ export function ThreadHistory({
           collapsedGroups={collapsedGroups}
           setCollapsedGroups={setCollapsedGroups}
           stickyTopOffset="top-10"
+          compactFirstGroup
+          folderTreeStyle
         />
       </div>
     ) : null
@@ -349,6 +351,8 @@ export function ThreadHistory({
               collapsedGroups={collapsedGroups}
               setCollapsedGroups={setCollapsedGroups}
               stickyTopOffset="top-0"
+              compactFirstGroup
+              folderTreeStyle
             />
           </div>
         ) : null}
@@ -389,7 +393,7 @@ export function ThreadHistory({
         <p className={cn('min-w-0 flex-1 truncate text-left', SIDEBAR_SECTION_HEADER_TITLE)}>
           {sectionTitleNode}
         </p>
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center">
           {isLoading ? (
             <Loader />
           ) : showCollapseButton && onCollapseAll ? (

@@ -20,7 +20,15 @@ import SidebarTrigger from '@/components/header/SidebarTrigger';
 import { Sidebar, SidebarHeader } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
-import { SIDEBAR_OUTER_GAP, SIDEBAR_CONTENT_PX, SIDEBAR_CTA_PRIMARY, SIDEBAR_ACTION_SECONDARY } from './layout';
+import {
+  SIDEBAR_OUTER_GAP,
+  SIDEBAR_CONTENT_PX,
+  SIDEBAR_CTA_PRIMARY,
+  SIDEBAR_ACTION_SECONDARY,
+  SIDEBAR_MAIN_BG,
+  SIDEBAR_GAP_SEPARATOR,
+  SIDEBAR_HEADER_BORDER
+} from './layout';
 import NewChatButton from '../header/NewChat';
 import SearchChats from './Search';
 import { ChatHistorySection } from './ChatHistorySection';
@@ -105,20 +113,29 @@ export default function LeftSidebar({
   return (
     <Sidebar
       {...props}
-      className="border-r border-sidebar-border/30 bg-sidebar flex flex-col min-w-0 overflow-hidden"
+      className={cn(
+        'border-r bg-sidebar flex flex-col min-w-0 overflow-hidden',
+        SIDEBAR_HEADER_BORDER
+      )}
     >
-      <SidebarHeader className="sidebar-header-nbc flex flex-col gap-5 border-b border-sidebar-border/25 pl-4 pr-2 py-5 shrink-0 bg-sidebar">
-        <div className="flex items-center justify-between gap-2 min-h-10">
-          <Logo className="h-8 w-auto max-w-[140px] shrink-0" />
+      <SidebarHeader
+        className={cn(
+          'sidebar-header-nbc flex flex-col gap-3 border-b pl-3 pr-2 py-3.5 shrink-0 bg-sidebar',
+          SIDEBAR_HEADER_BORDER
+        )}
+      >
+        <div className="flex items-center justify-between gap-2 min-h-8">
+          <Logo className="h-6 w-auto max-w-[120px] shrink-0" />
           <SidebarTrigger />
         </div>
       </SidebarHeader>
 
       <div
         className={cn(
-          'flex flex-1 flex-col min-h-0 min-w-0 overflow-x-hidden py-5',
+          'flex flex-1 flex-col min-h-0 min-w-0 overflow-x-hidden py-3',
           SIDEBAR_CONTENT_PX,
-          SIDEBAR_OUTER_GAP
+          SIDEBAR_OUTER_GAP,
+          SIDEBAR_MAIN_BG
         )}
       >
         <section className="shrink-0" aria-label="New chat">
@@ -129,14 +146,18 @@ export default function LeftSidebar({
           />
         </section>
 
-        <section className="shrink-0" aria-label="Search">
+        <section
+          className={cn('shrink-0', SIDEBAR_GAP_SEPARATOR)}
+          aria-label="Search"
+        >
           <SearchChats triggerVariant="bar" />
         </section>
 
         <section
           className={cn(
-            'flex flex-1 flex-col min-h-0 min-w-0 pt-2 overflow-hidden',
-            SIDEBAR_OUTER_GAP
+            'flex flex-1 flex-col min-h-0 min-w-0 pt-0.5 overflow-hidden',
+            SIDEBAR_OUTER_GAP,
+            SIDEBAR_GAP_SEPARATOR
           )}
           aria-label="Chat history"
         >

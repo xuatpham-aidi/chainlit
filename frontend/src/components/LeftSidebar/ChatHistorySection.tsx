@@ -16,7 +16,9 @@ import {
   SIDEBAR_SECTION_HEADER_TITLE,
   SIDEBAR_SECTION_HEADER_HOVER,
   SIDEBAR_GROUP_CONTENT_PX,
-  SIDEBAR_HISTORY_ZONE_BG
+  SIDEBAR_HISTORY_ZONE_BG,
+  SIDEBAR_INNER_SECTION_SEPARATOR,
+  SIDEBAR_SECTION_HEADER_BORDER
 } from './layout';
 import { Translator } from '../i18n';
 import { ThreadCollapseButton } from './ThreadCollapse';
@@ -122,14 +124,15 @@ export function ChatHistorySection({
           className={cn(
             SIDEBAR_SECTION_HEADER,
             SIDEBAR_SECTION_HEADER_HOVER,
-            'select-none border-b border-sidebar-border/25 dark:border-sidebar-border/30'
+            'select-none',
+            SIDEBAR_SECTION_HEADER_BORDER
           )}
         >
           <p className={SIDEBAR_SECTION_HEADER_TITLE}>
             <Translator path="threadHistory.sidebar.title" />
           </p>
           <div
-            className="flex h-9 w-9 min-w-9 shrink-0 items-center justify-end"
+            className="flex h-7 w-7 min-w-7 shrink-0 items-center justify-end"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             role="presentation"
@@ -152,7 +155,7 @@ export function ChatHistorySection({
         >
           <div
             className={cn(
-              'flex flex-1 flex-col min-h-0 min-w-0 py-4 gap-2',
+              'flex flex-1 flex-col min-h-0 min-w-0 py-2',
               SIDEBAR_GROUP_CONTENT_PX
             )}
           >
@@ -162,7 +165,10 @@ export function ChatHistorySection({
               expandedGroups={expandedGroupsInSection}
               onExpandedGroupsChange={setExpandedGroupsInSection}
             />
-            <ThreadHistory
+            <div
+              className={cn('flex flex-col flex-1 min-h-0 min-w-0 pt-3', SIDEBAR_INNER_SECTION_SEPARATOR)}
+            >
+              <ThreadHistory
               historyScrollRef={historyScrollRef}
               registerScrollHandler={registerThreadHistoryScroll}
               collapsedGroups={collapsedGroups}
@@ -175,6 +181,7 @@ export function ChatHistorySection({
               sectionExpanded={recentExpanded}
               onSectionExpandedChange={setRecentExpanded}
             />
+            </div>
           </div>
         </CustomScrollbar>
       </div>

@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 import { Loader } from '@/components/Loader';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
   SIDEBAR_SECTION_HEADER_SELECTED_STICKY,
   SIDEBAR_SECTION_HEADER_TO_CONTENT_GAP,
   SIDEBAR_SECTION_WRAPPER_SELECTED,
+  SIDEBAR_SECTION_WRAPPER_BAR,
   SIDEBAR_SECTION_LEFT_BAR_PADDING,
   SIDEBAR_STICKY_SECTION_HEADER_BG,
   SIDEBAR_GROUP_SECTION_WRAPPER,
@@ -94,11 +95,11 @@ export function SidebarSection({
           containsSelected && (stickyHeader ? SIDEBAR_SECTION_HEADER_SELECTED_STICKY : SIDEBAR_SECTION_HEADER_SELECTED_IN_WRAPPER),
           !containsSelected && !isSmallLabel && SIDEBAR_MAJOR_SECTION_HEADER_DEFAULT,
           !containsSelected && !isSmallLabel && SIDEBAR_MAJOR_SECTION_HEADER_HOVER,
-          !containsSelected && isSmallLabel && 'hover:bg-sidebar-foreground/[0.04] dark:hover:bg-sidebar-foreground/[0.06] hover:text-sidebar-foreground/80'
+          !containsSelected && isSmallLabel && 'hover:bg-sidebar-foreground/[0.05] dark:hover:bg-sidebar-foreground/[0.07] hover:text-sidebar-foreground/85'
         )}
         aria-expanded={expanded}
       >
-        <span className="min-w-0 flex-1 truncate text-left font-medium tracking-[0.01em]">
+        <span className="min-w-0 flex-1 truncate text-left font-medium tracking-[0.01em] text-[13px]">
           {title}
         </span>
         <div className="flex items-center gap-1 shrink-0">
@@ -106,10 +107,11 @@ export function SidebarSection({
             rightSlot
           ) : isLoading ? (
             <Loader />
-          ) : expanded ? (
-            <ChevronDown className={cn('size-4 shrink-0 transition-opacity duration-200 ease-in-out', isSmallLabel ? 'text-sidebar-foreground/45' : 'text-sidebar-foreground/50')} />
           ) : (
-            <ChevronRight className={cn('size-4 shrink-0 transition-opacity duration-200 ease-in-out', isSmallLabel ? 'text-sidebar-foreground/45' : 'text-sidebar-foreground/50')} />
+            <ChevronRight
+              className="size-3.5 shrink-0 sidebar-chevron-rotate text-sidebar-foreground/45"
+              data-expanded={expanded}
+            />
           )}
         </div>
       </Button>
@@ -137,7 +139,7 @@ export function SidebarSection({
       className={cn(
         'flex min-w-0 shrink-0 flex-col',
         expanded ? SIDEBAR_SECTION_HEADER_TO_CONTENT_GAP : 'gap-0',
-        containsSelected && SIDEBAR_SECTION_WRAPPER_SELECTED,
+        hasSectionWrapper && (containsSelected ? SIDEBAR_SECTION_WRAPPER_SELECTED : SIDEBAR_SECTION_WRAPPER_BAR),
         sectionWrapperClass,
         hasSectionBg && sectionBgClass
       )}

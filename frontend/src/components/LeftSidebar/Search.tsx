@@ -119,7 +119,7 @@ export default function SearchChats({
         <span className="min-w-0 flex-1 truncate text-left">
           {t('threadHistory.sidebar.filters.placeholder')}
         </span>
-        <Search className="size-4 shrink-0 opacity-75 transition-opacity duration-200" />
+        <Search className="size-3.5 shrink-0 opacity-70 transition-opacity duration-150" />
       </Button>
     ) : (
       <Button
@@ -128,9 +128,9 @@ export default function SearchChats({
         onPointerDown={handleSearchPointerDown}
         size="icon"
         variant="ghost"
-        className="h-9 w-9 rounded-xl text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-foreground/[0.05] dark:hover:bg-sidebar-foreground/[0.08] transition-colors duration-200 ease-in-out"
+        className="h-8 w-8 rounded-xl text-sidebar-foreground/55 hover:text-sidebar-foreground hover:bg-sidebar-foreground/[0.04] dark:hover:bg-sidebar-foreground/[0.06] transition-all duration-150 ease-out"
       >
-        <Search className="size-4" />
+        <Search className="size-3.5" />
       </Button>
     );
 

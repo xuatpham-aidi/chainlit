@@ -74,11 +74,11 @@ export default function ThreadOptions({
           id="thread-options"
           className={cn(SIDEBAR_ICON_BUTTON, className)}
         >
-          <Ellipsis className="h-4 w-4" />
+          <Ellipsis className="h-3.5 w-3.5" />
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="min-w-[9rem] rounded-xl border-sidebar-border/40 shadow-lg bg-sidebar dark:bg-sidebar py-1.5"
+        className="min-w-[8.5rem] rounded-xl border-sidebar-border/30 shadow-lg shadow-sidebar-foreground/[0.04] bg-sidebar dark:bg-sidebar py-1"
         side="right"
         align="start"
         forceMount
@@ -93,7 +93,7 @@ export default function ThreadOptions({
           className={SIDEBAR_MENU_ITEM}
         >
           <Translator path="threadHistory.thread.menu.rename" />
-          <Pencil className="ml-auto h-4 w-4 opacity-60" />
+          <Pencil className="ml-auto h-3.5 w-3.5 opacity-50" />
         </DropdownMenuItem>
         {hasGroups && onMoveToGroup && (
           <DropdownMenuSub>
@@ -138,7 +138,7 @@ export default function ThreadOptions({
             className={SIDEBAR_MENU_ITEM}
           >
             <Translator path="threadHistory.thread.menu.share" />
-            <Share2 className="ml-auto h-4 w-4 opacity-60" />
+            <Share2 className="ml-auto h-3.5 w-3.5 opacity-50" />
           </DropdownMenuItem>
         )}
         <DropdownMenuItem
@@ -150,7 +150,7 @@ export default function ThreadOptions({
           className={cn(SIDEBAR_MENU_ITEM, 'text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400')}
         >
           <Translator path="threadHistory.thread.menu.delete" />
-          <Trash2 className="ml-auto h-4 w-4 opacity-80" />
+          <Trash2 className="ml-auto h-3.5 w-3.5 opacity-70" />
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

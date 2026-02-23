@@ -1,16 +1,19 @@
 import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { ChevronRight, Folder, FolderOpen, Info } from 'lucide-react';
 
 import {
   SIDEBAR_GROUP_ROW,
   SIDEBAR_GROUP_ROW_DEFAULT,
   SIDEBAR_GROUP_ROW_BG,
+  SIDEBAR_GROUP_ROW_HOVER_TEXT,
   SIDEBAR_GROUP_ROW_SELECTED,
   SIDEBAR_GROUP_ICON_SIZE,
   SIDEBAR_GROUP_COUNT_BADGE,
   SIDEBAR_GROUP_COUNT_BADGE_DEFAULT,
   SIDEBAR_GROUP_COUNT_BADGE_SELECTED,
-  SIDEBAR_FOCUS_RING
+  SIDEBAR_FOCUS_RING,
+  SIDEBAR_FOLDER_ICON_COLLAPSED,
+  SIDEBAR_FOLDER_ICON_EXPANDED
 } from './layout';
 
 export interface CollapsibleGroupRowProps {
@@ -24,6 +27,8 @@ export interface CollapsibleGroupRowProps {
   contentOnly?: boolean;
   /** When false, show folder icon instead of chevron (e.g. empty group with no threads). */
   showChevron?: boolean;
+  /** 'folder' = Folder/FolderOpen (folder-tree); 'chevron' = ChevronRight/ChevronDown. */
+  iconVariant?: 'folder' | 'chevron';
 }
 
 /**
@@ -39,17 +44,26 @@ export function CollapsibleGroupRow({
   className,
   asButton = true,
   contentOnly = false,
-  showChevron = true
+  showChevron = true,
+  iconVariant = 'folder'
 }: CollapsibleGroupRowProps) {
   const leadingIcon = showChevron ? (
-    isCollapsed ? (
-      <ChevronRight className={cn(SIDEBAR_GROUP_ICON_SIZE, 'shrink-0')} aria-hidden />
+    iconVariant === 'folder' ? (
+      isCollapsed ? (
+        <Folder className={cn(SIDEBAR_GROUP_ICON_SIZE, 'shrink-0', SIDEBAR_FOLDER_ICON_COLLAPSED, 'group-hover/folder-row:text-sidebar-foreground/70')} aria-hidden />
+      ) : (
+        <FolderOpen className={cn(SIDEBAR_GROUP_ICON_SIZE, 'shrink-0', SIDEBAR_FOLDER_ICON_EXPANDED)} aria-hidden />
+      )
     ) : (
-      <ChevronDown className={cn(SIDEBAR_GROUP_ICON_SIZE, 'shrink-0')} aria-hidden />
+      <ChevronRight
+        className={cn(SIDEBAR_GROUP_ICON_SIZE, 'shrink-0 sidebar-chevron-rotate')}
+        data-expanded={!isCollapsed}
+        aria-hidden
+      />
     )
   ) : (
     <Info
-      className={cn(SIDEBAR_GROUP_ICON_SIZE, 'shrink-0 text-sidebar-foreground/50')}
+      className={cn(SIDEBAR_GROUP_ICON_SIZE, 'shrink-0 text-sidebar-foreground/45')}
       aria-hidden
     />
   );
@@ -73,12 +87,13 @@ export function CollapsibleGroupRow({
   );
 
   const rowClassName = cn(
+    'group/folder-row',
     SIDEBAR_GROUP_ROW,
     SIDEBAR_GROUP_ROW_DEFAULT,
     !contentOnly && SIDEBAR_GROUP_ROW_BG,
     SIDEBAR_FOCUS_RING,
     !contentOnly && containsSelected && SIDEBAR_GROUP_ROW_SELECTED,
-    !contentOnly && !containsSelected && 'hover:text-sidebar-foreground',
+    !contentOnly && !containsSelected && SIDEBAR_GROUP_ROW_HOVER_TEXT,
     className
   );
 
@@ -95,7 +110,7 @@ export function CollapsibleGroupRow({
     return (
       <div
         className={cn(
-          'flex flex-1 min-w-0 items-center gap-2 text-left pointer-events-none select-none',
+          'group/folder-row flex flex-1 min-w-0 items-center gap-1.5 text-left pointer-events-none select-none',
           SIDEBAR_GROUP_ROW,
           SIDEBAR_GROUP_ROW_DEFAULT,
           className

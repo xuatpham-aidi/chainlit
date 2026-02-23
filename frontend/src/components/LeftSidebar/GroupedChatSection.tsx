@@ -80,6 +80,7 @@ import {
   SIDEBAR_GROUP_ROW_STICKY,
   SIDEBAR_GROUP_ROW_SELECTED,
   SIDEBAR_GROUP_ROW_SELECTED_STICKY,
+  SIDEBAR_GROUP_BLOCK_PX,
   SIDEBAR_GROUP_BLOCK_SELECTED,
   SIDEBAR_SECTION_GAP,
   SIDEBAR_SECTION_INNER_GAP,
@@ -88,7 +89,9 @@ import {
   SIDEBAR_MENU_ITEM,
   SIDEBAR_TOPIC_TO_CHILDREN_GAP,
   SIDEBAR_TOPIC_ROW_STICKY_TOP,
-  SIDEBAR_TIME_GROUP_ROW_STICKY_TOP
+  SIDEBAR_TIME_GROUP_ROW_STICKY_TOP,
+  SIDEBAR_TREE_CONNECTOR,
+  SIDEBAR_FOLDER_CHILDREN_PL
 } from './layout';
 import { Translator } from '../i18n';
 import { CollapsibleGroupRow } from './CollapsibleGroupRow';
@@ -192,38 +195,39 @@ function SortableGroupRow({
         style={style}
         className={cn(
           'min-w-0',
+          SIDEBAR_GROUP_BLOCK_PX,
           isDragging && 'z-30',
           containsSelectedThread && SIDEBAR_GROUP_BLOCK_SELECTED
         )}
       >
-          <div
-            {...listeners}
-            {...attributes}
-            role={hasChildren ? 'button' : undefined}
-            tabIndex={hasChildren ? 0 : undefined}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleToggleClick();
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            onMouseDown={(e) => {
-              if (e.button === 0) e.preventDefault();
-            }}
-            onKeyDown={handleRowKeyDown}
-            style={stickyRowStyle}
-            className={cn(
-              'flex items-center gap-0 w-full rounded-xl overflow-hidden touch-none pr-2 select-none',
-              SIDEBAR_TOPIC_ROW_STICKY_TOP,
+        <div
+          {...listeners}
+          {...attributes}
+          role={hasChildren ? 'button' : undefined}
+          tabIndex={hasChildren ? 0 : undefined}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleToggleClick();
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => {
+            if (e.button === 0) e.preventDefault();
+          }}
+          onKeyDown={handleRowKeyDown}
+          style={stickyRowStyle}
+          className={cn(
+            'flex items-center gap-0 w-full rounded-lg overflow-hidden pr-2 select-none touch-none',
+            SIDEBAR_TOPIC_ROW_STICKY_TOP,
             'sticky',
             SIDEBAR_GROUP_ROW_STICKY,
             hasChildren
               ? 'cursor-grab active:cursor-grabbing'
               : 'cursor-default',
-            'transition-colors duration-200 ease-out',
+            'transition-all duration-200 ease-out',
             'border border-transparent',
             containsSelectedThread && SIDEBAR_GROUP_ROW_SELECTED_STICKY,
-            isDragging && 'opacity-60 shadow-md',
-            isDropTarget && 'ring-2 ring-sidebar-border ring-inset border-sidebar-border/60',
+            isDragging && 'opacity-50 shadow-lg shadow-sidebar-foreground/[0.08]',
+            isDropTarget && 'ring-2 ring-[hsl(var(--sidebar-teal)_/_0.4)] ring-inset border-[hsl(var(--sidebar-teal)_/_0.3)]',
             'bg-sidebar'
           )}
           aria-label={hasChildren ? 'Drag to reorder group' : undefined}
@@ -238,7 +242,7 @@ function SortableGroupRow({
                   containsSelected={containsSelectedThread}
                   contentOnly
                   showChevron={hasChildren}
-                  className="text-sidebar-foreground/88"
+                  className="text-sidebar-foreground/85"
                 />
               </div>
             </TooltipTrigger>
@@ -247,7 +251,7 @@ function SortableGroupRow({
             </TooltipContent>
           </Tooltip>
           <div
-            className="flex items-center shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity duration-200"
+            className="flex items-center shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity duration-150"
             onPointerDown={(e) => e.stopPropagation()}
           >
             <DropdownMenu>
@@ -255,14 +259,14 @@ function SortableGroupRow({
                 <button
                   type="button"
                   onClick={(e) => e.stopPropagation()}
-                  className={cn(SIDEBAR_ICON_BUTTON, 'h-8 w-8')}
+                  className={cn(SIDEBAR_ICON_BUTTON, 'h-7 w-7')}
                   aria-label="Group options"
                 >
-                  <Ellipsis className="h-3.5 w-3.5" />
+                  <Ellipsis className="h-3 w-3" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="min-w-[9rem] rounded-xl border-sidebar-border/40 shadow-lg bg-sidebar dark:bg-sidebar py-1.5"
+                className="min-w-[8.5rem] rounded-xl border-sidebar-border/30 shadow-lg shadow-sidebar-foreground/[0.04] bg-sidebar dark:bg-sidebar py-1"
                 side="right"
                 align="start"
                 forceMount
@@ -270,14 +274,14 @@ function SortableGroupRow({
               >
                 <DropdownMenuItem className={SIDEBAR_MENU_ITEM} onClick={onRename}>
                   <Translator path="threadHistory.thread.menu.rename" />
-                  <Pencil className="ml-auto h-4 w-4 opacity-60" />
+                  <Pencil className="ml-auto h-3.5 w-3.5 opacity-50" />
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={cn(SIDEBAR_MENU_ITEM, 'text-red-600 focus:text-red-600 dark:text-red-400')}
                   onClick={onDelete}
                 >
                   <Translator path="threadHistory.thread.menu.delete" />
-                  <Trash2 className="ml-auto h-4 w-4 opacity-60" />
+                  <Trash2 className="ml-auto h-3.5 w-3.5 opacity-70" />
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -616,7 +620,14 @@ export function GroupedChatSection({
                       )}
                       aria-hidden={!isExpanded}
                     >
-                      <div className={cn('min-h-0 min-w-0 overflow-clip rounded-xl', isExpanded && SIDEBAR_TOPIC_TO_CHILDREN_GAP)}>
+                      <div
+                        className={cn(
+                          'min-h-0 min-w-0 overflow-clip rounded-xl relative',
+                          isExpanded && SIDEBAR_TOPIC_TO_CHILDREN_GAP,
+                          isExpanded && SIDEBAR_FOLDER_CHILDREN_PL,
+                          isExpanded && SIDEBAR_TREE_CONNECTOR
+                        )}
+                      >
                         <SidebarGroupContent className="min-h-0 min-w-0 overflow-clip rounded-xl px-0">
                           <SidebarMenu className="gap-1">
                             {sortedKeys.length > 0 && (
@@ -639,6 +650,7 @@ export function GroupedChatSection({
                                 }
                                 stickyTopOffset={SIDEBAR_TIME_GROUP_ROW_STICKY_TOP}
                                 compactFirstGroup
+                                folderTreeStyle
                               />
                             )}
                           </SidebarMenu>

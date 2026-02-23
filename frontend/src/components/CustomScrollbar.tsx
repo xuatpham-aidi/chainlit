@@ -14,11 +14,11 @@ const SCROLLBAR_VARIANT_CLASSES = {
   sidebar: {
     scrollPadding: 'pr-2',
     scrollRounding: 'rounded-br-xl rounded-tr-xl',
-    track: 'w-1 pr-0.5 bg-sidebar-foreground/5 rounded-full z-10',
+    track: 'w-1 pr-0.5 bg-sidebar-foreground/[0.04] rounded-full z-10',
     trackInset: 'top-1 bottom-1',
     thumb: 'w-1',
     thumbColor:
-      'bg-sidebar-foreground/25 hover:bg-sidebar-foreground/45 active:bg-sidebar-foreground/55'
+      'bg-sidebar-foreground/20 hover:bg-sidebar-foreground/40 active:bg-sidebar-foreground/50 rounded-full transition-colors duration-200'
   },
   chat: {
     scrollPadding: '',

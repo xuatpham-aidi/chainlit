@@ -58,6 +58,7 @@ import {
 
 import {
   SIDEBAR_GROUP_BLOCK_PADDING,
+  SIDEBAR_GROUP_BLOCK_PX,
   SIDEBAR_GROUP_BLOCK_SELECTED,
   SIDEBAR_LEVEL_1_PL,
   SIDEBAR_LEVEL_2_PL,
@@ -70,7 +71,10 @@ import {
   SIDEBAR_THREAD_ITEM_ACTIVE,
   SIDEBAR_THREAD_ITEM_OPEN,
   SIDEBAR_THREAD_ICON_SIZE,
-  SIDEBAR_TIME_GROUP_ROW
+  SIDEBAR_TIME_GROUP_ROW,
+  SIDEBAR_TOPIC_TO_CHILDREN_GAP,
+  SIDEBAR_FOLDER_CHILDREN_PL,
+  SIDEBAR_TREE_CONNECTOR
 } from './layout';
 import { Translator } from '../i18n';
 import { CollapsibleGroupRow } from './CollapsibleGroupRow';
@@ -110,6 +114,8 @@ interface ThreadListProps {
   stickyTopOffset?: string;
   /** When true, remove top padding from the first time group (e.g. when nested under a topic in GroupedChatSection). */
   compactFirstGroup?: boolean;
+  /** When true, time groups use folder-tree style: children wrapped with tree connector and folder indent (e.g. Recent section). */
+  folderTreeStyle?: boolean;
 }
 
 export function ThreadList({
@@ -120,7 +126,8 @@ export function ThreadList({
   collapsedGroups,
   setCollapsedGroups,
   stickyTopOffset = 'top-0',
-  compactFirstGroup = false
+  compactFirstGroup = false,
+  folderTreeStyle = false
 }: ThreadListProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -383,13 +390,13 @@ export function ThreadList({
       <TooltipProvider delayDuration={300}>
         {error ? (
           <div className="px-3 py-3">
-            <Alert variant="error" className="rounded-xl border-sidebar-border/40 text-[13px]">
+            <Alert variant="error" className="rounded-xl border-sidebar-border/30 text-[12.5px]">
               {error}
             </Alert>
           </div>
         ) : hasNoThreads && !isLoading ? (
           <div className="px-3 py-4">
-            <Alert variant="info" className="rounded-xl border-sidebar-border/40 text-sidebar-foreground/85 text-[13px]">
+            <Alert variant="info" className="rounded-xl border-sidebar-border/30 text-sidebar-foreground/80 text-[12.5px]">
               <Translator path="threadHistory.sidebar.empty" />
             </Alert>
           </div>
@@ -408,10 +415,9 @@ export function ThreadList({
               <SidebarGroup
                 key={group}
                 className={cn(
-                  'px-0',
                   SIDEBAR_GROUP_BLOCK_PADDING,
+                  SIDEBAR_GROUP_BLOCK_PX,
                   groupIndex === 0 && compactFirstGroup && 'pt-0',
-                  groupIndex > 0 && 'mt-4',
                   groupContainsSelected && SIDEBAR_GROUP_BLOCK_SELECTED
                 )}
               >
@@ -422,7 +428,7 @@ export function ThreadList({
                     isCollapsed={isCollapsed}
                     onToggle={() => toggleGroup(group)}
                     containsSelected={groupContainsSelected}
-                    className={cn(SIDEBAR_TIME_GROUP_ROW, compactFirstGroup && SIDEBAR_LEVEL_1_PL)}
+                    className={cn(!groupContainsSelected && SIDEBAR_TIME_GROUP_ROW, compactFirstGroup && SIDEBAR_LEVEL_1_PL)}
                   />
                 </div>
                 <div
@@ -432,11 +438,20 @@ export function ThreadList({
                   )}
                   aria-hidden={isCollapsed}
                 >
-                  <SidebarGroupContent className="min-h-0 overflow-hidden px-0">
-                    <SidebarMenu
-                      key={`${group}-${isCollapsed}`}
-                      className="gap-1"
-                    >
+                  <div
+                    className={cn(
+                      'min-h-0 min-w-0 overflow-clip',
+                      folderTreeStyle && 'rounded-xl relative',
+                      folderTreeStyle && SIDEBAR_TOPIC_TO_CHILDREN_GAP,
+                      folderTreeStyle && SIDEBAR_FOLDER_CHILDREN_PL,
+                      folderTreeStyle && SIDEBAR_TREE_CONNECTOR
+                    )}
+                  >
+                    <SidebarGroupContent className="min-h-0 overflow-hidden px-0">
+                      <SidebarMenu
+                        key={`${group}-${isCollapsed}`}
+                        className="gap-1"
+                      >
                       {items.map((thread, itemIndex) => {
                         const isResumed =
                           idToResume === thread.id &&
@@ -467,10 +482,10 @@ export function ThreadList({
                             >
                               <TooltipTrigger asChild>
                                 <Link to={isResumed ? '' : `/thread/${thread.id}`}>
-                                    <SidebarMenuButton
+                                  <SidebarMenuButton
                                     isActive={isSelected}
                                     className={cn(
-                                      'relative group/thread transition-colors duration-200 ease-in-out',
+                                      'relative group/thread transition-all duration-150 ease-out',
                                       SIDEBAR_THREAD_ITEM_PADDING,
                                       compactFirstGroup ? SIDEBAR_LEVEL_2_PL : SIDEBAR_LEVEL_1_PL,
                                       SIDEBAR_THREAD_ITEM_DEFAULT,
@@ -481,8 +496,8 @@ export function ThreadList({
                                         threadIdToRename === thread.id ||
                                         (threadIdToShare === thread.id &&
                                           isShareDialogOpen)) &&
-                                        !isSelected &&
-                                        SIDEBAR_THREAD_ITEM_OPEN
+                                      !isSelected &&
+                                      SIDEBAR_THREAD_ITEM_OPEN
                                     )}
                                   >
                                     <span className="flex min-w-0 flex-1 items-center gap-2 pl-0">
@@ -490,7 +505,7 @@ export function ThreadList({
                                         <Share2
                                           className={cn(
                                             SIDEBAR_THREAD_ICON_SIZE,
-                                            'shrink-0 text-sidebar-foreground/70 transition-colors duration-200 ease-in-out'
+                                            'shrink-0 text-sidebar-foreground/60 transition-colors duration-200 ease-out group-hover/thread:text-[hsl(var(--sidebar-teal)_/_0.7)]'
                                           )}
                                           aria-hidden="true"
                                         />
@@ -498,10 +513,10 @@ export function ThreadList({
                                         <MessageSquare
                                           className={cn(
                                             SIDEBAR_THREAD_ICON_SIZE,
-                                            'shrink-0 transition-colors duration-200 ease-in-out',
+                                            'shrink-0 transition-colors duration-200 ease-out',
                                             isSelected
-                                              ? 'text-sidebar-foreground'
-                                              : 'text-sidebar-foreground/55'
+                                              ? 'text-[hsl(var(--sidebar-teal))]'
+                                              : 'text-sidebar-foreground/40 group-hover/thread:text-[hsl(var(--sidebar-teal)_/_0.7)]'
                                           )}
                                           aria-hidden="true"
                                         />
@@ -532,7 +547,7 @@ export function ThreadList({
                                       }
                                       disabled={isLoading}
                                       className={cn(
-                                        'shrink-0 h-9 w-9 rounded-xl flex opacity-0 group-hover/thread:opacity-100 transition-opacity duration-200 ease-in-out',
+                                        'shrink-0 h-7 w-7 rounded-lg flex opacity-0 group-hover/thread:opacity-100 transition-opacity duration-150 ease-out',
                                         isSelected && 'opacity-100'
                                       )}
                                     />
@@ -550,6 +565,7 @@ export function ThreadList({
                       })}
                     </SidebarMenu>
                   </SidebarGroupContent>
+                  </div>
                 </div>
               </SidebarGroup>
             );

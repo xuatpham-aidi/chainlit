@@ -84,13 +84,13 @@ export function ThreadCollapseButton({
       <span
         className={cn(
           iconClasses,
-          'cursor-default opacity-50 hover:bg-transparent',
-          alignIcon === 'end' && 'justify-end w-4 h-4'
+          'cursor-default opacity-40 hover:bg-transparent',
+          alignIcon === 'end' && 'justify-end w-3.5 h-3.5'
         )}
         aria-hidden
         onPointerDown={(e) => e.stopPropagation()}
       >
-        <CopyMinus className="size-4" />
+        <CopyMinus className="size-3.5" />
       </span>
     );
   }
@@ -117,14 +117,14 @@ export function ThreadCollapseButton({
             SIDEBAR_ICON_BUTTON,
             'shrink-0',
             isEndAligned
-              ? 'h-4 w-4 justify-center rounded-lg'
-              : 'h-9 w-9'
+              ? 'h-3.5 w-3.5 justify-center rounded-lg'
+              : 'h-7 w-7'
           )}
         >
-          <CopyMinus className="size-4 shrink-0" />
+          <CopyMinus className="size-3.5 shrink-0" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="right" sideOffset={10} className="rounded-xl text-[13px]">
+      <TooltipContent side="right" sideOffset={10} className="rounded-lg text-[13px]">
         {tooltipText}
       </TooltipContent>
     </Tooltip>
