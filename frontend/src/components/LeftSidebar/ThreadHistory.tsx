@@ -29,35 +29,14 @@ import { Translator } from '../i18n';
 import { ThreadCollapseButton } from './ThreadCollapse';
 import { ThreadList } from './ThreadList';
 import { SidebarSection } from './SidebarSection';
-
-const MAX_THREAD_NAME_LENGTH = 40;
-
-const LIST_PAGINATION = {
-  initialBatch: 3,
-  batchSize: 10
-} as const;
-
-const BATCH_FETCH_DELAY_MS = 500;
+import type { ThreadHistoryProps } from './types';
+import {
+  MAX_THREAD_NAME_LENGTH,
+  LIST_PAGINATION,
+  BATCH_FETCH_DELAY_MS
+} from './constants';
 
 let scrollTopCache = 0;
-
-interface ThreadHistoryProps {
-  /** When provided, list is in main scroll (no inner scroll); used for load-more and scroll cache. */
-  historyScrollRef?: React.RefObject<HTMLDivElement | null>;
-  /** When using main scroll, register this so parent calls it on scroll. */
-  registerScrollHandler?: (handler: (() => void) | null) => void;
-  collapsedGroups: Set<string> | null;
-  setCollapsedGroups: React.Dispatch<
-    React.SetStateAction<Set<string> | null>
-  >;
-  hideScrollbar?: boolean;
-  showCollapseButton?: boolean;
-  onCollapseAll?: () => void;
-  threadsFilter?: (thread: IThread) => boolean;
-  sectionTitle?: React.ReactNode;
-  sectionExpanded?: boolean;
-  onSectionExpandedChange?: (expanded: boolean) => void;
-}
 
 export function ThreadHistory({
   historyScrollRef: historyScrollRefProp,

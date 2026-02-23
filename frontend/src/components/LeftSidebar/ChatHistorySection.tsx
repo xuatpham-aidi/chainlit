@@ -24,21 +24,9 @@ import { Translator } from '../i18n';
 import { ThreadCollapseButton } from './ThreadCollapse';
 import { GroupedChatSection } from './GroupedChatSection';
 import { ThreadHistory } from './ThreadHistory';
+import type { ChatHistorySectionProps } from './types';
 
-export interface ChatHistorySectionProps {
-  historyScrollRef: React.RefObject<HTMLDivElement | null>;
-  onHistoryScroll?: () => void;
-  registerScrollHandler?: (handler: (() => void) | null) => void;
-  collapsedGroups: Set<string> | null;
-  setCollapsedGroups: React.Dispatch<
-    React.SetStateAction<Set<string> | null>
-  >;
-  onCollapseAll: () => void;
-  hideScrollbar: boolean;
-  threadsFilter: (thread: { groupId?: string | null }) => boolean;
-  ungroupedSectionTitle?: string;
-  hasUncollapsedRecentGroups?: boolean;
-}
+export type { ChatHistorySectionProps } from './types';
 
 const DEFAULT_UNGROUPED_TITLE = 'threadHistory.sidebar.recent';
 

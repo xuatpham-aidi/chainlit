@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { size } from 'lodash';
 import { MessageSquare, Share2 } from 'lucide-react';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSetRecoilState } from 'recoil';
@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import {
   ChainlitContext,
   ClientError,
-  ThreadHistory,
   threadHistoryState,
   threadGroupsState,
   useChatInteract,
@@ -19,6 +18,11 @@ import {
   useConfig
 } from '@chainlit/react-client';
 import { useRecoilValue } from 'recoil';
+
+import type { ThreadListProps } from './types';
+import { getSortedTimeGroupKeys } from './utils';
+import { THREAD_ITEM_REVEAL_DELAY_MS } from './constants';
+import { TimeGroupBlock } from './TimeGroupBlock';
 
 import Alert from '@/components/Alert';
 import ShareDialog from '@/components/share/ShareDialog';
@@ -36,16 +40,12 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar';
@@ -57,66 +57,18 @@ import {
 } from '@/components/ui/tooltip';
 
 import {
-  SIDEBAR_GROUP_BLOCK_PADDING,
-  SIDEBAR_GROUP_BLOCK_PX,
-  SIDEBAR_GROUP_BLOCK_SELECTED,
   SIDEBAR_LEVEL_1_PL,
   SIDEBAR_LEVEL_2_PL,
-  SIDEBAR_TIME_GROUP_ROW_STICKY,
-  SIDEBAR_TIME_GROUP_ROW_WRAPPER,
   SIDEBAR_THREAD_ITEM_PADDING,
   SIDEBAR_THREAD_ITEM_TEXT,
   SIDEBAR_THREAD_ITEM_DEFAULT,
   SIDEBAR_THREAD_ITEM_HOVER,
   SIDEBAR_THREAD_ITEM_ACTIVE,
   SIDEBAR_THREAD_ITEM_OPEN,
-  SIDEBAR_THREAD_ICON_SIZE,
-  SIDEBAR_TIME_GROUP_ROW,
-  SIDEBAR_TOPIC_TO_CHILDREN_GAP,
-  SIDEBAR_FOLDER_CHILDREN_PL,
-  SIDEBAR_TREE_CONNECTOR
+  SIDEBAR_THREAD_ICON_SIZE
 } from './layout';
 import { Translator } from '../i18n';
-import { CollapsibleGroupRow } from './CollapsibleGroupRow';
 import ThreadOptions from './ThreadOptions';
-
-const TIME_GROUP_ORDER = [
-  'Today',
-  'Yesterday',
-  'Previous 7 days',
-  'Previous 30 days'
-];
-
-export function getSortedTimeGroupKeys(
-  timeGroupedThreads: Record<string, unknown[]> | undefined
-): string[] {
-  if (!timeGroupedThreads) return [];
-  return Object.keys(timeGroupedThreads).sort((a, b) => {
-    const aIndex = TIME_GROUP_ORDER.indexOf(a);
-    const bIndex = TIME_GROUP_ORDER.indexOf(b);
-    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-    if (aIndex !== -1) return -1;
-    if (bIndex !== -1) return 1;
-    return a.localeCompare(b);
-  });
-}
-
-interface ThreadListProps {
-  threadHistory?: ThreadHistory;
-  error?: string;
-  isFetching: boolean;
-  isLoadingMore: boolean;
-  collapsedGroups: Set<string> | null;
-  setCollapsedGroups: React.Dispatch<
-    React.SetStateAction<Set<string> | null>
-  >;
-  /** When set, time group headers stick at this offset (e.g. top-18) below parent headers. */
-  stickyTopOffset?: string;
-  /** When true, remove top padding from the first time group (e.g. when nested under a topic in GroupedChatSection). */
-  compactFirstGroup?: boolean;
-  /** When true, time groups use folder-tree style: children wrapped with tree connector and folder indent (e.g. Recent section). */
-  folderTreeStyle?: boolean;
-}
 
 export function ThreadList({
   threadHistory,
@@ -344,14 +296,8 @@ export function ThreadList({
             <DialogTitle>
               <Translator path="threadHistory.thread.actions.rename.title" />
             </DialogTitle>
-            <DialogDescription>
-              {/* <Translator path="threadHistory.thread.actions.rename.description" /> */}
-            </DialogDescription>
           </DialogHeader>
           <div className="my-6">
-            {/* <Label htmlFor="name" className="text-right">
-              <Translator path="threadHistory.thread.actions.rename.form.name.label" />
-            </Label> */}
             <Input
               id="name"
               required
@@ -412,47 +358,20 @@ export function ThreadList({
             const isCollapsed = effectiveCollapsed.has(group);
             const count = items.length;
             return (
-              <SidebarGroup
+              <TimeGroupBlock
                 key={group}
-                className={cn(
-                  SIDEBAR_GROUP_BLOCK_PADDING,
-                  SIDEBAR_GROUP_BLOCK_PX,
-                  groupIndex === 0 && compactFirstGroup && 'pt-0',
-                  groupContainsSelected && SIDEBAR_GROUP_BLOCK_SELECTED
-                )}
+                groupKey={group}
+                label={getTimeGroupLabel(group)}
+                count={count}
+                isCollapsed={isCollapsed}
+                onToggle={() => toggleGroup(group)}
+                groupContainsSelected={groupContainsSelected}
+                stickyTopOffset={stickyTopOffset}
+                compactFirstGroup={compactFirstGroup}
+                folderTreeStyle={folderTreeStyle}
+                isFirst={groupIndex === 0}
               >
-                <div className={cn(SIDEBAR_TIME_GROUP_ROW_STICKY, SIDEBAR_TIME_GROUP_ROW_WRAPPER, stickyTopOffset)}>
-                  <CollapsibleGroupRow
-                    label={getTimeGroupLabel(group)}
-                    count={count}
-                    isCollapsed={isCollapsed}
-                    onToggle={() => toggleGroup(group)}
-                    containsSelected={groupContainsSelected}
-                    className={cn(!groupContainsSelected && SIDEBAR_TIME_GROUP_ROW, compactFirstGroup && SIDEBAR_LEVEL_1_PL)}
-                  />
-                </div>
-                <div
-                  className={cn(
-                    'grid transition-[grid-template-rows] duration-200 ease-out',
-                    isCollapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'
-                  )}
-                  aria-hidden={isCollapsed}
-                >
-                  <div
-                    className={cn(
-                      'min-h-0 min-w-0 overflow-clip',
-                      folderTreeStyle && 'rounded-xl relative',
-                      folderTreeStyle && SIDEBAR_TOPIC_TO_CHILDREN_GAP,
-                      folderTreeStyle && SIDEBAR_FOLDER_CHILDREN_PL,
-                      folderTreeStyle && SIDEBAR_TREE_CONNECTOR
-                    )}
-                  >
-                    <SidebarGroupContent className="min-h-0 overflow-hidden px-0">
-                      <SidebarMenu
-                        key={`${group}-${isCollapsed}`}
-                        className="gap-1"
-                      >
-                      {items.map((thread, itemIndex) => {
+                {items.map((thread, itemIndex) => {
                         const isResumed =
                           idToResume === thread.id &&
                           !threadHistory!.currentThreadId;
@@ -467,7 +386,7 @@ export function ThreadList({
                             key={thread.id}
                             id={`thread-${thread.id}`}
                             className="list-none thread-item-reveal"
-                            style={{ animationDelay: `${itemIndex * 35}ms` }}
+                            style={{ animationDelay: `${itemIndex * THREAD_ITEM_REVEAL_DELAY_MS}ms` }}
                           >
                             <Tooltip
                               open={
@@ -563,11 +482,7 @@ export function ThreadList({
                           </SidebarMenuItem>
                         );
                       })}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                  </div>
-                </div>
-              </SidebarGroup>
+              </TimeGroupBlock>
             );
           })}
       </TooltipProvider>

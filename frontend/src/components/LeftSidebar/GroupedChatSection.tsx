@@ -1,26 +1,17 @@
 import {
   DndContext,
   DragEndEvent,
-  DragOverlay,
   PointerSensor,
-  useDndMonitor,
   useSensor,
   useSensors
 } from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
-  useSortable,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
-import {
-  Ellipsis,
-  FolderPlus,
-  Pencil,
-  Trash2
-} from 'lucide-react';
+import { FolderPlus } from 'lucide-react';
 import { useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
@@ -38,288 +29,30 @@ import {
 import { sidebarGroupTimeGroupCollapsedState } from '@/state/sidebar';
 import { threadListLoadingState } from '@/state/project';
 import { Loader } from '@/components/Loader';
-
+import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
-} from '@/components/ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import {
-  SidebarGroup,
   SidebarGroupContent,
   SidebarMenu
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
 
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger
-} from '@/components/ui/tooltip';
-
-import {
-  SIDEBAR_GROUP_ROW_STICKY,
-  SIDEBAR_GROUP_ROW_SELECTED,
-  SIDEBAR_GROUP_ROW_SELECTED_STICKY,
-  SIDEBAR_GROUP_BLOCK_PX,
-  SIDEBAR_GROUP_BLOCK_SELECTED,
-  SIDEBAR_SECTION_GAP,
   SIDEBAR_SECTION_INNER_GAP,
   SIDEBAR_ACTION_BUTTON,
-  SIDEBAR_ICON_BUTTON,
-  SIDEBAR_MENU_ITEM,
   SIDEBAR_TOPIC_TO_CHILDREN_GAP,
-  SIDEBAR_TOPIC_ROW_STICKY_TOP,
   SIDEBAR_TIME_GROUP_ROW_STICKY_TOP,
   SIDEBAR_TREE_CONNECTOR,
   SIDEBAR_FOLDER_CHILDREN_PL
 } from './layout';
 import { Translator } from '../i18n';
-import { CollapsibleGroupRow } from './CollapsibleGroupRow';
 import { SidebarSection } from './SidebarSection';
 import { ThreadList } from './ThreadList';
-import { getSortedTimeGroupKeys } from './ThreadList';
+import { getSortedTimeGroupKeys } from './utils';
+import { TopicGroupRow, DragStateSync } from './TopicGroupRow';
+import { GroupedChatDialogs } from './GroupedChatDialogs';
+import type { GroupedChatSectionProps, ThreadGroupRecord } from './types';
+import { DRAG_ACTIVATION_DISTANCE_PX, CLICK_AFTER_DRAG_SUPPRESS_MS } from './constants';
 
-const DRAG_ACTIVATION_DISTANCE_PX = 6;
-const CLICK_AFTER_DRAG_SUPPRESS_MS = 300;
-
-interface IThreadGroup {
-  id: string;
-  userId: string;
-  name: string;
-  displayOrder: number;
-  createdAt?: string;
-}
-
-/** Section header uses z-20; group rows use z-[10..19] so earlier groups stack on top when sticky. */
-const SIDEBAR_SECTION_HEADER_Z = 20;
-const SIDEBAR_GROUP_ROW_Z_BASE = 10;
-
-function getGroupRowStickyZIndex(index: number, totalCount: number): number {
-  if (totalCount <= 0) return SIDEBAR_GROUP_ROW_Z_BASE;
-  return Math.min(
-    SIDEBAR_SECTION_HEADER_Z - 1,
-    SIDEBAR_GROUP_ROW_Z_BASE + (totalCount - 1 - index)
-  );
-}
-
-interface SortableGroupRowProps {
-  group: IThreadGroup;
-  isExpanded: boolean;
-  onToggle: () => void;
-  onRename: () => void;
-  onDelete: () => void;
-  children: React.ReactNode;
-  hasChildren?: boolean;
-  isDropTarget?: boolean;
-  lastDraggedGroupIdRef?: React.MutableRefObject<string | null>;
-  containsSelectedThread?: boolean;
-  groupIndex?: number;
-  totalGroupCount?: number;
-}
-
-/**
- * Single group row: click to expand/collapse, hold and move to drag and reorder.
- * Options menu (ellipsis) does not start drag (stopPropagation).
- */
-function SortableGroupRow({
-  group,
-  isExpanded,
-  onToggle,
-  onRename,
-  onDelete,
-  children,
-  hasChildren = true,
-  isDropTarget = false,
-  lastDraggedGroupIdRef,
-  containsSelectedThread = false,
-  groupIndex = 0,
-  totalGroupCount = 1
-}: SortableGroupRowProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id: group.id });
-  const stickyZ = getGroupRowStickyZIndex(groupIndex, totalGroupCount);
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition
-  };
-  const stickyRowStyle = { zIndex: stickyZ };
-  const handleToggleClick = useCallback(() => {
-    if (!hasChildren) return;
-    if (lastDraggedGroupIdRef?.current === group.id) {
-      lastDraggedGroupIdRef.current = null;
-      return;
-    }
-    onToggle();
-  }, [group.id, hasChildren, lastDraggedGroupIdRef, onToggle]);
-
-  const handleRowKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (!hasChildren) return;
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        handleToggleClick();
-      }
-    },
-    [hasChildren, handleToggleClick]
-  );
-  return (
-    <SidebarGroup className="px-0 py-0 group/row min-w-0">
-      <div
-        ref={setNodeRef}
-        style={style}
-        className={cn(
-          'min-w-0',
-          SIDEBAR_GROUP_BLOCK_PX,
-          isDragging && 'z-30',
-          containsSelectedThread && SIDEBAR_GROUP_BLOCK_SELECTED
-        )}
-      >
-        <div
-          {...listeners}
-          {...attributes}
-          role={hasChildren ? 'button' : undefined}
-          tabIndex={hasChildren ? 0 : undefined}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleToggleClick();
-          }}
-          onPointerDown={(e) => e.stopPropagation()}
-          onMouseDown={(e) => {
-            if (e.button === 0) e.preventDefault();
-          }}
-          onKeyDown={handleRowKeyDown}
-          style={stickyRowStyle}
-          className={cn(
-            'flex items-center gap-0 w-full rounded-lg overflow-hidden pr-2 select-none touch-none',
-            SIDEBAR_TOPIC_ROW_STICKY_TOP,
-            'sticky',
-            SIDEBAR_GROUP_ROW_STICKY,
-            hasChildren
-              ? 'cursor-grab active:cursor-grabbing'
-              : 'cursor-default',
-            'transition-all duration-200 ease-out',
-            'border border-transparent',
-            containsSelectedThread && SIDEBAR_GROUP_ROW_SELECTED_STICKY,
-            isDragging && 'opacity-50 shadow-lg shadow-sidebar-foreground/[0.08]',
-            isDropTarget && 'ring-2 ring-[hsl(var(--sidebar-teal)_/_0.4)] ring-inset border-[hsl(var(--sidebar-teal)_/_0.3)]',
-            'bg-sidebar'
-          )}
-          aria-label={hasChildren ? 'Drag to reorder group' : undefined}
-          aria-expanded={hasChildren ? isExpanded : undefined}
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex flex-1 min-w-0 min-h-0">
-                <CollapsibleGroupRow
-                  label={<span className="truncate block">{group.name}</span>}
-                  isCollapsed={!isExpanded}
-                  containsSelected={containsSelectedThread}
-                  contentOnly
-                  showChevron={hasChildren}
-                  className="text-sidebar-foreground/85"
-                />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="right" align="start" sideOffset={50}>
-              <p className="max-w-xs break-words">{group.name}</p>
-            </TooltipContent>
-          </Tooltip>
-          <div
-            className="flex items-center shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity duration-150"
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  onClick={(e) => e.stopPropagation()}
-                  className={cn(SIDEBAR_ICON_BUTTON, 'h-7 w-7')}
-                  aria-label="Group options"
-                >
-                  <Ellipsis className="h-3 w-3" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="min-w-[8.5rem] rounded-xl border-sidebar-border/30 shadow-lg shadow-sidebar-foreground/[0.04] bg-sidebar dark:bg-sidebar py-1"
-                side="right"
-                align="start"
-                forceMount
-                sideOffset={20}
-              >
-                <DropdownMenuItem className={SIDEBAR_MENU_ITEM} onClick={onRename}>
-                  <Translator path="threadHistory.thread.menu.rename" />
-                  <Pencil className="ml-auto h-3.5 w-3.5 opacity-50" />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className={cn(SIDEBAR_MENU_ITEM, 'text-red-600 focus:text-red-600 dark:text-red-400')}
-                  onClick={onDelete}
-                >
-                  <Translator path="threadHistory.thread.menu.delete" />
-                  <Trash2 className="ml-auto h-3.5 w-3.5 opacity-70" />
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-        {!isDragging && children}
-      </div>
-    </SidebarGroup>
-  );
-}
-
-
-interface DragStateSyncProps {
-  setActiveId: (id: string | null) => void;
-  setOverId: (id: string | null) => void;
-}
-
-function DragStateSync({ setActiveId, setOverId }: DragStateSyncProps) {
-  const clearDragState = useCallback(() => {
-    setActiveId(null);
-    setOverId(null);
-  }, [setActiveId, setOverId]);
-
-  useDndMonitor({
-    onDragStart: (e) => setActiveId(String(e.active.id)),
-    onDragOver: (e) => setOverId(e.over ? String(e.over.id) : null),
-    onDragEnd: clearDragState,
-    onDragCancel: clearDragState
-  });
-  return null;
-}
-
-export interface GroupedChatSectionProps {
-  sectionExpanded?: boolean;
-  onSectionExpandedChange?: (expanded: boolean) => void;
-  expandedGroups?: Set<string>;
-  onExpandedGroupsChange?: (set: React.SetStateAction<Set<string>>) => void;
-}
+export type { GroupedChatSectionProps } from './types';
 
 export function GroupedChatSection({
   sectionExpanded: sectionExpandedProp,
@@ -596,9 +329,9 @@ export function GroupedChatSection({
                 );
 
                 return (
-                  <SortableGroupRow
+                  <TopicGroupRow
                     key={group.id}
-                    group={group}
+                    group={group as ThreadGroupRecord}
                     groupIndex={groupIndex}
                     totalGroupCount={threadGroups.length}
                     isExpanded={isExpanded}
@@ -657,7 +390,7 @@ export function GroupedChatSection({
                         </SidebarGroupContent>
                       </div>
                     </div>
-                  </SortableGroupRow>
+                  </TopicGroupRow>
                 );
               })}
             </div>
@@ -665,84 +398,26 @@ export function GroupedChatSection({
         </DndContext>
       </div>
 
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              <Translator path="threadHistory.sidebar.createGroupTitle" />
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              value={newGroupName}
-              onChange={(e) => setNewGroupName(e.target.value)}
-              placeholder={t('threadHistory.sidebar.createGroupPlaceholder')}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateGroup()}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-              <Translator path="common.actions.cancel" />
-            </Button>
-            <Button
-              onClick={handleCreateGroup}
-              disabled={!newGroupName.trim()}
-            >
-              <Translator path="common.actions.confirm" />
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={!!renameGroupId}
-        onOpenChange={(open) => !open && setRenameGroupId(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              <Translator path="threadHistory.thread.actions.rename.title" />
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              value={renameGroupName}
-              onChange={(e) => setRenameGroupName(e.target.value)}
-              placeholder={t('threadHistory.sidebar.createGroupPlaceholder')}
-              onKeyDown={(e) => e.key === 'Enter' && handleRenameGroup()}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRenameGroupId(null)}>
-              <Translator path="common.actions.cancel" />
-            </Button>
-            <Button onClick={handleRenameGroup} disabled={!renameGroupName.trim()}>
-              <Translator path="common.actions.confirm" />
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={!!deleteGroupId} onOpenChange={() => setDeleteGroupId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              <Translator path="threadHistory.sidebar.deleteGroupTitle" />
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              <Translator path="threadHistory.sidebar.deleteGroupDescription" />
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              <Translator path="common.actions.cancel" />
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteGroup}>
-              <Translator path="common.actions.confirm" />
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <GroupedChatDialogs
+        createDialogOpen={createDialogOpen}
+        onCreateDialogOpenChange={setCreateDialogOpen}
+        newGroupName={newGroupName}
+        onNewGroupNameChange={setNewGroupName}
+        onCreateGroup={handleCreateGroup}
+        renameGroupId={renameGroupId}
+        renameGroupName={renameGroupName}
+        onRenameGroupNameChange={setRenameGroupName}
+        onRenameGroup={handleRenameGroup}
+        onRenameDialogClose={() => {
+          setRenameGroupId(null);
+          setRenameGroupName('');
+        }}
+        deleteGroupId={deleteGroupId}
+        onDeleteGroupIdChange={setDeleteGroupId}
+        onDeleteGroup={handleDeleteGroup}
+        createGroupPlaceholder={t('threadHistory.sidebar.createGroupPlaceholder')}
+        renamePlaceholder={t('threadHistory.sidebar.createGroupPlaceholder')}
+      />
     </SidebarSection>
   );
 }

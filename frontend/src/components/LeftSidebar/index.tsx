@@ -32,7 +32,7 @@ import {
 import NewChatButton from '../header/NewChat';
 import SearchChats from './Search';
 import { ChatHistorySection } from './ChatHistorySection';
-import { getSortedTimeGroupKeys } from './ThreadList';
+import { getSortedTimeGroupKeys } from './utils';
 
 export default function LeftSidebar({
   ...props
