@@ -238,7 +238,7 @@ function SortableGroupRow({
                   containsSelected={containsSelectedThread}
                   contentOnly
                   showChevron={hasChildren}
-                  className="text-sidebar-foreground/85"
+                  className="text-sidebar-foreground/88"
                 />
               </div>
             </TooltipTrigger>

@@ -8,6 +8,7 @@ import {
   SIDEBAR_MAJOR_SECTION_HEADER,
   SIDEBAR_MAJOR_SECTION_HEADER_DEFAULT,
   SIDEBAR_MAJOR_SECTION_HEADER_HOVER,
+  SIDEBAR_MAJOR_SECTION_HEADER_SMALL_LABEL,
   SIDEBAR_SECTION_HEADER_SELECTED_IN_WRAPPER,
   SIDEBAR_SECTION_HEADER_SELECTED_STICKY,
   SIDEBAR_SECTION_HEADER_TO_CONTENT_GAP,
@@ -19,6 +20,9 @@ import {
 } from './layout';
 
 export type SidebarSectionBackgroundVariant = 'topics' | 'recent' | 'none';
+
+/** Topics = borderless muted header; Recent = small text label only (NBC). */
+export type SidebarSectionHeaderVariant = 'default' | 'smallLabel';
 
 export interface SidebarSectionProps {
   title: React.ReactNode;
@@ -33,6 +37,8 @@ export interface SidebarSectionProps {
   stickyHeader?: boolean;
   /** Full-section background when expanded (covers entire group for visual distinction). */
   sectionBackground?: SidebarSectionBackgroundVariant;
+  /** default = Topics (muted); smallLabel = Recent (small text label only). */
+  headerVariant?: SidebarSectionHeaderVariant;
 }
 
 /**
@@ -49,7 +55,8 @@ export function SidebarSection({
   rightSlot,
   ariaLabel = 'Section',
   stickyHeader = false,
-  sectionBackground = 'none'
+  sectionBackground = 'none',
+  headerVariant = 'default'
 }: SidebarSectionProps) {
   const handleToggleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -66,6 +73,8 @@ export function SidebarSection({
         ? SIDEBAR_GROUP_SECTION_BG_RECENT
         : '';
 
+  const isSmallLabel = headerVariant === 'smallLabel';
+
   const sectionContent = (
     <>
       <Button
@@ -78,10 +87,13 @@ export function SidebarSection({
         size="default"
         className={cn(
           SIDEBAR_MAJOR_SECTION_HEADER,
+          isSmallLabel && 'h-9 min-h-9 text-[12px]',
+          isSmallLabel && SIDEBAR_MAJOR_SECTION_HEADER_SMALL_LABEL,
           stickyHeader && cn('sticky top-0 z-20', SIDEBAR_STICKY_SECTION_HEADER_BG),
           containsSelected && (stickyHeader ? SIDEBAR_SECTION_HEADER_SELECTED_STICKY : SIDEBAR_SECTION_HEADER_SELECTED_IN_WRAPPER),
-          !containsSelected && SIDEBAR_MAJOR_SECTION_HEADER_DEFAULT,
-          !containsSelected && SIDEBAR_MAJOR_SECTION_HEADER_HOVER
+          !containsSelected && !isSmallLabel && SIDEBAR_MAJOR_SECTION_HEADER_DEFAULT,
+          !containsSelected && !isSmallLabel && SIDEBAR_MAJOR_SECTION_HEADER_HOVER,
+          !containsSelected && isSmallLabel && 'hover:bg-sidebar-foreground/[0.04] dark:hover:bg-sidebar-foreground/[0.06] hover:text-sidebar-foreground/80'
         )}
         aria-expanded={expanded}
       >
@@ -94,9 +106,9 @@ export function SidebarSection({
           ) : isLoading ? (
             <Loader />
           ) : expanded ? (
-            <ChevronDown className="size-4 text-sidebar-foreground/50 transition-opacity duration-200" />
+            <ChevronDown className={cn('size-4 transition-opacity duration-200', isSmallLabel ? 'text-sidebar-foreground/45' : 'text-sidebar-foreground/50')} />
           ) : (
-            <ChevronRight className="size-4 text-sidebar-foreground/50 transition-opacity duration-200" />
+            <ChevronRight className={cn('size-4 transition-opacity duration-200', isSmallLabel ? 'text-sidebar-foreground/45' : 'text-sidebar-foreground/50')} />
           )}
         </div>
       </Button>

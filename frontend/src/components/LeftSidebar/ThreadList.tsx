@@ -411,7 +411,7 @@ export function ThreadList({
                   'px-0',
                   SIDEBAR_GROUP_BLOCK_PADDING,
                   groupIndex === 0 && compactFirstGroup && 'pt-0',
-                  groupIndex > 0 && 'mt-3',
+                  groupIndex > 0 && 'mt-4',
                   groupContainsSelected && SIDEBAR_GROUP_BLOCK_SELECTED
                 )}
               >

@@ -56,7 +56,7 @@ export function CollapsibleGroupRow({
   const content = (
     <>
       {leadingIcon}
-      <span className="flex-1 min-w-0 overflow-hidden text-left">{label}</span>
+      <span className="flex-1 min-w-0 overflow-hidden text-left tracking-[0.01em]">{label}</span>
       {count !== undefined && (
         <span
           className={cn(

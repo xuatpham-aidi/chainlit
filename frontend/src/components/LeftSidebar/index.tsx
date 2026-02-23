@@ -135,7 +135,7 @@ export default function LeftSidebar({
 
         <section
           className={cn(
-            'flex flex-1 flex-col min-h-0 min-w-0 pt-1 rounded-2xl overflow-hidden',
+            'flex flex-1 flex-col min-h-0 min-w-0 pt-2 rounded-2xl overflow-hidden',
             SIDEBAR_OUTER_GAP
           )}
           aria-label="Chat history"
