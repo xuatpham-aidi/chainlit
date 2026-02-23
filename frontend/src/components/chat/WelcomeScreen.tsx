@@ -70,84 +70,72 @@ export default function WelcomeScreen(props: Props) {
               }}
             />
             <div
-              className="cube-container relative h-16 w-16"
+              className="cube-container relative h-16 w-16 cube-face-theme"
               style={{ '--cube-texture': `url("${iconSrc}")` } as React.CSSProperties}
             >
               <div className="cube-3d relative w-full h-full">
-                {/* Front face */}
                 <div
-                  className="cube-face border-2 border-purple-500/40 rounded-lg shadow-2xl backdrop-blur-sm"
+                  className="cube-face rounded-lg backdrop-blur-sm"
                   style={{
                     transform: 'translate3d(0, 0, 32px)',
                     backgroundImage: 'var(--cube-texture)',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat',
-                    boxShadow: '0 0 20px rgba(168, 85, 247, 0.3), inset 0 0 20px rgba(168, 85, 247, 0.1)'
+                    backgroundRepeat: 'no-repeat'
                   }}
                 />
-                {/* Back face */}
                 <div
-                  className="cube-face border-2 border-purple-500/40 rounded-lg shadow-2xl backdrop-blur-sm"
+                  className="cube-face rounded-lg backdrop-blur-sm"
                   style={{
                     transform: 'translate3d(0, 0, -32px) rotateY(180deg)',
                     backgroundImage: 'var(--cube-texture)',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat',
-                    boxShadow: '0 0 20px rgba(168, 85, 247, 0.3), inset 0 0 20px rgba(168, 85, 247, 0.1)'
+                    backgroundRepeat: 'no-repeat'
                   }}
                 />
-                {/* Right face */}
                 <div
-                  className="cube-face border-2 border-purple-500/40 rounded-lg shadow-2xl backdrop-blur-sm"
+                  className="cube-face rounded-lg backdrop-blur-sm"
                   style={{
                     transform: 'rotateY(90deg) translate3d(0, 0, 32px)',
                     backgroundImage: 'var(--cube-texture)',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',
-                    opacity: 0.85,
-                    boxShadow: '0 0 15px rgba(168, 85, 247, 0.25), inset 0 0 15px rgba(168, 85, 247, 0.08)'
+                    opacity: 0.9
                   }}
                 />
-                {/* Left face */}
                 <div
-                  className="cube-face border-2 border-purple-500/40 rounded-lg shadow-2xl backdrop-blur-sm"
+                  className="cube-face rounded-lg backdrop-blur-sm"
                   style={{
                     transform: 'rotateY(-90deg) translate3d(0, 0, 32px)',
                     backgroundImage: 'var(--cube-texture)',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',
-                    opacity: 0.85,
-                    boxShadow: '0 0 15px rgba(168, 85, 247, 0.25), inset 0 0 15px rgba(168, 85, 247, 0.08)'
+                    opacity: 0.9
                   }}
                 />
-                {/* Top face */}
                 <div
-                  className="cube-face border-2 border-purple-500/40 rounded-lg shadow-2xl backdrop-blur-sm"
+                  className="cube-face rounded-lg backdrop-blur-sm"
                   style={{
                     transform: 'rotateX(90deg) translate3d(0, 0, 32px)',
                     backgroundImage: 'var(--cube-texture)',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',
-                    opacity: 0.75,
-                    boxShadow: '0 0 15px rgba(168, 85, 247, 0.25), inset 0 0 15px rgba(168, 85, 247, 0.08)'
+                    opacity: 0.85
                   }}
                 />
-                {/* Bottom face */}
                 <div
-                  className="cube-face border-2 border-purple-500/40 rounded-lg shadow-2xl backdrop-blur-sm"
+                  className="cube-face rounded-lg backdrop-blur-sm"
                   style={{
                     transform: 'rotateX(-90deg) translate3d(0, 0, 32px)',
                     backgroundImage: 'var(--cube-texture)',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',
-                    opacity: 0.75,
-                    boxShadow: '0 0 15px rgba(168, 85, 247, 0.25), inset 0 0 15px rgba(168, 85, 247, 0.08)'
+                    opacity: 0.85
                   }}
                 />
               </div>
@@ -171,7 +159,7 @@ export default function WelcomeScreen(props: Props) {
     <div
       id="welcome-screen"
       className={cn(
-        'flex flex-col -mt-[60px] gap-4 w-full flex-grow items-center justify-center welcome-screen mx-auto transition-opacity duration-500 opacity-0 delay-100',
+        'flex flex-col -mt-[60px] gap-6 w-full flex-grow items-center justify-center welcome-screen mx-auto transition-opacity duration-500 ease-out opacity-0 delay-100',
         isVisible && 'opacity-100'
       )}
     >

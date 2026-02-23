@@ -156,7 +156,7 @@ export function ChatHistorySection({
               onExpandedGroupsChange={setExpandedGroupsInSection}
             />
             <div
-              className={cn('flex flex-col flex-1 min-h-0 min-w-0 pt-3', SIDEBAR_INNER_SECTION_SEPARATOR)}
+              className={cn('flex flex-col flex-1 min-h-0 min-w-0', SIDEBAR_INNER_SECTION_SEPARATOR)}
             >
               <ThreadHistory
               historyScrollRef={historyScrollRef}

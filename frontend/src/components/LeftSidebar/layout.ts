@@ -150,7 +150,7 @@ export const SIDEBAR_SECTION_HEADER_SELECTED_IN_WRAPPER =
   'text-sidebar-foreground rounded-r-xl bg-[hsl(var(--sidebar-primary)_/_0.05)] dark:bg-[hsl(var(--sidebar-primary)_/_0.08)]';
 
 export const SIDEBAR_SECTION_HEADER_SELECTED_STICKY =
-  'text-sidebar-foreground rounded-r-xl bg-sidebar ';
+  'text-sidebar-foreground bg-sidebar';
 
 /** Section wrapper when it contains selected: 2px bar (border). Wrapper must always have border-l-2 border-transparent. */
 export const SIDEBAR_SECTION_WRAPPER_SELECTED =
