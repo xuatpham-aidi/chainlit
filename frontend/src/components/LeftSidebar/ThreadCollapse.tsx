@@ -124,7 +124,7 @@ export function ThreadCollapseButton({
           <CopyMinus className="size-4 shrink-0" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="right" sideOffset={10} className="rounded-xl">
+      <TooltipContent side="right" sideOffset={10} className="rounded-xl text-[13px]">
         {tooltipText}
       </TooltipContent>
     </Tooltip>

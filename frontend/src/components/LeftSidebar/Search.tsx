@@ -119,7 +119,7 @@ export default function SearchChats({
         <span className="min-w-0 flex-1 truncate text-left">
           {t('threadHistory.sidebar.filters.placeholder')}
         </span>
-        <Search className="size-4 shrink-0 opacity-80" />
+        <Search className="size-4 shrink-0 opacity-75 transition-opacity duration-200" />
       </Button>
     ) : (
       <Button

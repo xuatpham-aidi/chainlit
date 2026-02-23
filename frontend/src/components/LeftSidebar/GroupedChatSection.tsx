@@ -262,7 +262,7 @@ function SortableGroupRow({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="min-w-[9rem] rounded-xl border-sidebar-border/60 shadow-lg bg-sidebar dark:bg-sidebar"
+                className="min-w-[9rem] rounded-xl border-sidebar-border/40 shadow-lg bg-sidebar dark:bg-sidebar py-1.5"
                 side="right"
                 align="start"
                 forceMount

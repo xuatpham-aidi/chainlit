@@ -382,14 +382,14 @@ export function ThreadList({
       />
       <TooltipProvider delayDuration={300}>
         {error ? (
-          <div className="px-2 py-3">
-            <Alert variant="error" className="rounded-xl border-sidebar-border/60">
+          <div className="px-3 py-3">
+            <Alert variant="error" className="rounded-xl border-sidebar-border/40 text-[13px]">
               {error}
             </Alert>
           </div>
         ) : hasNoThreads && !isLoading ? (
-          <div className="px-2 py-4">
-            <Alert variant="info" className="rounded-xl border-sidebar-border/60 text-sidebar-foreground/85">
+          <div className="px-3 py-4">
+            <Alert variant="info" className="rounded-xl border-sidebar-border/40 text-sidebar-foreground/85 text-[13px]">
               <Translator path="threadHistory.sidebar.empty" />
             </Alert>
           </div>
@@ -490,7 +490,7 @@ export function ThreadList({
                                         <Share2
                                           className={cn(
                                             SIDEBAR_THREAD_ICON_SIZE,
-                                            'shrink-0 text-sidebar-foreground/70'
+                                            'shrink-0 text-sidebar-foreground/70 transition-colors duration-200 ease-in-out'
                                           )}
                                           aria-hidden="true"
                                         />
@@ -498,7 +498,7 @@ export function ThreadList({
                                         <MessageSquare
                                           className={cn(
                                             SIDEBAR_THREAD_ICON_SIZE,
-                                            'shrink-0 transition-colors duration-200',
+                                            'shrink-0 transition-colors duration-200 ease-in-out',
                                             isSelected
                                               ? 'text-sidebar-foreground'
                                               : 'text-sidebar-foreground/55'

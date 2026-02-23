@@ -7,13 +7,27 @@
  * - Generous spacing, balanced padding/margin, clear level hierarchy (section > topic > time group > thread).
  * - Smooth ease-in-out transitions, subtle hover elevation, fluid micro-interactions.
  * - Block A: New chat (solid Deep Blue/Teal) + Search (soft). Block B: Topics (muted header) + Recent (small label).
- * - Typography: section 14px, group 13px, time label 12px, thread 13px – confident, readable.
+ * - Typography: unified scale – 14px section, 13px items, 12px labels. Confident, readable.
  */
+
+/**
+ * Unified typography and height scale (single source of truth).
+ * Hierarchy: section 14px > item (topic/thread) 13px > label (time group, recent) 12px.
+ * Row heights: section header 3rem, major/topic/thread rows 2.75rem for consistent tap targets.
+ */
+export const SIDEBAR_FONT_SECTION = 'text-[14px]';
+export const SIDEBAR_FONT_ITEM = 'text-[13px]';
+export const SIDEBAR_FONT_LABEL = 'text-[12px]';
+
+/** Shared min-height for section headers and list rows (tap targets). */
+export const SIDEBAR_ROW_MIN_H = 'min-h-[2.75rem]';
+export const SIDEBAR_SECTION_HEADER_H = 'h-12 min-h-[3rem]';
 
 /** Horizontal padding: left for hierarchy/alignment, right minimized to utilize width. */
 export const SIDEBAR_CONTENT_PL = 'pl-4';
 export const SIDEBAR_CONTENT_PR = 'pr-2';
 export const SIDEBAR_CONTENT_PX = 'pl-4 pr-2';
+export const SIDEBAR_GROUP_CONTENT_PX = 'pl-4';
 
 /** Indentation: level 0 = section, level 1 = topic/time group header, level 2 = thread under topic, level 3 = thread under time. */
 export const SIDEBAR_LEVEL_0_PL = 'pl-4';
@@ -32,21 +46,27 @@ export const SIDEBAR_SECTION_GAP = 'gap-5';
 export const SIDEBAR_SECTION_HEADER_TO_CONTENT_GAP = 'gap-3';
 
 /**
+ * Wrapper for Topics/Recent sections: same padding and rounded corners whether
+ * collapsed or expanded, so expand/collapse does not shift layout (no UX jump).
+ */
+export const SIDEBAR_GROUP_SECTION_WRAPPER =
+  'rounded-2xl px-1 py-1.5 transition-colors duration-200 ease-in-out';
+
+/**
  * Full-section background for expanded Groups (Topics) and Recent.
- * User-friendly: clear blocks so "Topics" vs "Recent" are easy to see and follow.
- * Impressive but simple: soft tint, no harsh edges – two distinct, scannable cards.
+ * Applied only when expanded; wrapper is always applied so layout stays stable.
  */
 export const SIDEBAR_GROUP_SECTION_BG_TOPICS =
-  'rounded-2xl px-1 py-1.5 bg-sidebar-foreground/[0.06] dark:bg-sidebar-foreground/[0.09] transition-colors duration-200 ease-in-out';
+  'bg-sidebar-foreground/[0.06] dark:bg-sidebar-foreground/[0.09]';
 
 export const SIDEBAR_GROUP_SECTION_BG_RECENT =
-  'rounded-2xl px-1 py-1.5 bg-sidebar-foreground/[0.04] dark:bg-sidebar-foreground/[0.065] transition-colors duration-200 ease-in-out';
+  'bg-sidebar-foreground/[0.04] dark:bg-sidebar-foreground/[0.065]';
 
 /** Inner padding for group section content (when expanded). */
 export const SIDEBAR_GROUP_SECTION_INNER = 'px-3 pt-1 pb-3';
 
 /** Inner gap within a section. */
-export const SIDEBAR_SECTION_INNER_GAP = 'gap-2';
+export const SIDEBAR_SECTION_INNER_GAP = 'gap-1.5';
 
 export const SIDEBAR_TOPIC_TO_CHILDREN_GAP = 'pt-2';
 
@@ -88,22 +108,22 @@ export const SIDEBAR_SECTION_WRAPPER_SELECTED =
 
 export const SIDEBAR_SECTION_LEFT_BAR_PADDING = 'pl-[3px]';
 
-/** Topics section: borderless, muted header – one tap target, big-tech clarity (13px). */
+/** Topics section: borderless, muted header – one tap target, big-tech clarity. */
 export const SIDEBAR_MAJOR_SECTION_HEADER =
-  'flex items-center gap-3 w-full h-11 min-h-[2.75rem] pl-4 pr-2 py-0 rounded-xl transition-colors duration-200 ease-in-out text-[13px] font-medium tracking-[0.02em] select-none';
+  'flex items-center gap-3 w-full h-11 min-h-[2.75rem] pl-4 pr-2 py-0 rounded-xl transition-colors duration-200 ease-in-out font-medium tracking-[0.02em] select-none text-[13px]';
 
 export const SIDEBAR_MAJOR_SECTION_HEADER_DEFAULT = 'text-sidebar-foreground/75';
 
 export const SIDEBAR_MAJOR_SECTION_HEADER_HOVER =
   'hover:bg-sidebar-foreground/[0.05] dark:hover:bg-sidebar-foreground/[0.08] hover:text-sidebar-foreground/95';
 
-/** Recent section: small text label only – minimal, friendly. */
+/** Recent section: small label (12px); same row height as Topics from SIDEBAR_MAJOR_SECTION_HEADER. */
 export const SIDEBAR_MAJOR_SECTION_HEADER_SMALL_LABEL =
-  'text-[12px] font-medium tracking-[0.02em] text-sidebar-foreground/60 dark:text-sidebar-foreground/65';
+  'font-medium tracking-[0.02em] text-sidebar-foreground/60 dark:text-sidebar-foreground/65 text-[12px]';
 
-/** Group/topic row – comfortable tap target, 13px, level-aware. */
+/** Group/topic row – same height as thread rows (2.75rem), 13px, comfortable tap target. */
 export const SIDEBAR_GROUP_ROW =
-  'flex w-full items-center gap-3 py-2.5 pl-4 pr-2 min-h-[2.75rem] text-[13px] font-medium tracking-[0.02em] transition-colors duration-200 ease-in-out rounded-xl select-none';
+  'flex w-full items-center gap-3 py-2.5 pl-4 pr-2 min-h-[2.75rem] font-medium tracking-[0.02em] transition-colors duration-200 ease-in-out rounded-xl select-none text-[13px]';
 
 export const SIDEBAR_GROUP_ROW_DEFAULT = 'text-sidebar-foreground/88 bg-transparent';
 
@@ -125,17 +145,17 @@ export const SIDEBAR_GROUP_ROW_STICKY =
 export const SIDEBAR_TIME_GROUP_ROW_STICKY =
   'sticky z-[1] bg-sidebar transition-colors duration-200 ease-in-out';
 
-/** Time group label (Today, Yesterday…): smaller, muted – level 1 under section. */
+/** Time group label (Today, Yesterday…): 12px, muted; row height from SIDEBAR_GROUP_ROW. */
 export const SIDEBAR_TIME_GROUP_ROW =
-  'text-sidebar-foreground/55 dark:text-sidebar-foreground/60 text-[12px] font-medium tracking-[0.02em]';
+  'text-sidebar-foreground/55 dark:text-sidebar-foreground/60 font-medium tracking-[0.02em] text-[12px]';
 
 export const SIDEBAR_TIME_GROUP_ROW_WRAPPER = 'rounded-xl';
 
-/** Thread item: comfortable tap target, 13px, clear hierarchy. */
+/** Thread item: same row height as topic (2.75rem), 13px, comfortable tap target. */
 export const SIDEBAR_THREAD_ITEM_PADDING =
   'rounded-xl pl-4 pr-2 py-2.5 min-h-[2.75rem] my-0.5';
 export const SIDEBAR_THREAD_ITEM_TEXT =
-  'truncate text-left text-[13px] tracking-[0.01em]';
+  'truncate text-left tracking-[0.01em] text-[13px]';
 
 export const SIDEBAR_THREAD_ITEM_DEFAULT =
   'text-sidebar-foreground/90 bg-transparent';
@@ -158,19 +178,19 @@ export const SIDEBAR_GROUP_BLOCK_SELECTED = '';
 
 /** Primary CTA (New chat): solid Deep Blue / Teal, subtle hover glow. */
 export const SIDEBAR_CTA_PRIMARY =
-  'w-full justify-between gap-3 h-12 min-h-12 pl-5 pr-3.5 rounded-xl bg-sidebar-primary text-sidebar-primary-foreground hover:opacity-95 hover:shadow-[0_4px_16px_hsl(var(--sidebar-primary)_/_0.3)] active:scale-[0.98] transition-all duration-200 ease-in-out text-[14px] font-medium tracking-wide focus-visible:ring-2 focus-visible:ring-sidebar-primary focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar outline-none shadow-sm';
+  'w-full justify-between gap-3 h-12 min-h-12 pl-5 pr-3.5 rounded-xl bg-sidebar-primary text-sidebar-primary-foreground hover:opacity-95 hover:shadow-[0_4px_16px_hsl(var(--sidebar-primary)_/_0.3)] active:scale-[0.98] transition-all duration-200 ease-in-out font-medium tracking-wide focus-visible:ring-2 focus-visible:ring-sidebar-primary focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar outline-none shadow-sm text-[14px]';
 
 /** Secondary action (Search): soft background, no heavy border. */
 export const SIDEBAR_ACTION_SECONDARY =
-  'w-full justify-between gap-2.5 h-11 min-h-11 pl-4 pr-3.5 rounded-xl bg-sidebar-foreground/[0.04] dark:bg-sidebar-foreground/[0.08] border border-transparent text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-foreground/[0.07] dark:hover:bg-sidebar-foreground/[0.11] transition-colors duration-200 ease-in-out text-[13px] font-medium tracking-wide focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar outline-none';
+  'w-full justify-between gap-2.5 h-11 min-h-11 pl-4 pr-3.5 rounded-xl bg-sidebar-foreground/[0.04] dark:bg-sidebar-foreground/[0.08] border border-transparent text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-foreground/[0.07] dark:hover:bg-sidebar-foreground/[0.11] transition-colors duration-200 ease-in-out font-medium tracking-wide focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar outline-none text-[13px]';
 
 /** Create-group / secondary action in Topics. */
 export const SIDEBAR_ACTION_BUTTON =
-  'w-full justify-start gap-3 h-10 min-h-10 pl-4 pr-2 rounded-xl text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-foreground/[0.05] dark:hover:bg-sidebar-foreground/[0.09] transition-colors duration-200 ease-in-out text-[13px] font-medium tracking-wide focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar outline-none';
+  'w-full justify-start gap-3 h-10 min-h-10 pl-4 pr-2 rounded-xl text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-foreground/[0.05] dark:hover:bg-sidebar-foreground/[0.09] transition-colors duration-200 ease-in-out font-medium tracking-wide focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar outline-none text-[13px]';
 
-/** Count badge: pill shape, subtle – level-aware. */
+/** Count badge: pill shape, subtle – unified label size. */
 export const SIDEBAR_GROUP_COUNT_BADGE =
-  'inline-flex items-center justify-center text-[11px] font-medium tabular-nums rounded-full px-2.5 py-0.5 min-w-[1.25rem] transition-colors duration-200';
+  'inline-flex items-center justify-center font-medium tabular-nums rounded-full px-2.5 py-0.5 min-w-[1.25rem] transition-colors duration-200 text-[12px]';
 
 export const SIDEBAR_GROUP_COUNT_BADGE_DEFAULT =
   'text-sidebar-foreground/50 bg-sidebar-foreground/[0.08] dark:bg-sidebar-foreground/[0.12]';
@@ -187,4 +207,4 @@ export const SIDEBAR_ICON_BUTTON =
 
 /** Dropdown menu item (sidebar context). */
 export const SIDEBAR_MENU_ITEM =
-  'rounded-xl py-2.5 cursor-pointer';
+  'rounded-xl py-2.5 cursor-pointer text-[13px]';

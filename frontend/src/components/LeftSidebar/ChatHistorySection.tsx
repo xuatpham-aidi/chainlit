@@ -15,7 +15,7 @@ import {
   SIDEBAR_SECTION_HEADER,
   SIDEBAR_SECTION_HEADER_TITLE,
   SIDEBAR_SECTION_HEADER_HOVER,
-  SIDEBAR_CONTENT_PX,
+  SIDEBAR_GROUP_CONTENT_PX,
   SIDEBAR_HISTORY_ZONE_BG
 } from './layout';
 import { Translator } from '../i18n';
@@ -122,7 +122,7 @@ export function ChatHistorySection({
           className={cn(
             SIDEBAR_SECTION_HEADER,
             SIDEBAR_SECTION_HEADER_HOVER,
-            'select-none border-b border-sidebar-border/20 dark:border-sidebar-border/30'
+            'select-none border-b border-sidebar-border/25 dark:border-sidebar-border/30'
           )}
         >
           <p className={SIDEBAR_SECTION_HEADER_TITLE}>
@@ -152,8 +152,8 @@ export function ChatHistorySection({
         >
           <div
             className={cn(
-              'flex flex-1 flex-col min-h-0 min-w-0 py-4 gap-5',
-              SIDEBAR_CONTENT_PX
+              'flex flex-1 flex-col min-h-0 min-w-0 py-4 gap-2',
+              SIDEBAR_GROUP_CONTENT_PX
             )}
           >
             <GroupedChatSection

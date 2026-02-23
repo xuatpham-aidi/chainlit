@@ -78,9 +78,9 @@ export default function ThreadOptions({
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="min-w-[9rem] rounded-xl border-sidebar-border/60 shadow-lg bg-sidebar dark:bg-sidebar"
-        side="right"      // Changed from default (bottom) to right
-        align="start"     // Aligns to the start of the trigger
+        className="min-w-[9rem] rounded-xl border-sidebar-border/40 shadow-lg bg-sidebar dark:bg-sidebar py-1.5"
+        side="right"
+        align="start"
         forceMount
         sideOffset={20}
       >
@@ -105,7 +105,7 @@ export default function ThreadOptions({
               }}>
               <Translator path="threadHistory.thread.menu.moveToGroup" />
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="rounded-xl border-sidebar-border/60 max-w-[14rem]">
+            <DropdownMenuSubContent className="rounded-xl border-sidebar-border/40 max-w-[14rem] py-1.5">
               {isInGroup && (
                 <DropdownMenuItem
                   className={SIDEBAR_MENU_ITEM}

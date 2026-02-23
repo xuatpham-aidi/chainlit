@@ -15,6 +15,7 @@ import {
   SIDEBAR_SECTION_WRAPPER_SELECTED,
   SIDEBAR_SECTION_LEFT_BAR_PADDING,
   SIDEBAR_STICKY_SECTION_HEADER_BG,
+  SIDEBAR_GROUP_SECTION_WRAPPER,
   SIDEBAR_GROUP_SECTION_BG_TOPICS,
   SIDEBAR_GROUP_SECTION_BG_RECENT
 } from './layout';
@@ -64,8 +65,9 @@ export function SidebarSection({
     onToggle();
   };
 
-  const hasSectionBg =
-    sectionBackground !== 'none' && expanded;
+  const hasSectionWrapper = sectionBackground !== 'none';
+  const hasSectionBg = hasSectionWrapper && expanded;
+  const sectionWrapperClass = hasSectionWrapper ? SIDEBAR_GROUP_SECTION_WRAPPER : '';
   const sectionBgClass =
     sectionBackground === 'topics'
       ? SIDEBAR_GROUP_SECTION_BG_TOPICS
@@ -87,7 +89,6 @@ export function SidebarSection({
         size="default"
         className={cn(
           SIDEBAR_MAJOR_SECTION_HEADER,
-          isSmallLabel && 'h-9 min-h-9 text-[12px]',
           isSmallLabel && SIDEBAR_MAJOR_SECTION_HEADER_SMALL_LABEL,
           stickyHeader && cn('sticky top-0 z-20', SIDEBAR_STICKY_SECTION_HEADER_BG),
           containsSelected && (stickyHeader ? SIDEBAR_SECTION_HEADER_SELECTED_STICKY : SIDEBAR_SECTION_HEADER_SELECTED_IN_WRAPPER),
@@ -97,7 +98,7 @@ export function SidebarSection({
         )}
         aria-expanded={expanded}
       >
-        <span className="min-w-0 flex-1 truncate text-left font-medium">
+        <span className="min-w-0 flex-1 truncate text-left font-medium tracking-[0.01em]">
           {title}
         </span>
         <div className="flex items-center gap-1 shrink-0">
@@ -106,9 +107,9 @@ export function SidebarSection({
           ) : isLoading ? (
             <Loader />
           ) : expanded ? (
-            <ChevronDown className={cn('size-4 transition-opacity duration-200', isSmallLabel ? 'text-sidebar-foreground/45' : 'text-sidebar-foreground/50')} />
+            <ChevronDown className={cn('size-4 shrink-0 transition-opacity duration-200 ease-in-out', isSmallLabel ? 'text-sidebar-foreground/45' : 'text-sidebar-foreground/50')} />
           ) : (
-            <ChevronRight className={cn('size-4 transition-opacity duration-200', isSmallLabel ? 'text-sidebar-foreground/45' : 'text-sidebar-foreground/50')} />
+            <ChevronRight className={cn('size-4 shrink-0 transition-opacity duration-200 ease-in-out', isSmallLabel ? 'text-sidebar-foreground/45' : 'text-sidebar-foreground/50')} />
           )}
         </div>
       </Button>
@@ -137,6 +138,7 @@ export function SidebarSection({
         'flex min-w-0 shrink-0 flex-col',
         expanded ? SIDEBAR_SECTION_HEADER_TO_CONTENT_GAP : 'gap-0',
         containsSelected && SIDEBAR_SECTION_WRAPPER_SELECTED,
+        sectionWrapperClass,
         hasSectionBg && sectionBgClass
       )}
       aria-label={ariaLabel}
