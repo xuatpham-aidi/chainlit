@@ -212,7 +212,7 @@ function SortableGroupRow({
             onKeyDown={handleRowKeyDown}
             style={stickyRowStyle}
             className={cn(
-              'flex items-center gap-0 w-full rounded-2xl overflow-hidden touch-none pr-3 select-none',
+              'flex items-center gap-0 w-full rounded-xl overflow-hidden touch-none pr-3 select-none',
               SIDEBAR_TOPIC_ROW_STICKY_TOP,
             'sticky',
             SIDEBAR_GROUP_ROW_STICKY,
@@ -242,7 +242,7 @@ function SortableGroupRow({
                 />
               </div>
             </TooltipTrigger>
-            <TooltipContent side="right" align="start" sideOffset={40}>
+            <TooltipContent side="right" align="start" sideOffset={50}>
               <p className="max-w-xs break-words">{group.name}</p>
             </TooltipContent>
           </Tooltip>
@@ -262,7 +262,7 @@ function SortableGroupRow({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="min-w-[9rem] rounded-2xl border-sidebar-border/70 shadow-lg bg-sidebar dark:bg-sidebar"
+                className="min-w-[9rem] rounded-xl border-sidebar-border/60 shadow-lg bg-sidebar dark:bg-sidebar"
                 side="right"
                 align="start"
                 forceMount

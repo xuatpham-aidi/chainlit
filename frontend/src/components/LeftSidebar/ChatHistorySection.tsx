@@ -121,7 +121,7 @@ export function ChatHistorySection({
         )}
       >
         <header
-          className={cn(SIDEBAR_SECTION_HEADER, SIDEBAR_SECTION_HEADER_HOVER, "select-none")}
+          className={cn(SIDEBAR_SECTION_HEADER, SIDEBAR_SECTION_HEADER_HOVER, 'select-none')}
         >
           <p className={SIDEBAR_SECTION_HEADER_TITLE}>
             <Translator path="threadHistory.sidebar.title" />
@@ -150,7 +150,7 @@ export function ChatHistorySection({
         >
           <div
             className={cn(
-              'flex flex-1 flex-col min-h-0 min-w-0 py-5',
+              'flex flex-1 flex-col min-h-0 min-w-0 py-4',
               SIDEBAR_SECTION_GAP,
               SIDEBAR_CONTENT_PX
             )}

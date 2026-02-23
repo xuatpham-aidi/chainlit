@@ -78,7 +78,7 @@ export default function ThreadOptions({
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="min-w-[9rem] rounded-2xl border-sidebar-border/70 shadow-lg bg-sidebar dark:bg-sidebar"
+        className="min-w-[9rem] rounded-xl border-sidebar-border/60 shadow-lg bg-sidebar dark:bg-sidebar"
         side="right"      // Changed from default (bottom) to right
         align="start"     // Aligns to the start of the trigger
         forceMount
@@ -105,7 +105,7 @@ export default function ThreadOptions({
               }}>
               <Translator path="threadHistory.thread.menu.moveToGroup" />
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="rounded-2xl border-sidebar-border/70">
+            <DropdownMenuSubContent className="rounded-xl border-sidebar-border/60">
               {isInGroup && (
                 <DropdownMenuItem
                   className={SIDEBAR_MENU_ITEM}

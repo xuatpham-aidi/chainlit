@@ -117,14 +117,14 @@ export function ThreadCollapseButton({
             SIDEBAR_ICON_BUTTON,
             'shrink-0',
             isEndAligned
-              ? 'h-4 w-4 justify-center rounded-xl'
+              ? 'h-4 w-4 justify-center rounded-lg'
               : 'h-9 w-9'
           )}
         >
           <CopyMinus className="size-4 shrink-0" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="right" sideOffset={10} className="rounded-2xl">
+      <TooltipContent side="right" sideOffset={10} className="rounded-xl">
         {tooltipText}
       </TooltipContent>
     </Tooltip>
