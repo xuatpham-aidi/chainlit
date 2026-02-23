@@ -80,7 +80,8 @@ export function TimeGroupBlock({
           onToggle={onToggle}
           containsSelected={groupContainsSelected}
           className={cn(
-            !groupContainsSelected && SIDEBAR_TIME_GROUP_ROW,
+            SIDEBAR_TIME_GROUP_ROW,
+            groupContainsSelected && 'text-sidebar-foreground',
             compactFirstGroup && SIDEBAR_LEVEL_1_PL
           )}
         />

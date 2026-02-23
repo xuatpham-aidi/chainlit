@@ -23,9 +23,10 @@ import {
   SIDEBAR_GROUP_BLOCK_PX,
   SIDEBAR_GROUP_BLOCK_SELECTED,
   SIDEBAR_GROUP_ROW_STICKY,
-  SIDEBAR_GROUP_ROW_SELECTED_STICKY,
+  SIDEBAR_GROUP_ROW_SELECTED_TINT,
   SIDEBAR_TOPIC_ROW_STICKY_TOP,
   SIDEBAR_ROW_HOVER_BG,
+  SIDEBAR_TIME_GROUP_ROW,
   SIDEBAR_ICON_BUTTON,
   SIDEBAR_MENU_ITEM
 } from './layout';
@@ -145,68 +146,78 @@ export function TopicGroupRow({
               : 'cursor-default',
             'transition-all duration-200 ease-out',
             'border border-transparent',
-            containsSelectedThread && SIDEBAR_GROUP_ROW_SELECTED_STICKY,
             isDragging && 'opacity-50 shadow-lg shadow-sidebar-foreground/[0.08]',
             isDropTarget &&
-              'ring-2 ring-[hsl(var(--sidebar-teal)_/_0.4)] ring-inset border-[hsl(var(--sidebar-teal)_/_0.3)]',
-            'bg-sidebar',
-            !containsSelectedThread && SIDEBAR_ROW_HOVER_BG
+            'ring-2 ring-[hsl(var(--sidebar-teal)_/_0.4)] ring-inset border-[hsl(var(--sidebar-teal)_/_0.3)]',
+            'bg-sidebar'
           )}
           aria-label={hasChildren ? 'Drag to reorder group' : undefined}
           aria-expanded={hasChildren ? isExpanded : undefined}
         >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex flex-1 min-w-0 min-h-0">
-                <CollapsibleGroupRow
-                  label={<span className="truncate block">{group.name}</span>}
-                  isCollapsed={!isExpanded}
-                  containsSelected={containsSelectedThread}
-                  contentOnly
-                  showChevron={hasChildren}
-                  className="text-sidebar-foreground/85"
-                />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="right" align="start" sideOffset={40}>
-              <p className="max-w-xs break-words">{group.name}</p>
-            </TooltipContent>
-          </Tooltip>
           <div
-            className="flex items-center shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity duration-150"
-            onPointerDown={(e) => e.stopPropagation()}
+            className={cn(
+              'flex flex-1 min-w-0 min-h-0 items-center rounded-lg self-stretch',
+              !containsSelectedThread && SIDEBAR_ROW_HOVER_BG,
+              containsSelectedThread && SIDEBAR_GROUP_ROW_SELECTED_TINT,
+              containsSelectedThread && 'rounded-r-lg -mr-2 pr-2'
+            )}
           >
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  onClick={(e) => e.stopPropagation()}
-                  className={cn(SIDEBAR_ICON_BUTTON, 'h-7 w-7')}
-                  aria-label="Group options"
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex flex-1 min-w-0 min-h-0">
+                  <CollapsibleGroupRow
+                    label={<span className="truncate block">{group.name}</span>}
+                    isCollapsed={!isExpanded}
+                    containsSelected={containsSelectedThread}
+                    contentOnly
+                    showChevron={hasChildren}
+                    className={cn(
+                      SIDEBAR_TIME_GROUP_ROW,
+                      containsSelectedThread && 'text-sidebar-foreground'
+                    )}
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" align="start" sideOffset={40}>
+                <p className="max-w-xs break-words">{group.name}</p>
+              </TooltipContent>
+            </Tooltip>
+            <div
+              className="flex items-center shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity duration-150"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={(e) => e.stopPropagation()}
+                    className={cn(SIDEBAR_ICON_BUTTON, 'h-7 w-7')}
+                    aria-label="Group options"
+                  >
+                    <Ellipsis className="h-3 w-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="min-w-[8.5rem] rounded-xl border-sidebar-border/30 shadow-lg shadow-sidebar-foreground/[0.04] bg-sidebar dark:bg-sidebar py-1"
+                  side="right"
+                  align="start"
+                  forceMount
+                  sideOffset={20}
                 >
-                  <Ellipsis className="h-3 w-3" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="min-w-[8.5rem] rounded-xl border-sidebar-border/30 shadow-lg shadow-sidebar-foreground/[0.04] bg-sidebar dark:bg-sidebar py-1"
-                side="right"
-                align="start"
-                forceMount
-                sideOffset={20}
-              >
-                <DropdownMenuItem className={SIDEBAR_MENU_ITEM} onClick={onRename}>
-                  <Translator path="threadHistory.thread.menu.rename" />
-                  <Pencil className="ml-auto h-3.5 w-3.5 opacity-50" />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className={cn(SIDEBAR_MENU_ITEM, 'text-red-600 focus:text-red-600 dark:text-red-400')}
-                  onClick={onDelete}
-                >
-                  <Translator path="threadHistory.thread.menu.delete" />
-                  <Trash2 className="ml-auto h-3.5 w-3.5 opacity-70" />
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuItem className={SIDEBAR_MENU_ITEM} onClick={onRename}>
+                    <Translator path="threadHistory.thread.menu.rename" />
+                    <Pencil className="ml-auto h-3.5 w-3.5 opacity-50" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className={cn(SIDEBAR_MENU_ITEM, 'text-red-600 focus:text-red-600 dark:text-red-400')}
+                    onClick={onDelete}
+                  >
+                    <Translator path="threadHistory.thread.menu.delete" />
+                    <Trash2 className="ml-auto h-3.5 w-3.5 opacity-70" />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
         {!isDragging && children}

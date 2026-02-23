@@ -137,14 +137,17 @@ export const SIDEBAR_SECTION_HEADER_HOVER = '';
 /**
  * Selected-thread path: use border-left (reserved space) so selection does not shift layout.
  * Default = transparent border; selected = primary color.
+ * Same background for selected thread and all parent labels (section, topic/time group).
  */
+export const SIDEBAR_SELECTED_PATH_BG =
+  'bg-[hsl(var(--sidebar-primary)_/_0.06)] dark:bg-[hsl(var(--sidebar-primary)_/_0.09)]';
 
 /** Section (Topics/Recent) contains selected: lightest tint + 2px bar (border, no shift). */
 export const SIDEBAR_SECTION_HEADER_SELECTED =
-  'text-sidebar-foreground rounded-r-xl bg-[hsl(var(--sidebar-primary)_/_0.05)] dark:bg-[hsl(var(--sidebar-primary)_/_0.08)] border-l-2 border-[hsl(var(--sidebar-primary))]';
+  'text-sidebar-foreground rounded-r-xl bg-[hsl(var(--sidebar-primary)_/_0.05)] dark:bg-[hsl(var(--sidebar-primary)_/_0.08)]';
 
 export const SIDEBAR_SECTION_HEADER_SELECTED_IN_WRAPPER =
-  'text-sidebar-foreground rounded-r-xl bg-[hsl(var(--sidebar-primary)_/_0.05)] dark:bg-[hsl(var(--sidebar-primary)_/_0.08)] border-l-2 border-[hsl(var(--sidebar-primary))]';
+  'text-sidebar-foreground rounded-r-xl bg-[hsl(var(--sidebar-primary)_/_0.05)] dark:bg-[hsl(var(--sidebar-primary)_/_0.08)]';
 
 export const SIDEBAR_SECTION_HEADER_SELECTED_STICKY =
   'text-sidebar-foreground rounded-r-xl bg-sidebar ';
@@ -171,7 +174,7 @@ export const SIDEBAR_MAJOR_SECTION_HEADER_SMALL_LABEL =
 
 /** Group/topic row – compact height. Reserve 2px left bar to avoid layout shift. */
 export const SIDEBAR_GROUP_ROW =
-  'flex w-full items-center gap-1.5 py-1 border-l-2 border-transparent pl-2.5 pr-2 min-h-[2.125rem] font-medium tracking-[0.01em] transition-all duration-150 ease-out rounded-lg select-none text-[13px] active:scale-[0.98] active:transition-transform active:duration-100';
+  'flex w-full items-center gap-1.5 py-1 pl-2.5 pr-2 min-h-[2.125rem] font-medium tracking-[0.01em] transition-all duration-150 ease-out rounded-lg select-none text-[13px] active:scale-[0.98] active:transition-transform active:duration-100';
 
 /** Default text for group rows and thread items – unified hierarchy (85% for list items). */
 export const SIDEBAR_GROUP_ROW_DEFAULT = 'text-sidebar-foreground/85 bg-transparent';
@@ -179,17 +182,22 @@ export const SIDEBAR_GROUP_ROW_DEFAULT = 'text-sidebar-foreground/85 bg-transpar
 export const SIDEBAR_ROW_BG =
   'bg-transparent hover:bg-sidebar-foreground/[0.04] dark:hover:bg-sidebar-foreground/[0.06]';
 
-/** Hover background only (e.g. for sticky rows that keep their own bg). Same as datetime group. */
-export const SIDEBAR_ROW_HOVER_BG = '';
+/** Hover background only. Use on an inner layer so the sticky row keeps opaque bg-sidebar; otherwise hover replaces bg and row becomes transparent. Same as datetime group. */
+export const SIDEBAR_ROW_HOVER_BG =
+  'hover:bg-sidebar-foreground/[0.04] dark:hover:bg-sidebar-foreground/[0.06]';
 
 export const SIDEBAR_GROUP_ROW_BG = SIDEBAR_ROW_BG;
 
 /** Parent (topic/time group) contains selected: subtle flat tint + 2px bar (border); full text. */
 export const SIDEBAR_GROUP_ROW_SELECTED =
-  'text-sidebar-foreground rounded-r-lg bg-[hsl(var(--sidebar-primary)_/_0.06)] dark:bg-[hsl(var(--sidebar-primary)_/_0.09)] border-l-2 border-[hsl(var(--sidebar-primary))]';
+  'text-sidebar-foreground rounded-r-lg bg-[hsl(var(--sidebar-primary)_/_0.06)] dark:bg-[hsl(var(--sidebar-primary)_/_0.09)]';
+
+/** Selected tint only (for overlay on sticky rows so the row stays opaque and content does not show through when scrolling). */
+export const SIDEBAR_GROUP_ROW_SELECTED_TINT =
+  'bg-[hsl(var(--sidebar-primary)_/_0.06)] dark:bg-[hsl(var(--sidebar-primary)_/_0.09)]';
 
 export const SIDEBAR_GROUP_ROW_SELECTED_STICKY =
-  'text-sidebar-foreground rounded-r-lg bg-sidebar border-l-2 border-[hsl(var(--sidebar-primary))]';
+  'text-sidebar-foreground rounded-r-lg bg-sidebar';
 
 /** Hover text for group rows – unified with thread items (full on hover). */
 export const SIDEBAR_GROUP_ROW_HOVER_TEXT = 'hover:text-sidebar-foreground';
@@ -209,9 +217,9 @@ export const SIDEBAR_TIME_GROUP_ROW_WRAPPER = 'rounded-lg';
 
 /** Thread item: compact row height. Always reserve 3px left (transparent or primary) to prevent layout shift on select. */
 export const SIDEBAR_THREAD_ITEM_PADDING =
-  'rounded-lg border-l-[3px] border-transparent pl-2 pr-1.5 py-1.5 min-h-[2.25rem] my-px box-border';
+  'rounded-lg border-transparent pr-1.5';
 export const SIDEBAR_THREAD_ITEM_TEXT =
-  'truncate text-left tracking-[0.005em] text-[13px]';
+  'truncate text-left tracking-[0.005em] text-xs';
 
 /** Thread item default – unified weight with selected (no layout shift on select). Override sidebar base data-[active]:font-medium. */
 export const SIDEBAR_THREAD_ITEM_DEFAULT =
@@ -223,7 +231,7 @@ export const SIDEBAR_THREAD_ITEM_HOVER =
 
 /** Selected thread: strongest tint + 3px bar (border). Same font-weight as default to prevent layout shift. */
 export const SIDEBAR_THREAD_ITEM_ACTIVE =
-  '!font-normal rounded-r-lg bg-[hsl(var(--sidebar-primary)_/_0.10)] dark:bg-[hsl(var(--sidebar-primary)_/_0.14)] text-sidebar-foreground border-l-[3px] border-[hsl(var(--sidebar-primary))]';
+  '!font-normal rounded-r-lg text-sidebar-foreground !bg-[hsl(var(--sidebar-primary)_/_0.06)] dark:!bg-[hsl(var(--sidebar-primary)_/_0.09)]';
 
 export const SIDEBAR_THREAD_ITEM_OPEN =
   'bg-sidebar-foreground/[0.04] dark:bg-sidebar-foreground/[0.06]';
@@ -247,8 +255,7 @@ export const SIDEBAR_GROUP_BLOCK_PADDING = 'py-px';
 export const SIDEBAR_GROUP_BLOCK_PX = 'px-0.5';
 
 /** Entire date-time or topic group when it contains the selected thread: very subtle container tint. */
-export const SIDEBAR_GROUP_BLOCK_SELECTED =
-  'rounded-lg bg-sidebar-foreground/[0.015] dark:bg-sidebar-foreground/[0.03] transition-colors duration-200 ease-out';
+export const SIDEBAR_GROUP_BLOCK_SELECTED = '';
 
 /** Primary CTA (New chat): solid Deep Blue / Teal, subtle hover glow – addictive feedback. */
 export const SIDEBAR_CTA_PRIMARY =
@@ -260,7 +267,7 @@ export const SIDEBAR_ACTION_SECONDARY =
 
 /** Create-group / secondary action in Topics. */
 export const SIDEBAR_ACTION_BUTTON =
-  'w-full justify-start h-8 min-h-8 pl-3.5 pr-2 rounded-lg text-sidebar-foreground/55 hover:text-sidebar-foreground/85 hover:bg-sidebar-foreground/[0.05] dark:hover:bg-sidebar-foreground/[0.07] transition-all duration-150 ease-out font-medium tracking-wide focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar outline-none text-[12.5px]';
+  'w-full justify-start h-8 min-h-8 pl-3 pr-2 rounded-lg text-sidebar-foreground/55 hover:text-sidebar-foreground/85 hover:bg-sidebar-foreground/[0.05] dark:hover:bg-sidebar-foreground/[0.07] transition-all duration-150 ease-out font-medium tracking-wide focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar outline-none text-[12.5px]';
 
 /** Count badge: pill shape, subtle. */
 export const SIDEBAR_GROUP_COUNT_BADGE =

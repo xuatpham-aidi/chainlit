@@ -12,7 +12,7 @@ const MIN_THUMB_HEIGHT = 24;
 
 const SCROLLBAR_VARIANT_CLASSES = {
   sidebar: {
-    scrollPadding: 'pr-2',
+    scrollPadding: '',
     scrollRounding: 'rounded-br-xl rounded-tr-xl',
     track: 'w-1 pr-0.5 bg-sidebar-foreground/[0.04] rounded-full z-10',
     trackInset: 'top-1 bottom-1',
