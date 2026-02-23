@@ -90,6 +90,7 @@
         },
         "messages": {
             "processing": "Đang xử lý",
+            "completed": "Hoàn thành trong",
             "status": {
                 "using": "Đang dùng",
                 "used": "Đã dùng"
@@ -124,14 +125,16 @@
             "title": "Bảng cài đặt",
             "customize": "Tùy chỉnh cài đặt chat tại đây"
         },
-        "watermark": "Hãy kiểm tra lại các thông tin quan trọng."
+        "watermark": "Hãy kiểm tra lại thông tin quan trọng."
     },
     "threadHistory": {
         "sidebar": {
-            "title": "Các cuộc trò chuyện trước",
+            "title": "Lịch sử chat",
+            "groupedChat": "Theo chủ đề",
+            "ungroupedChat": "Gần đây",
             "filters": {
                 "search": "Tìm kiếm",
-                "placeholder": "Tìm kiếm cuộc trò chuyện..."
+                "placeholder": "Tìm kiếm đoạn chat"
             },
             "timeframes": {
                 "today": "Hôm nay",
@@ -140,9 +143,27 @@
                 "previous30days": "30 ngày trước"
             },
             "empty": "Không tìm thấy lịch sử chat",
+            "newChat": "Chat mới",
+            "newChatInGroup": "Tạo chat mới trong chủ đề này",
+            "collapseAll": "Thu gọn",
             "actions": {
-                "close": "Đóng sidebar",
-                "open": "Mở sidebar"
+                "close": "Đóng menu",
+                "open": "Mở menu"
+            },
+            "createGroupTitle": "Thêm chủ đề",
+            "createGroupPlaceholder": "Tên chủ đề",
+            "createGroup": {
+                "inProgress": "Đang thêm chủ đề...",
+                "success": "Đã thêm chủ đề",
+                "error": "Thêm chủ đề thất bại",
+                "duplicateName": "Tên chủ đề đã tồn tại"
+            },
+            "deleteGroupTitle": "Xóa chủ đề",
+            "deleteGroupDescription": "Thao tác này sẽ xóa chủ đề và tất cả cuộc trò chuyện trong chủ đề. Không thể hoàn tác.",
+            "deleteGroup": {
+                "inProgress": "Đang xóa chủ đề...",
+                "success": "Đã xóa chủ đề",
+                "error": "Xóa chủ đề thất bại"
             }
         },
         "thread": {
@@ -150,6 +171,7 @@
             "menu": {
                 "rename": "Đổi tên",
                 "share": "Chia sẻ",
+                "moveToGroup": "Chuyển vào",
                 "delete": "Xóa"
             },
             "actions": {
@@ -181,6 +203,11 @@
                     },
                     "success": "Đã đổi tên!",
                     "inProgress": "Đang đổi tên"
+                },
+                "moveToGroup": {
+                    "inProgress": "Đang chuyển...",
+                    "success": "Đã chuyển cuộc trò chuyện",
+                    "error": "Không thể chuyển cuộc trò chuyện vào chủ đề"
                 }
             }
         }
@@ -196,11 +223,11 @@
             }
         },
         "newChat": {
-            "button": "Tạo chat mới",
+            "button": "Đoạn chat mới",
             "dialog": {
                 "title": "Tạo mới cuộc trò chuyện",
                 "description": "",
-                "tooltip": "Chat mới"
+                "tooltip": "Tạo chat mới"
             }
         },
         "user": {

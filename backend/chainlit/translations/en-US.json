@@ -90,6 +90,7 @@
     },
     "messages": {
       "processing": "Processing",
+      "completed": "Completed",
       "status": {
         "using": "Using",
         "used": "Used"
@@ -128,7 +129,9 @@
   },
   "threadHistory": {
     "sidebar": {
-      "title": "Past Chats",
+      "title": "Chat history",
+      "groupedChat": "Grouped Chat",
+      "ungroupedChat": "Ungrouped Chat",
       "filters": {
         "search": "Search",
         "placeholder": "Search conversations..."
@@ -136,22 +139,41 @@
       "timeframes": {
         "today": "Today",
         "yesterday": "Yesterday",
-        "previous7days": "Previous 7 days",
-        "previous30days": "Previous 30 days"
+        "previous7days": "Last week",
+        "previous30days": "Last month"
       },
       "empty": "No threads found",
+      "newChat": "New chat",
+      "newChatInGroup": "New chat in this group",
+      "collapseAll": "Collapse",
       "actions": {
         "close": "Close sidebar",
         "open": "Open sidebar"
+      },
+      "createGroupTitle": "Create group",
+      "createGroupPlaceholder": "Group name",
+      "createGroup": {
+        "inProgress": "Creating group...",
+        "success": "Group created",
+        "error": "Failed to create group",
+        "duplicateName": "Group name already exists"
+      },
+      "deleteGroupTitle": "Delete group",
+      "deleteGroupDescription": "This will delete this group and all chats inside it. This cannot be undone.",
+      "deleteGroup": {
+        "inProgress": "Deleting group...",
+        "success": "Group deleted",
+        "error": "Failed to delete group"
       }
     },
     "thread": {
       "untitled": "Untitled Conversation",
       "menu": {
-          "rename": "Rename",
-          "share": "Share",
-          "delete": "Delete"
-        },
+        "rename": "Rename",
+        "share": "Share",
+        "moveToGroup": "Move to group",
+        "delete": "Delete"
+      },
       "actions": {
         "share": {
           "title": "Share link to chat",
@@ -183,6 +205,11 @@
           },
           "success": "Thread renamed!",
           "inProgress": "Renaming thread"
+        },
+        "moveToGroup": {
+          "inProgress": "Moving chat...",
+          "success": "Chat moved",
+          "error": "Failed to move thread to group"
         }
       }
     }
