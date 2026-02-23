@@ -25,6 +25,7 @@ import {
   SIDEBAR_GROUP_ROW_STICKY,
   SIDEBAR_GROUP_ROW_SELECTED_STICKY,
   SIDEBAR_TOPIC_ROW_STICKY_TOP,
+  SIDEBAR_ROW_HOVER_BG,
   SIDEBAR_ICON_BUTTON,
   SIDEBAR_MENU_ITEM
 } from './layout';
@@ -148,7 +149,8 @@ export function TopicGroupRow({
             isDragging && 'opacity-50 shadow-lg shadow-sidebar-foreground/[0.08]',
             isDropTarget &&
               'ring-2 ring-[hsl(var(--sidebar-teal)_/_0.4)] ring-inset border-[hsl(var(--sidebar-teal)_/_0.3)]',
-            'bg-sidebar'
+            'bg-sidebar',
+            !containsSelectedThread && SIDEBAR_ROW_HOVER_BG
           )}
           aria-label={hasChildren ? 'Drag to reorder group' : undefined}
           aria-expanded={hasChildren ? isExpanded : undefined}
@@ -166,7 +168,7 @@ export function TopicGroupRow({
                 />
               </div>
             </TooltipTrigger>
-            <TooltipContent side="right" align="start" sideOffset={50}>
+            <TooltipContent side="right" align="start" sideOffset={40}>
               <p className="max-w-xs break-words">{group.name}</p>
             </TooltipContent>
           </Tooltip>

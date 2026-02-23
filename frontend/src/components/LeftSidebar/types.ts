@@ -24,7 +24,8 @@ export interface ChatHistorySectionProps {
 }
 
 export interface ThreadHistoryProps {
-  historyScrollRef?: React.RefObject<HTMLDivElement | null>;
+  /** Ref to the parent scroll container (e.g. ChatHistorySection's CustomScrollbar). Required; scroll is owned by parent. */
+  historyScrollRef: React.RefObject<HTMLDivElement | null>;
   registerScrollHandler?: (handler: (() => void) | null) => void;
   collapsedGroups: Set<string> | null;
   setCollapsedGroups: React.Dispatch<React.SetStateAction<Set<string> | null>>;

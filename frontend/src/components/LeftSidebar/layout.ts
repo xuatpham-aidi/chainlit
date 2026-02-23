@@ -61,12 +61,18 @@ export const SIDEBAR_GAP_SEPARATOR =
 /** Vertical gap between sections inside history (Topics vs Recent). */
 export const SIDEBAR_SECTION_GAP = 'gap-3';
 
+/**
+ * Use with list containers that have gap (e.g. gap-1). Ensures the gap space
+ * is painted with the same background as the sidebar so it reads as solid, not a hole.
+ */
+export const SIDEBAR_LIST_GAP_BG = 'bg-sidebar';
+
 /** Separator between Topics and Recent inside the history zone (solid gap). */
 export const SIDEBAR_INNER_SECTION_SEPARATOR =
   'border-t border-sidebar-border/20 dark:border-sidebar-border/25';
 
 /** Vertical gap between section header and its content. */
-export const SIDEBAR_SECTION_HEADER_TO_CONTENT_GAP = 'gap-2';
+export const SIDEBAR_SECTION_HEADER_TO_CONTENT_GAP = 'gap-0';
 
 /**
  * Wrapper for Topics/Recent sections: same padding and rounded corners whether
@@ -77,13 +83,10 @@ export const SIDEBAR_GROUP_SECTION_WRAPPER =
 
 /**
  * Full-section background for expanded Groups (Topics) and Recent.
- * Applied only when expanded; wrapper is always applied so layout stays stable.
+ * Same for both so label and children share one surface; applied only when expanded.
  */
-export const SIDEBAR_GROUP_SECTION_BG_TOPICS =
+export const SIDEBAR_GROUP_SECTION_BG =
   'bg-sidebar-foreground/[0.04] dark:bg-sidebar-foreground/[0.06]';
-
-export const SIDEBAR_GROUP_SECTION_BG_RECENT =
-  'bg-sidebar-foreground/[0.03] dark:bg-sidebar-foreground/[0.05]';
 
 /** Inner padding for group section content (when expanded). */
 export const SIDEBAR_GROUP_SECTION_INNER = 'px-2 pt-0.5 pb-2';
@@ -96,12 +99,18 @@ export const SIDEBAR_TOPIC_TO_CHILDREN_GAP = 'pt-0.5';
 /** Left-padding for folder children – clear nesting depth. */
 export const SIDEBAR_FOLDER_CHILDREN_PL = 'pl-4';
 
-export const SIDEBAR_TOPIC_ROW_STICKY_TOP = 'top-[2.5rem]';
-export const SIDEBAR_TIME_GROUP_ROW_STICKY_TOP = 'top-[4.75rem]';
+export const SIDEBAR_TOPIC_ROW_STICKY_TOP = 'top-[2rem]';
+export const SIDEBAR_TIME_GROUP_ROW_STICKY_TOP = 'top-[4rem]';
+
+/** Sticky top when list is inside main history scroll (below "Chat history" header). */
+export const SIDEBAR_RECENT_LIST_STICKY_TOP = 'top-[2rem]';
+/** Sticky top when list is in its own scroll container (e.g. Recent section with CustomScrollbar). */
+export const SIDEBAR_STICKY_TOP_SCROLL_CONTAINER = 'top-0';
+/** Sticky top for section header (Topics/Recent) when sticky inside its scroll container. */
+export const SIDEBAR_SECTION_HEADER_STICKY_TOP = 'top-0';
 
 /** Chat history zone: soft card, rounded-xl, very subtle background with refined depth. */
-export const SIDEBAR_HISTORY_ZONE_BG =
-  'bg-sidebar-foreground/[0.02] dark:bg-sidebar-foreground/[0.035] rounded-2xl overflow-hidden shadow-[0_1px_3px_hsl(var(--sidebar-foreground)_/_0.04)] dark:shadow-[0_1px_3px_hsl(var(--sidebar-foreground)_/_0.08)]';
+export const SIDEBAR_HISTORY_ZONE_BG = '';
 
 /** Top/bottom borders – unified across sidebar header and section headers. */
 export const SIDEBAR_HEADER_BORDER =
@@ -112,8 +121,7 @@ export const SIDEBAR_SECTION_HEADER_BORDER =
 /** Opaque background for sticky headers so scrolled content does not show through. */
 export const SIDEBAR_STICKY_HEADER_BG = `bg-sidebar ${SIDEBAR_SECTION_HEADER_BORDER}`;
 
-export const SIDEBAR_STICKY_SECTION_HEADER_BG =
-  'bg-sidebar border-b border-sidebar-border/15 dark:border-sidebar-border/20';
+export const SIDEBAR_STICKY_SECTION_HEADER_BG = 'bg-sidebar';
 
 /** Main "Chat history" header – compact height, clear typography (13.5px). */
 export const SIDEBAR_SECTION_HEADER =
@@ -124,8 +132,7 @@ export const SIDEBAR_SECTION_HEADER_TITLE =
 
 export const SIDEBAR_SECTION_HEADER_DEFAULT = '';
 
-export const SIDEBAR_SECTION_HEADER_HOVER =
-  'hover:bg-sidebar-foreground/[0.04] dark:hover:bg-sidebar-foreground/[0.06] hover:text-sidebar-foreground rounded-xl';
+export const SIDEBAR_SECTION_HEADER_HOVER = '';
 
 /**
  * Selected-thread path: use border-left (reserved space) so selection does not shift layout.
@@ -140,27 +147,27 @@ export const SIDEBAR_SECTION_HEADER_SELECTED_IN_WRAPPER =
   'text-sidebar-foreground rounded-r-xl bg-[hsl(var(--sidebar-primary)_/_0.05)] dark:bg-[hsl(var(--sidebar-primary)_/_0.08)] border-l-2 border-[hsl(var(--sidebar-primary))]';
 
 export const SIDEBAR_SECTION_HEADER_SELECTED_STICKY =
-  'text-sidebar-foreground rounded-r-xl bg-sidebar border-l-2 border-[hsl(var(--sidebar-primary))]';
+  'text-sidebar-foreground rounded-r-xl bg-sidebar ';
 
 /** Section wrapper when it contains selected: 2px bar (border). Wrapper must always have border-l-2 border-transparent. */
 export const SIDEBAR_SECTION_WRAPPER_SELECTED =
   'rounded-xl border-l-2 border-[hsl(var(--sidebar-primary))]';
 export const SIDEBAR_SECTION_WRAPPER_BAR = 'border-l-2 border-transparent';
 
-export const SIDEBAR_SECTION_LEFT_BAR_PADDING = 'pl-[2px]';
+export const SIDEBAR_SECTION_LEFT_BAR_PADDING = 'pl-0';
 
-/** Topics section: borderless, muted header – one tap target. Reserve 2px left bar to avoid layout shift. */
+/** Section label (Grouped chat / Recent): same visual weight as children, no distinction. Rounded top only. Reserve 2px left bar. */
 export const SIDEBAR_MAJOR_SECTION_HEADER =
-  'flex items-center gap-2 w-full h-9 min-h-[2.25rem] border-l-2 border-transparent pl-2.5 pr-2 py-0 rounded-lg transition-all duration-150 ease-out font-semibold tracking-[0.02em] select-none text-[13px]';
+  'flex items-center gap-2 w-full h-9 min-h-[2.25rem] border-l-2 border-transparent pl-2.5 pr-2 py-0 rounded-t-lg rounded-b-none transition-all duration-150 ease-out font-semibold tracking-[0.02em] select-none text-[13px]';
 
-export const SIDEBAR_MAJOR_SECTION_HEADER_DEFAULT = 'text-sidebar-foreground/70';
+/** Same text as list items so label and children are not distinguished. */
+export const SIDEBAR_MAJOR_SECTION_HEADER_DEFAULT = 'text-sidebar-foreground/85';
 
-export const SIDEBAR_MAJOR_SECTION_HEADER_HOVER =
-  'hover:bg-sidebar-foreground/[0.05] dark:hover:bg-sidebar-foreground/[0.07] hover:text-sidebar-foreground/90';
+export const SIDEBAR_MAJOR_SECTION_HEADER_HOVER = 'hover:text-sidebar-foreground';
 
-/** Recent section: same font size and weight as Topics so title/label look identical. */
+/** Same as default header: no visual distinction between label and children. */
 export const SIDEBAR_MAJOR_SECTION_HEADER_SMALL_LABEL =
-  'font-semibold tracking-[0.02em] text-sidebar-foreground/70 dark:text-sidebar-foreground/75 text-[13px]';
+  'font-semibold tracking-[0.02em] text-sidebar-foreground/85 text-[13px]';
 
 /** Group/topic row – compact height. Reserve 2px left bar to avoid layout shift. */
 export const SIDEBAR_GROUP_ROW =
@@ -171,6 +178,9 @@ export const SIDEBAR_GROUP_ROW_DEFAULT = 'text-sidebar-foreground/85 bg-transpar
 
 export const SIDEBAR_ROW_BG =
   'bg-transparent hover:bg-sidebar-foreground/[0.04] dark:hover:bg-sidebar-foreground/[0.06]';
+
+/** Hover background only (e.g. for sticky rows that keep their own bg). Same as datetime group. */
+export const SIDEBAR_ROW_HOVER_BG = '';
 
 export const SIDEBAR_GROUP_ROW_BG = SIDEBAR_ROW_BG;
 
@@ -250,7 +260,7 @@ export const SIDEBAR_ACTION_SECONDARY =
 
 /** Create-group / secondary action in Topics. */
 export const SIDEBAR_ACTION_BUTTON =
-  'w-full justify-start gap-2 h-8 min-h-8 pl-2.5 pr-2 rounded-lg text-sidebar-foreground/55 hover:text-sidebar-foreground/85 hover:bg-sidebar-foreground/[0.05] dark:hover:bg-sidebar-foreground/[0.07] transition-all duration-150 ease-out font-medium tracking-wide focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar outline-none text-[12.5px]';
+  'w-full justify-start h-8 min-h-8 pl-3.5 pr-2 rounded-lg text-sidebar-foreground/55 hover:text-sidebar-foreground/85 hover:bg-sidebar-foreground/[0.05] dark:hover:bg-sidebar-foreground/[0.07] transition-all duration-150 ease-out font-medium tracking-wide focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar outline-none text-[12.5px]';
 
 /** Count badge: pill shape, subtle. */
 export const SIDEBAR_GROUP_COUNT_BADGE =

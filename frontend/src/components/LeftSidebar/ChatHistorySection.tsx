@@ -18,7 +18,8 @@ import {
   SIDEBAR_GROUP_CONTENT_PX,
   SIDEBAR_HISTORY_ZONE_BG,
   SIDEBAR_INNER_SECTION_SEPARATOR,
-  SIDEBAR_SECTION_HEADER_BORDER
+  SIDEBAR_SECTION_HEADER_BORDER,
+  SIDEBAR_LIST_GAP_BG
 } from './layout';
 import { Translator } from '../i18n';
 import { ThreadCollapseButton } from './ThreadCollapse';
@@ -144,7 +145,8 @@ export function ChatHistorySection({
           <div
             className={cn(
               'flex flex-1 flex-col min-h-0 min-w-0 py-2',
-              SIDEBAR_GROUP_CONTENT_PX
+              SIDEBAR_GROUP_CONTENT_PX,
+              SIDEBAR_LIST_GAP_BG
             )}
           >
             <GroupedChatSection

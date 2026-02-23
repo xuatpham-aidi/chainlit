@@ -41,7 +41,8 @@ import {
   SIDEBAR_TOPIC_TO_CHILDREN_GAP,
   SIDEBAR_TIME_GROUP_ROW_STICKY_TOP,
   SIDEBAR_TREE_CONNECTOR,
-  SIDEBAR_FOLDER_CHILDREN_PL
+  SIDEBAR_FOLDER_CHILDREN_PL,
+  SIDEBAR_LIST_GAP_BG
 } from './layout';
 import { Translator } from '../i18n';
 import { SidebarSection } from './SidebarSection';
@@ -295,7 +296,13 @@ export function GroupedChatSection({
             items={threadGroups.map((g) => g.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className={cn('flex min-w-0 flex-col', SIDEBAR_SECTION_INNER_GAP)}>
+            <div
+              className={cn(
+                'flex min-w-0 flex-col rounded-b-xl',
+                SIDEBAR_SECTION_INNER_GAP,
+                SIDEBAR_LIST_GAP_BG
+              )}
+            >
               <Button
                 variant="ghost"
                 size="sm"

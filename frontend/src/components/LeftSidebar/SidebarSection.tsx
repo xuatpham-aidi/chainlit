@@ -11,14 +11,14 @@ import {
   SIDEBAR_MAJOR_SECTION_HEADER_SMALL_LABEL,
   SIDEBAR_SECTION_HEADER_SELECTED_IN_WRAPPER,
   SIDEBAR_SECTION_HEADER_SELECTED_STICKY,
+  SIDEBAR_SECTION_HEADER_STICKY_TOP,
   SIDEBAR_SECTION_HEADER_TO_CONTENT_GAP,
   SIDEBAR_SECTION_WRAPPER_SELECTED,
   SIDEBAR_SECTION_WRAPPER_BAR,
   SIDEBAR_SECTION_LEFT_BAR_PADDING,
   SIDEBAR_STICKY_SECTION_HEADER_BG,
   SIDEBAR_GROUP_SECTION_WRAPPER,
-  SIDEBAR_GROUP_SECTION_BG_TOPICS,
-  SIDEBAR_GROUP_SECTION_BG_RECENT
+  SIDEBAR_GROUP_SECTION_BG
 } from './layout';
 
 export type SidebarSectionBackgroundVariant = 'topics' | 'recent' | 'none';
@@ -70,11 +70,9 @@ export function SidebarSection({
   const hasSectionBg = hasSectionWrapper && expanded;
   const sectionWrapperClass = hasSectionWrapper ? SIDEBAR_GROUP_SECTION_WRAPPER : '';
   const sectionBgClass =
-    sectionBackground === 'topics'
-      ? SIDEBAR_GROUP_SECTION_BG_TOPICS
-      : sectionBackground === 'recent'
-        ? SIDEBAR_GROUP_SECTION_BG_RECENT
-        : '';
+    sectionBackground === 'topics' || sectionBackground === 'recent'
+      ? SIDEBAR_GROUP_SECTION_BG
+      : '';
 
   const isSmallLabel = headerVariant === 'smallLabel';
 
@@ -91,11 +89,11 @@ export function SidebarSection({
         className={cn(
           SIDEBAR_MAJOR_SECTION_HEADER,
           isSmallLabel && SIDEBAR_MAJOR_SECTION_HEADER_SMALL_LABEL,
-          stickyHeader && cn('sticky top-0 z-20', SIDEBAR_STICKY_SECTION_HEADER_BG),
+          stickyHeader && cn('sticky', SIDEBAR_SECTION_HEADER_STICKY_TOP, 'z-20', SIDEBAR_STICKY_SECTION_HEADER_BG),
           containsSelected && (stickyHeader ? SIDEBAR_SECTION_HEADER_SELECTED_STICKY : SIDEBAR_SECTION_HEADER_SELECTED_IN_WRAPPER),
           !containsSelected && !isSmallLabel && SIDEBAR_MAJOR_SECTION_HEADER_DEFAULT,
           !containsSelected && !isSmallLabel && SIDEBAR_MAJOR_SECTION_HEADER_HOVER,
-          !containsSelected && isSmallLabel && 'hover:bg-sidebar-foreground/[0.05] dark:hover:bg-sidebar-foreground/[0.07] hover:text-sidebar-foreground/85'
+          !containsSelected && isSmallLabel && 'hover:bg-sidebar-foreground/[0.05] dark:hover:bg-sidebar-foreground/[0.07] hover:text-sidebar-foreground'
         )}
         aria-expanded={expanded}
       >

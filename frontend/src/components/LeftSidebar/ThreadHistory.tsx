@@ -14,16 +14,22 @@ import { groupByDate } from '@chainlit/react-client';
 import { threadListLoadingState } from '@/state/project';
 import { cn } from '@/lib/utils';
 
-import { SidebarContent } from '@/components/ui/sidebar';
+import {
+  SidebarContent,
+  SidebarGroupContent,
+  SidebarMenu
+} from '@/components/ui/sidebar';
 
-import { CustomScrollbar } from '@/components/CustomScrollbar';
 import { Loader } from '@/components/Loader';
 
 import {
   SIDEBAR_SECTION_HEADER,
   SIDEBAR_SECTION_HEADER_TITLE,
   SIDEBAR_SECTION_HEADER_HOVER,
-  SIDEBAR_SECTION_GAP
+  SIDEBAR_SECTION_GAP,
+  SIDEBAR_SECTION_INNER_GAP,
+  SIDEBAR_LIST_GAP_BG,
+  SIDEBAR_RECENT_LIST_STICKY_TOP
 } from './layout';
 import { Translator } from '../i18n';
 import { ThreadCollapseButton } from './ThreadCollapse';
@@ -63,8 +69,7 @@ export function ThreadHistory({
   const useChevronToggle =
     sectionExpandedProp !== undefined && onSectionExpandedChange !== undefined;
   const navigate = useNavigate();
-  const innerScrollRef = useRef<HTMLDivElement>(null);
-  const scrollRef = historyScrollRefProp ?? innerScrollRef;
+  const scrollRef = historyScrollRefProp;
   const apiClient = useContext(ChainlitContext);
   const { firstInteraction, messages, threadId } = useChatMessages();
   const [threadHistory, setThreadHistory] = useRecoilState(threadHistoryState);
@@ -76,8 +81,6 @@ export function ThreadHistory({
 
   const setListLoadingFlag = (key: 'isFetching' | 'isLoadingMore', value: boolean) =>
     setListLoading((prev) => ({ ...prev, [key]: value }));
-
-  const useMainScroll = Boolean(historyScrollRefProp);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -161,10 +164,10 @@ export function ThreadHistory({
   }, [scrollRef]);
 
   useEffect(() => {
-    if (!useMainScroll || !registerScrollHandler) return;
+    if (!registerScrollHandler) return;
     registerScrollHandler(handleScroll);
     return () => registerScrollHandler(null);
-  }, [useMainScroll, registerScrollHandler, handleScroll]);
+  }, [registerScrollHandler, handleScroll]);
 
   const fetchThreads = async (
     cursor?: string | number,
@@ -281,63 +284,26 @@ export function ThreadHistory({
       <Translator path="threadHistory.sidebar.title" />
     );
 
-  const listContent = useMainScroll ? (
-    showThreadList ? (
-      <div
-        id="thread-history"
-        className="flex flex-col min-h-0"
-        role="region"
-        aria-label="Chat history list"
-      >
-        <ThreadList
-          threadHistory={displayedThreadHistory}
-          error={error}
-          isFetching={isFetching}
-          isLoadingMore={isLoadingMore}
-          collapsedGroups={collapsedGroups}
-          setCollapsedGroups={setCollapsedGroups}
-          stickyTopOffset="top-10"
-          compactFirstGroup
-          folderTreeStyle
-        />
-      </div>
-    ) : null
-  ) : (
+  const listContent = showThreadList ? (
     <div
-      className="flex flex-1 flex-col min-h-0"
+      id="thread-history"
+      className="flex flex-col min-h-0"
       role="region"
       aria-label="Chat history list"
     >
-      <CustomScrollbar
-        ref={innerScrollRef}
-        onScroll={handleScroll}
-        className="flex-1 min-h-0"
-        variant="sidebar"
-        hideScrollbar={hideScrollbar}
-        invalidateKey={
-          collapsedGroups
-            ? Array.from(collapsedGroups).sort().join(',')
-            : ''
-        }
-      >
-        {showThreadList ? (
-          <div id="thread-history" className="flex flex-col min-h-0">
-            <ThreadList
-              threadHistory={displayedThreadHistory}
-              error={error}
-              isFetching={isFetching}
-              isLoadingMore={isLoadingMore}
-              collapsedGroups={collapsedGroups}
-              setCollapsedGroups={setCollapsedGroups}
-              stickyTopOffset="top-0"
-              compactFirstGroup
-              folderTreeStyle
-            />
-          </div>
-        ) : null}
-      </CustomScrollbar>
+      <ThreadList
+        threadHistory={displayedThreadHistory}
+        error={error}
+        isFetching={isFetching}
+        isLoadingMore={isLoadingMore}
+        collapsedGroups={collapsedGroups}
+        setCollapsedGroups={setCollapsedGroups}
+        stickyTopOffset={SIDEBAR_RECENT_LIST_STICKY_TOP}
+        compactFirstGroup
+        folderTreeStyle
+      />
     </div>
-  );
+  ) : null;
 
   if (useChevronToggle) {
     return (
@@ -349,10 +315,21 @@ export function ThreadHistory({
         isLoading={isLoading}
         ariaLabel="Recent chat section"
         stickyHeader
-        sectionBackground="recent"
-        headerVariant="smallLabel"
+        sectionBackground="topics"
       >
-        {listContent}
+        <div
+          className={cn(
+            'flex min-w-0 flex-col min-h-0 overflow-clip rounded-b-xl',
+            SIDEBAR_SECTION_INNER_GAP,
+            SIDEBAR_LIST_GAP_BG
+          )}
+        >
+          <SidebarGroupContent className="min-h-0 min-w-0 overflow-clip rounded-xl px-0">
+            <SidebarMenu className="gap-1">
+              {listContent}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </div>
       </SidebarSection>
     );
   }

@@ -18,7 +18,9 @@ import {
   SIDEBAR_TIME_GROUP_ROW,
   SIDEBAR_TOPIC_TO_CHILDREN_GAP,
   SIDEBAR_FOLDER_CHILDREN_PL,
-  SIDEBAR_TREE_CONNECTOR
+  SIDEBAR_TREE_CONNECTOR,
+  SIDEBAR_LIST_GAP_BG,
+  SIDEBAR_STICKY_TOP_SCROLL_CONTAINER
 } from './layout';
 import { CollapsibleGroupRow } from './CollapsibleGroupRow';
 
@@ -49,7 +51,7 @@ export function TimeGroupBlock({
   isCollapsed,
   onToggle,
   groupContainsSelected,
-  stickyTopOffset = 'top-0',
+  stickyTopOffset = SIDEBAR_STICKY_TOP_SCROLL_CONTAINER,
   compactFirstGroup = false,
   folderTreeStyle = false,
   isFirst = false,
@@ -100,7 +102,10 @@ export function TimeGroupBlock({
           )}
         >
           <SidebarGroupContent className="min-h-0 overflow-hidden px-0">
-            <SidebarMenu key={`${groupKey}-${isCollapsed}`} className="gap-1">
+            <SidebarMenu
+              key={`${groupKey}-${isCollapsed}`}
+              className={cn('gap-1', SIDEBAR_LIST_GAP_BG)}
+            >
               {children}
             </SidebarMenu>
           </SidebarGroupContent>

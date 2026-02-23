@@ -65,7 +65,8 @@ import {
   SIDEBAR_THREAD_ITEM_HOVER,
   SIDEBAR_THREAD_ITEM_ACTIVE,
   SIDEBAR_THREAD_ITEM_OPEN,
-  SIDEBAR_THREAD_ICON_SIZE
+  SIDEBAR_THREAD_ICON_SIZE,
+  SIDEBAR_STICKY_TOP_SCROLL_CONTAINER
 } from './layout';
 import { Translator } from '../i18n';
 import ThreadOptions from './ThreadOptions';
@@ -77,7 +78,7 @@ export function ThreadList({
   isLoadingMore,
   collapsedGroups,
   setCollapsedGroups,
-  stickyTopOffset = 'top-0',
+  stickyTopOffset = SIDEBAR_STICKY_TOP_SCROLL_CONTAINER,
   compactFirstGroup = false,
   folderTreeStyle = false
 }: ThreadListProps) {
