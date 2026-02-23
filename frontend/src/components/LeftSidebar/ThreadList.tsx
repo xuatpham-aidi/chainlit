@@ -58,11 +58,13 @@ import {
 
 import {
   SIDEBAR_GROUP_BLOCK_PADDING,
+  SIDEBAR_GROUP_BLOCK_SELECTED,
   SIDEBAR_GROUP_ROW_STICKY,
   SIDEBAR_THREAD_ITEM_PADDING,
   SIDEBAR_THREAD_ITEM_TEXT,
   SIDEBAR_THREAD_ITEM_ACTIVE,
-  SIDEBAR_THREAD_ICON_SIZE
+  SIDEBAR_THREAD_ICON_SIZE,
+  SIDEBAR_TIME_GROUP_ROW
 } from './layout';
 import { Translator } from '../i18n';
 import { CollapsibleGroupRow } from './CollapsibleGroupRow';
@@ -396,7 +398,11 @@ export function ThreadList({
             return (
               <SidebarGroup
                 key={group}
-                className={cn(SIDEBAR_GROUP_BLOCK_PADDING, groupIndex > 0 && 'mt-0')}
+                className={cn(
+                  SIDEBAR_GROUP_BLOCK_PADDING,
+                  groupIndex > 0 && 'mt-0',
+                  groupContainsSelected && SIDEBAR_GROUP_BLOCK_SELECTED
+                )}
               >
                 <div className={cn(SIDEBAR_GROUP_ROW_STICKY, stickyTopOffset)}>
                   <CollapsibleGroupRow
@@ -405,6 +411,7 @@ export function ThreadList({
                     isCollapsed={isCollapsed}
                     onToggle={() => toggleGroup(group)}
                     containsSelected={groupContainsSelected}
+                    className={SIDEBAR_TIME_GROUP_ROW}
                   />
                 </div>
                 <div
@@ -452,10 +459,9 @@ export function ThreadList({
                                   <SidebarMenuButton
                                     isActive={isSelected}
                                     className={cn(
-                                      'relative group/thread transition-colors duration-150 ease-out',
+                                      'relative group/thread transition-colors duration-200 ease-out',
                                       SIDEBAR_THREAD_ITEM_PADDING,
-                                      'hover:bg-sidebar-foreground/[0.06]',
-                                      'data-[active=true]:border-l-[3px] data-[active=true]:border-l-sidebar-foreground data-[active=true]:rounded-md',
+                                      'hover:bg-sidebar-foreground/[0.03]',
                                       isSelected && SIDEBAR_THREAD_ITEM_ACTIVE,
                                       (openDropdownThreadId === thread.id ||
                                         threadIdToDelete === thread.id ||
@@ -463,7 +469,7 @@ export function ThreadList({
                                         (threadIdToShare === thread.id &&
                                           isShareDialogOpen)) &&
                                         !isSelected &&
-                                        'bg-sidebar-foreground/[0.06]'
+                                        'bg-sidebar-foreground/[0.03]'
                                     )}
                                   >
                                     <span className="flex min-w-0 flex-1 items-center gap-2 pl-0">
@@ -481,8 +487,8 @@ export function ThreadList({
                                             SIDEBAR_THREAD_ICON_SIZE,
                                             'shrink-0',
                                             isSelected
-                                              ? 'text-sidebar-foreground'
-                                              : 'text-sidebar-foreground/60'
+                                              ? 'text-sidebar-foreground/90'
+                                              : 'text-sidebar-foreground/55'
                                           )}
                                           aria-hidden="true"
                                         />

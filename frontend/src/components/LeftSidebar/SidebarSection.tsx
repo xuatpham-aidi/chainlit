@@ -5,10 +5,11 @@ import { Loader } from '@/components/Loader';
 import { Button } from '@/components/ui/button';
 
 import {
-  SIDEBAR_SECTION_HEADER,
+  SIDEBAR_MAJOR_SECTION_HEADER,
   SIDEBAR_SECTION_HEADER_SELECTED,
   SIDEBAR_SECTION_HEADER_HOVER,
-  SIDEBAR_SECTION_GAP
+  SIDEBAR_SECTION_GAP,
+  SIDEBAR_SECTION_WRAPPER_SELECTED
 } from './layout';
 
 export interface SidebarSectionProps {
@@ -25,8 +26,8 @@ export interface SidebarSectionProps {
 }
 
 /**
- * Unified collapsible section: header (title + chevron + optional right slot)
- * toggles section open/closed; same behaviour for group-chat and recent-chat.
+ * Collapsible section: header toggles expand/collapse. When it contains the
+ * current thread, a subtle left accent and tint indicate "you are here".
  */
 export function SidebarSection({
   title,
@@ -39,37 +40,31 @@ export function SidebarSection({
   ariaLabel = 'Section',
   stickyHeader = false
 }: SidebarSectionProps) {
-  return (
-    <section
-      className={cn('shrink-0 flex flex-col', SIDEBAR_SECTION_GAP)}
-      aria-label={ariaLabel}
-    >
+  const sectionContent = (
+    <>
       <Button
         onClick={onToggle}
         variant="ghost"
         size="default"
         className={cn(
-          SIDEBAR_SECTION_HEADER,
-          stickyHeader && 'sticky top-0 z-20 !bg-sidebar',
+          SIDEBAR_MAJOR_SECTION_HEADER,
+          stickyHeader && 'sticky top-0 z-20 bg-sidebar',
           containsSelected && SIDEBAR_SECTION_HEADER_SELECTED,
-          containsSelected && 'hover:bg-sidebar-foreground/15 text-sidebar-foreground',
-          !containsSelected && 'text-sidebar-foreground/70 hover:text-sidebar-foreground',
+          !containsSelected && 'text-sidebar-foreground/65 hover:text-sidebar-foreground',
           !containsSelected && SIDEBAR_SECTION_HEADER_HOVER
         )}
         aria-expanded={expanded}
       >
-        <span className="min-w-0 flex-1 truncate text-left text-xs font-medium tracking-tight">
-          {title}
-        </span>
+        <span className="min-w-0 flex-1 truncate text-left">{title}</span>
         <div className="flex items-center gap-1 shrink-0">
           {rightSlot != null ? (
             rightSlot
           ) : isLoading ? (
             <Loader />
           ) : expanded ? (
-            <ChevronDown className="size-4" />
+            <ChevronDown className="size-4 text-sidebar-foreground/50" />
           ) : (
-            <ChevronRight className="size-4" />
+            <ChevronRight className="size-4 text-sidebar-foreground/50" />
           )}
         </div>
       </Button>
@@ -82,6 +77,20 @@ export function SidebarSection({
       >
         <div className="min-h-0 overflow-clip">{children}</div>
       </div>
+    </>
+  );
+
+  return (
+    <section
+      className={cn(
+        'shrink-0 flex flex-col',
+        expanded ? SIDEBAR_SECTION_GAP : 'gap-0',
+        containsSelected && SIDEBAR_SECTION_WRAPPER_SELECTED
+      )}
+      aria-label={ariaLabel}
+      aria-current={containsSelected ? 'true' : undefined}
+    >
+      {sectionContent}
     </section>
   );
 }

@@ -55,10 +55,10 @@ export function CollapsibleGroupRow({
       {count !== undefined && (
         <span
           className={cn(
-            'text-xs font-normal rounded-full px-1.5 text-center',
+            'text-[11px] font-medium tabular-nums rounded-md px-1.5 py-0.5',
             containsSelected
-              ? 'bg-sidebar-foreground/15 font-medium text-sidebar-foreground/90'
-              : 'text-sidebar-foreground/50 bg-sidebar-foreground/10'
+              ? 'bg-sidebar-foreground/10 text-sidebar-foreground/80'
+              : 'text-sidebar-foreground/45 bg-sidebar-foreground/[0.06]'
           )}
         >
           {count}

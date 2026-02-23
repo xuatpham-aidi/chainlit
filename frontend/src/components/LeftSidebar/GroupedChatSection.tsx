@@ -74,6 +74,7 @@ import { Button } from '@/components/ui/button';
 import {
   SIDEBAR_GROUP_ROW_STICKY,
   SIDEBAR_GROUP_ROW_SELECTED,
+  SIDEBAR_GROUP_BLOCK_SELECTED,
   SIDEBAR_SECTION_GAP
 } from './layout';
 import { Translator } from '../i18n';
@@ -158,7 +159,10 @@ function SortableGroupRow({
       <div
         ref={setNodeRef}
         style={style}
-        className={cn(isDragging && 'z-30')}
+        className={cn(
+          isDragging && 'z-30',
+          containsSelectedThread && SIDEBAR_GROUP_BLOCK_SELECTED
+        )}
       >
         <div
           {...listeners}
@@ -174,7 +178,7 @@ function SortableGroupRow({
             hasChildren
               ? 'cursor-grab active:cursor-grabbing'
               : 'cursor-default',
-            'bg-transparent hover:bg-sidebar-foreground/[0.06] transition-colors duration-150',
+            'hover:bg-sidebar-foreground/[0.03] transition-colors duration-200',
             'border border-transparent',
             containsSelectedThread && SIDEBAR_GROUP_ROW_SELECTED,
             isDragging && 'opacity-60 shadow-md',
@@ -509,12 +513,12 @@ export function GroupedChatSection({
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full justify-start gap-2 h-9 min-h-9 pl-3 pr-2 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-foreground/[0.06] transition-colors duration-150"
+                className="w-full justify-start gap-2 h-10 min-h-10 pl-3 pr-2 rounded-xl text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-foreground/[0.03] transition-colors duration-200"
                 onClick={() => setCreateDialogOpen(true)}
                 aria-label={t('threadHistory.sidebar.createGroupTitle')}
               >
                 <FolderPlus className="size-4 shrink-0" />
-                <span className="truncate text-xs font-semibold tracking-tight">
+                <span className="truncate text-[13px] font-medium tracking-tight">
                   <Translator path="threadHistory.sidebar.createGroupTitle" />
                 </span>
               </Button>

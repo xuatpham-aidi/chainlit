@@ -16,7 +16,8 @@ import {
   SIDEBAR_SECTION_HEADER_TITLE,
   SIDEBAR_SECTION_HEADER_HOVER,
   SIDEBAR_SECTION_GAP,
-  SIDEBAR_CONTENT_PX
+  SIDEBAR_CONTENT_PX,
+  SIDEBAR_HISTORY_ZONE_BG
 } from './layout';
 import { Translator } from '../i18n';
 import { ThreadCollapseButton } from './ThreadCollapse';
@@ -112,48 +113,61 @@ export function ChatHistorySection({
 
   return (
     <div className="flex flex-1 flex-col min-h-0" aria-label="Chat history">
-      <header className={cn('flex shrink-0 items-center', SIDEBAR_SECTION_HEADER, SIDEBAR_SECTION_HEADER_HOVER)}>
-        <p className={SIDEBAR_SECTION_HEADER_TITLE}>
-          <Translator path="threadHistory.sidebar.title" />
-        </p>
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-          <ThreadCollapseButton
-            visible
-            onCollapseAll={handleCollapseAll}
-            disabled={!showCollapseButton}
-          />
-        </div>
-      </header>
-      <CustomScrollbar
-        ref={historyScrollRef}
-        onScroll={handleHistoryScroll}
-        className="flex-1 min-h-0 mt-3"
-        variant="sidebar"
-        hideScrollbar={hideScrollbar}
-        invalidateKey={invalidateKey}
-      >
-        <div className={cn('flex flex-col min-h-0', SIDEBAR_SECTION_GAP, SIDEBAR_CONTENT_PX)}>
-          <GroupedChatSection
-            sectionExpanded={topicsExpanded}
-            onSectionExpandedChange={setTopicsExpanded}
-            expandedGroups={expandedGroupsInSection}
-            onExpandedGroupsChange={setExpandedGroupsInSection}
-          />
-          <ThreadHistory
-            historyScrollRef={historyScrollRef}
-            registerScrollHandler={registerThreadHistoryScroll}
-            collapsedGroups={collapsedGroups}
-            setCollapsedGroups={setCollapsedGroups}
-            threadsFilter={threadsFilter}
-            sectionTitle={ungroupedSectionTitle}
-            hideScrollbar={hideScrollbar}
-            showCollapseButton={recentExpanded}
-            onCollapseAll={onCollapseAll}
-            sectionExpanded={recentExpanded}
-            onSectionExpandedChange={setRecentExpanded}
-          />
-        </div>
-      </CustomScrollbar>
+      <div className={cn('flex flex-1 flex-col min-h-0', SIDEBAR_HISTORY_ZONE_BG)}>
+        <header
+          className={cn(
+            SIDEBAR_SECTION_HEADER,
+            SIDEBAR_SECTION_HEADER_HOVER
+          )}
+        >
+          <p className={SIDEBAR_SECTION_HEADER_TITLE}>
+            <Translator path="threadHistory.sidebar.title" />
+          </p>
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+            <ThreadCollapseButton
+              visible
+              onCollapseAll={handleCollapseAll}
+              disabled={!showCollapseButton}
+            />
+          </div>
+        </header>
+        <CustomScrollbar
+          ref={historyScrollRef}
+          onScroll={handleHistoryScroll}
+          className="flex-1 min-h-0"
+          variant="sidebar"
+          hideScrollbar={hideScrollbar}
+          invalidateKey={invalidateKey}
+        >
+          <div
+            className={cn(
+              'flex flex-col min-h-0 py-4',
+              SIDEBAR_SECTION_GAP,
+              SIDEBAR_CONTENT_PX
+            )}
+          >
+            <GroupedChatSection
+              sectionExpanded={topicsExpanded}
+              onSectionExpandedChange={setTopicsExpanded}
+              expandedGroups={expandedGroupsInSection}
+              onExpandedGroupsChange={setExpandedGroupsInSection}
+            />
+            <ThreadHistory
+              historyScrollRef={historyScrollRef}
+              registerScrollHandler={registerThreadHistoryScroll}
+              collapsedGroups={collapsedGroups}
+              setCollapsedGroups={setCollapsedGroups}
+              threadsFilter={threadsFilter}
+              sectionTitle={ungroupedSectionTitle}
+              hideScrollbar={hideScrollbar}
+              showCollapseButton={recentExpanded}
+              onCollapseAll={onCollapseAll}
+              sectionExpanded={recentExpanded}
+              onSectionExpandedChange={setRecentExpanded}
+            />
+          </div>
+        </CustomScrollbar>
+      </div>
     </div>
   );
 }
