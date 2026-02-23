@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronRight, Folder } from 'lucide-react';
+import { ChevronDown, ChevronRight, Info } from 'lucide-react';
 
 import {
   SIDEBAR_GROUP_ROW,
@@ -48,7 +48,7 @@ export function CollapsibleGroupRow({
       <ChevronDown className={cn(SIDEBAR_GROUP_ICON_SIZE, 'shrink-0')} aria-hidden />
     )
   ) : (
-    <Folder
+    <Info
       className={cn(SIDEBAR_GROUP_ICON_SIZE, 'shrink-0 text-sidebar-foreground/50')}
       aria-hidden
     />
