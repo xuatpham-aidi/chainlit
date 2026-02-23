@@ -2,7 +2,6 @@ import { cn } from '@/lib/utils';
 import { Ellipsis, Share2, Trash2 } from 'lucide-react';
 
 import { Pencil } from '@/components/icons/Pencil';
-import { buttonVariants } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +13,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { Translator } from '../i18n';
+
+import {
+  SIDEBAR_ICON_BUTTON,
+  SIDEBAR_MENU_ITEM
+} from './layout';
 
 interface IThreadGroup {
   id: string;
@@ -68,11 +72,7 @@ export default function ThreadOptions({
             e.preventDefault();
           }}
           id="thread-options"
-          className={cn(
-            buttonVariants({ variant: 'ghost', size: 'icon' }),
-            'h-8 w-8 focus:ring-0 focus:ring-offset-0 focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-1 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-lg transition-colors duration-150',
-            className
-          )}
+          className={cn(SIDEBAR_ICON_BUTTON, className)}
         >
           <Ellipsis className="h-4 w-4" />
         </div>
@@ -90,7 +90,7 @@ export default function ThreadOptions({
             e.stopPropagation();
             onRename();
           }}
-          className="rounded-lg py-2 cursor-pointer"
+          className={SIDEBAR_MENU_ITEM}
         >
           <Translator path="threadHistory.thread.menu.rename" />
           <Pencil className="ml-auto h-4 w-4 opacity-60" />
@@ -98,7 +98,7 @@ export default function ThreadOptions({
         {hasGroups && onMoveToGroup && (
           <DropdownMenuSub>
             <DropdownMenuSubTrigger
-              className="rounded-lg py-2 cursor-pointer-none"
+              className={cn(SIDEBAR_MENU_ITEM, 'cursor-pointer')}
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -108,7 +108,7 @@ export default function ThreadOptions({
             <DropdownMenuSubContent className="rounded-xl border-sidebar-border/80" >
               {isInGroup && (
                 <DropdownMenuItem
-                  className="rounded-lg py-2 cursor-pointer"
+                  className={SIDEBAR_MENU_ITEM}
                   onClick={(e) => handleMoveToGroup(e, null)}
                 >
                   <Translator path="threadHistory.sidebar.ungroupedChat" />
@@ -117,7 +117,7 @@ export default function ThreadOptions({
               {otherGroups.map((g) => (
                 <DropdownMenuItem
                   key={g.id}
-                  className="rounded-lg py-2 cursor-pointer"
+                  className={SIDEBAR_MENU_ITEM}
                   onClick={(e) => handleMoveToGroup(e, g.id)}
                 >
                   {g.name}
@@ -133,7 +133,7 @@ export default function ThreadOptions({
               e.stopPropagation();
               onShare();
             }}
-            className="rounded-lg py-2 cursor-pointer"
+            className={SIDEBAR_MENU_ITEM}
           >
             <Translator path="threadHistory.thread.menu.share" />
             <Share2 className="ml-auto h-4 w-4 opacity-60" />
@@ -145,7 +145,7 @@ export default function ThreadOptions({
             e.stopPropagation();
             onDelete();
           }}
-          className="rounded-lg py-2 cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
+          className={cn(SIDEBAR_MENU_ITEM, 'text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400')}
         >
           <Translator path="threadHistory.thread.menu.delete" />
           <Trash2 className="ml-auto h-4 w-4 opacity-80" />

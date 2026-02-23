@@ -3,9 +3,14 @@ import { ChevronDown, ChevronRight, Folder } from 'lucide-react';
 
 import {
   SIDEBAR_GROUP_ROW,
+  SIDEBAR_GROUP_ROW_DEFAULT,
   SIDEBAR_GROUP_ROW_BG,
   SIDEBAR_GROUP_ROW_SELECTED,
-  SIDEBAR_GROUP_ICON_SIZE
+  SIDEBAR_GROUP_ICON_SIZE,
+  SIDEBAR_GROUP_COUNT_BADGE,
+  SIDEBAR_GROUP_COUNT_BADGE_DEFAULT,
+  SIDEBAR_GROUP_COUNT_BADGE_SELECTED,
+  SIDEBAR_FOCUS_RING
 } from './layout';
 
 export interface CollapsibleGroupRowProps {
@@ -51,14 +56,14 @@ export function CollapsibleGroupRow({
   const content = (
     <>
       {leadingIcon}
-      <span className="flex-1 text-left">{label}</span>
+      <span className="flex-1 min-w-0 overflow-hidden text-left">{label}</span>
       {count !== undefined && (
         <span
           className={cn(
-            'text-[11px] font-medium tabular-nums rounded-md px-1.5 py-0.5',
+            SIDEBAR_GROUP_COUNT_BADGE,
             containsSelected
-              ? 'bg-sidebar-foreground/10 text-sidebar-foreground/80'
-              : 'text-sidebar-foreground/45 bg-sidebar-foreground/[0.06]'
+              ? SIDEBAR_GROUP_COUNT_BADGE_SELECTED
+              : SIDEBAR_GROUP_COUNT_BADGE_DEFAULT
           )}
         >
           {count}
@@ -69,10 +74,11 @@ export function CollapsibleGroupRow({
 
   const rowClassName = cn(
     SIDEBAR_GROUP_ROW,
+    SIDEBAR_GROUP_ROW_DEFAULT,
     !contentOnly && SIDEBAR_GROUP_ROW_BG,
-    'outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
+    SIDEBAR_FOCUS_RING,
     !contentOnly && containsSelected && SIDEBAR_GROUP_ROW_SELECTED,
-    !contentOnly && !containsSelected && 'hover:text-sidebar-foreground/90',
+    !contentOnly && !containsSelected && 'hover:text-sidebar-foreground',
     className
   );
 
@@ -80,8 +86,9 @@ export function CollapsibleGroupRow({
     return (
       <div
         className={cn(
-          'flex flex-1 min-w-0 items-center gap-2 text-left rounded-none pointer-events-none select-none text-sidebar-foreground/80',
+          'flex flex-1 min-w-0 items-center gap-2 text-left pointer-events-none select-none',
           SIDEBAR_GROUP_ROW,
+          SIDEBAR_GROUP_ROW_DEFAULT,
           className
         )}
       >

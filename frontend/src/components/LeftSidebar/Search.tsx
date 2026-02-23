@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Translator } from 'components/i18n';
 
+import { SIDEBAR_ACTION_SECONDARY } from './layout';
 import { Kbd } from '../Kbd';
 
 interface SearchChatsProps {
@@ -102,7 +103,7 @@ export default function SearchChats({
         onClick={() => setOpen(!open)}
         variant="ghost"
         size="default"
-        className="w-full justify-between gap-2 rounded-lg h-9 px-3 border border-sidebar-border/60 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
+        className={SIDEBAR_ACTION_SECONDARY}
       >
         <span className="min-w-0 flex-1 truncate text-left">
           {t('threadHistory.sidebar.filters.placeholder')}
@@ -115,7 +116,7 @@ export default function SearchChats({
         onClick={() => setOpen(!open)}
         size="icon"
         variant="ghost"
-        className="h-8 w-8 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
+        className="h-9 w-9 rounded-xl text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-foreground/[0.06] dark:hover:bg-sidebar-foreground/[0.08] transition-colors duration-200 ease-out"
       >
         <Search className="size-4" />
       </Button>

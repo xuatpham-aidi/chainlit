@@ -13,6 +13,7 @@ const MIN_THUMB_HEIGHT = 24;
 const SCROLLBAR_VARIANT_CLASSES = {
   sidebar: {
     scrollPadding: 'pr-2',
+    scrollRounding: 'rounded-br-xl rounded-tr-xl',
     track: 'w-1 pr-0.5 bg-sidebar-foreground/5 rounded-full z-10',
     trackInset: 'top-1 bottom-1',
     thumb: 'w-1',
@@ -21,6 +22,7 @@ const SCROLLBAR_VARIANT_CLASSES = {
   },
   chat: {
     scrollPadding: '',
+    scrollRounding: '',
     track: 'w-2.5 pr-1',
     trackInset: 'top-4 bottom-4',
     thumb: 'w-1.5',
@@ -197,7 +199,8 @@ const CustomScrollbar = forwardRef<HTMLDivElement | null, CustomScrollbarProps>(
           onScroll={handleScroll}
           className={cn(
             'custom-scrollbar-native-hidden h-full min-h-0 flex-1 overflow-y-auto overflow-x-hidden',
-            variantClasses.scrollPadding
+            variantClasses.scrollPadding,
+            variantClasses.scrollRounding
           )}
         >
           {children}

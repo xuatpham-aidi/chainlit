@@ -59,10 +59,16 @@ import {
 import {
   SIDEBAR_GROUP_BLOCK_PADDING,
   SIDEBAR_GROUP_BLOCK_SELECTED,
-  SIDEBAR_GROUP_ROW_STICKY,
+  SIDEBAR_LEVEL_1_PL,
+  SIDEBAR_LEVEL_2_PL,
+  SIDEBAR_TIME_GROUP_ROW_STICKY,
+  SIDEBAR_TIME_GROUP_ROW_WRAPPER,
   SIDEBAR_THREAD_ITEM_PADDING,
   SIDEBAR_THREAD_ITEM_TEXT,
+  SIDEBAR_THREAD_ITEM_DEFAULT,
+  SIDEBAR_THREAD_ITEM_HOVER,
   SIDEBAR_THREAD_ITEM_ACTIVE,
+  SIDEBAR_THREAD_ITEM_OPEN,
   SIDEBAR_THREAD_ICON_SIZE,
   SIDEBAR_TIME_GROUP_ROW
 } from './layout';
@@ -102,6 +108,8 @@ interface ThreadListProps {
   >;
   /** When set, time group headers stick at this offset (e.g. top-18) below parent headers. */
   stickyTopOffset?: string;
+  /** When true, remove top padding from the first time group (e.g. when nested under a topic in GroupedChatSection). */
+  compactFirstGroup?: boolean;
 }
 
 export function ThreadList({
@@ -111,7 +119,8 @@ export function ThreadList({
   isLoadingMore,
   collapsedGroups,
   setCollapsedGroups,
-  stickyTopOffset = 'top-0'
+  stickyTopOffset = 'top-0',
+  compactFirstGroup = false
 }: ThreadListProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -399,19 +408,21 @@ export function ThreadList({
               <SidebarGroup
                 key={group}
                 className={cn(
+                  'px-0',
                   SIDEBAR_GROUP_BLOCK_PADDING,
-                  groupIndex > 0 && 'mt-0',
+                  groupIndex === 0 && compactFirstGroup && 'pt-0',
+                  groupIndex > 0 && 'mt-3',
                   groupContainsSelected && SIDEBAR_GROUP_BLOCK_SELECTED
                 )}
               >
-                <div className={cn(SIDEBAR_GROUP_ROW_STICKY, stickyTopOffset)}>
+                <div className={cn(SIDEBAR_TIME_GROUP_ROW_STICKY, SIDEBAR_TIME_GROUP_ROW_WRAPPER, stickyTopOffset)}>
                   <CollapsibleGroupRow
                     label={getTimeGroupLabel(group)}
                     count={count}
                     isCollapsed={isCollapsed}
                     onToggle={() => toggleGroup(group)}
                     containsSelected={groupContainsSelected}
-                    className={SIDEBAR_TIME_GROUP_ROW}
+                    className={cn(SIDEBAR_TIME_GROUP_ROW, compactFirstGroup && SIDEBAR_LEVEL_1_PL)}
                   />
                 </div>
                 <div
@@ -424,7 +435,7 @@ export function ThreadList({
                   <SidebarGroupContent className="min-h-0 overflow-hidden px-0">
                     <SidebarMenu
                       key={`${group}-${isCollapsed}`}
-                      className="gap-0.5"
+                      className="gap-1"
                     >
                       {items.map((thread, itemIndex) => {
                         const isResumed =
@@ -456,12 +467,14 @@ export function ThreadList({
                             >
                               <TooltipTrigger asChild>
                                 <Link to={isResumed ? '' : `/thread/${thread.id}`}>
-                                  <SidebarMenuButton
+                                    <SidebarMenuButton
                                     isActive={isSelected}
                                     className={cn(
                                       'relative group/thread transition-colors duration-200 ease-out',
                                       SIDEBAR_THREAD_ITEM_PADDING,
-                                      'hover:bg-sidebar-foreground/[0.03]',
+                                      compactFirstGroup ? SIDEBAR_LEVEL_2_PL : SIDEBAR_LEVEL_1_PL,
+                                      SIDEBAR_THREAD_ITEM_DEFAULT,
+                                      SIDEBAR_THREAD_ITEM_HOVER,
                                       isSelected && SIDEBAR_THREAD_ITEM_ACTIVE,
                                       (openDropdownThreadId === thread.id ||
                                         threadIdToDelete === thread.id ||
@@ -469,7 +482,7 @@ export function ThreadList({
                                         (threadIdToShare === thread.id &&
                                           isShareDialogOpen)) &&
                                         !isSelected &&
-                                        'bg-sidebar-foreground/[0.03]'
+                                        SIDEBAR_THREAD_ITEM_OPEN
                                     )}
                                   >
                                     <span className="flex min-w-0 flex-1 items-center gap-2 pl-0">
@@ -485,9 +498,9 @@ export function ThreadList({
                                         <MessageSquare
                                           className={cn(
                                             SIDEBAR_THREAD_ICON_SIZE,
-                                            'shrink-0',
+                                            'shrink-0 transition-colors duration-200',
                                             isSelected
-                                              ? 'text-sidebar-foreground/90'
+                                              ? 'text-sidebar-foreground'
                                               : 'text-sidebar-foreground/55'
                                           )}
                                           aria-hidden="true"
@@ -519,7 +532,7 @@ export function ThreadList({
                                       }
                                       disabled={isLoading}
                                       className={cn(
-                                        'shrink-0 h-8 w-8 rounded-lg flex opacity-0 group-hover/thread:opacity-100 transition-opacity duration-150',
+                                        'shrink-0 h-8 w-8 rounded-xl flex opacity-0 group-hover/thread:opacity-100 transition-opacity duration-200',
                                         isSelected && 'opacity-100'
                                       )}
                                     />

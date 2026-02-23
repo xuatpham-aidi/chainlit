@@ -8,6 +8,9 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 
+import { cn } from '@/lib/utils';
+import { SIDEBAR_ICON_BUTTON } from './layout';
+
 export interface ThreadCollapseState {
   collapsedGroups: Set<string> | null;
   setCollapsedGroups: React.Dispatch<
@@ -71,13 +74,12 @@ export function ThreadCollapseButton({
 
   if (!visible) return null;
 
-  const iconClasses =
-    'h-8 w-8 rounded-lg text-sidebar-foreground/70 transition-colors duration-150 flex items-center justify-center';
+  const iconClasses = cn(SIDEBAR_ICON_BUTTON, 'cursor-pointer');
 
   if (disabled) {
     return (
       <span
-        className={`${iconClasses} cursor-default opacity-50`}
+        className={`${iconClasses} cursor-default opacity-50 hover:bg-transparent`}
         aria-hidden
       >
         <CopyMinus className="size-4" />
@@ -94,12 +96,12 @@ export function ThreadCollapseButton({
           onClick={onCollapseAll}
           size="icon"
           variant="ghost"
-          className="h-8 w-8 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors duration-150"
+          className={cn(SIDEBAR_ICON_BUTTON, 'h-9 w-9')}
         >
           <CopyMinus className="size-4" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="right" sideOffset={10} className="rounded-lg">
+      <TooltipContent side="right" sideOffset={10} className="rounded-xl">
         {tooltipText}
       </TooltipContent>
     </Tooltip>

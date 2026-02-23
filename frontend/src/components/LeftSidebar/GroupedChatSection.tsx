@@ -39,7 +39,6 @@ import { sidebarGroupTimeGroupCollapsedState } from '@/state/sidebar';
 import { threadListLoadingState } from '@/state/project';
 import { Loader } from '@/components/Loader';
 
-import { buttonVariants } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,10 +71,24 @@ import {
 import { Button } from '@/components/ui/button';
 
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from '@/components/ui/tooltip';
+
+import {
   SIDEBAR_GROUP_ROW_STICKY,
   SIDEBAR_GROUP_ROW_SELECTED,
+  SIDEBAR_GROUP_ROW_SELECTED_STICKY,
   SIDEBAR_GROUP_BLOCK_SELECTED,
-  SIDEBAR_SECTION_GAP
+  SIDEBAR_SECTION_GAP,
+  SIDEBAR_SECTION_INNER_GAP,
+  SIDEBAR_ACTION_BUTTON,
+  SIDEBAR_ICON_BUTTON,
+  SIDEBAR_MENU_ITEM,
+  SIDEBAR_TOPIC_TO_CHILDREN_GAP,
+  SIDEBAR_TOPIC_ROW_STICKY_TOP,
+  SIDEBAR_TIME_GROUP_ROW_STICKY_TOP
 } from './layout';
 import { Translator } from '../i18n';
 import { CollapsibleGroupRow } from './CollapsibleGroupRow';
@@ -94,6 +107,18 @@ interface IThreadGroup {
   createdAt?: string;
 }
 
+/** Section header uses z-20; group rows use z-[10..19] so earlier groups stack on top when sticky. */
+const SIDEBAR_SECTION_HEADER_Z = 20;
+const SIDEBAR_GROUP_ROW_Z_BASE = 10;
+
+function getGroupRowStickyZIndex(index: number, totalCount: number): number {
+  if (totalCount <= 0) return SIDEBAR_GROUP_ROW_Z_BASE;
+  return Math.min(
+    SIDEBAR_SECTION_HEADER_Z - 1,
+    SIDEBAR_GROUP_ROW_Z_BASE + (totalCount - 1 - index)
+  );
+}
+
 interface SortableGroupRowProps {
   group: IThreadGroup;
   isExpanded: boolean;
@@ -105,6 +130,8 @@ interface SortableGroupRowProps {
   isDropTarget?: boolean;
   lastDraggedGroupIdRef?: React.MutableRefObject<string | null>;
   containsSelectedThread?: boolean;
+  groupIndex?: number;
+  totalGroupCount?: number;
 }
 
 /**
@@ -121,7 +148,9 @@ function SortableGroupRow({
   hasChildren = true,
   isDropTarget = false,
   lastDraggedGroupIdRef,
-  containsSelectedThread = false
+  containsSelectedThread = false,
+  groupIndex = 0,
+  totalGroupCount = 1
 }: SortableGroupRowProps) {
   const {
     attributes,
@@ -131,10 +160,12 @@ function SortableGroupRow({
     transition,
     isDragging
   } = useSortable({ id: group.id });
+  const stickyZ = getGroupRowStickyZIndex(groupIndex, totalGroupCount);
   const style = {
     transform: CSS.Transform.toString(transform),
     transition
   };
+  const stickyRowStyle = { zIndex: stickyZ };
   const handleToggleClick = useCallback(() => {
     if (!hasChildren) return;
     if (lastDraggedGroupIdRef?.current === group.id) {
@@ -155,11 +186,12 @@ function SortableGroupRow({
     [hasChildren, handleToggleClick]
   );
   return (
-    <SidebarGroup className="px-0 py-0 group/row">
+    <SidebarGroup className="px-0 py-0 group/row min-w-0">
       <div
         ref={setNodeRef}
         style={style}
         className={cn(
+          'min-w-0',
           isDragging && 'z-30',
           containsSelectedThread && SIDEBAR_GROUP_BLOCK_SELECTED
         )}
@@ -171,32 +203,44 @@ function SortableGroupRow({
           tabIndex={hasChildren ? 0 : undefined}
           onClick={handleToggleClick}
           onKeyDown={handleRowKeyDown}
+          style={stickyRowStyle}
           className={cn(
-            'flex items-center gap-0 w-full rounded-lg overflow-hidden touch-none',
-            'sticky top-9 z-10',
+            'flex items-center gap-0 w-full rounded-xl overflow-hidden touch-none pr-3',
+            SIDEBAR_TOPIC_ROW_STICKY_TOP,
+            'sticky',
             SIDEBAR_GROUP_ROW_STICKY,
             hasChildren
               ? 'cursor-grab active:cursor-grabbing'
               : 'cursor-default',
-            'hover:bg-sidebar-foreground/[0.03] transition-colors duration-200',
+            'transition-colors duration-200 ease-out',
             'border border-transparent',
-            containsSelectedThread && SIDEBAR_GROUP_ROW_SELECTED,
+            containsSelectedThread && SIDEBAR_GROUP_ROW_SELECTED_STICKY,
             isDragging && 'opacity-60 shadow-md',
-            isDropTarget && 'ring-2 ring-sidebar-border ring-inset border-sidebar-border/60'
+            isDropTarget && 'ring-2 ring-sidebar-border ring-inset border-sidebar-border/60',
+            'bg-sidebar'
           )}
           aria-label={hasChildren ? 'Drag to reorder group' : undefined}
           aria-expanded={hasChildren ? isExpanded : undefined}
         >
-          <CollapsibleGroupRow
-            label={<span className="truncate">{group.name}</span>}
-            isCollapsed={!isExpanded}
-            containsSelected={containsSelectedThread}
-            contentOnly
-            showChevron={hasChildren}
-            className="text-sidebar-foreground/80"
-          />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex flex-1 min-w-0 min-h-0">
+                <CollapsibleGroupRow
+                  label={<span className="truncate block">{group.name}</span>}
+                  isCollapsed={!isExpanded}
+                  containsSelected={containsSelectedThread}
+                  contentOnly
+                  showChevron={hasChildren}
+                  className="text-sidebar-foreground/85"
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right" align="start" sideOffset={40}>
+              <p className="max-w-xs break-words">{group.name}</p>
+            </TooltipContent>
+          </Tooltip>
           <div
-            className="flex items-center shrink-0 pr-1.5 opacity-0 group-hover/row:opacity-100 transition-opacity"
+            className="flex items-center shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity duration-200"
             onPointerDown={(e) => e.stopPropagation()}
           >
             <DropdownMenu>
@@ -204,10 +248,7 @@ function SortableGroupRow({
                 <button
                   type="button"
                   onClick={(e) => e.stopPropagation()}
-                  className={cn(
-                    buttonVariants({ variant: 'ghost', size: 'icon' }),
-                    'h-7 w-7 rounded-md'
-                  )}
+                  className={cn(SIDEBAR_ICON_BUTTON, 'h-8 w-8')}
                   aria-label="Group options"
                 >
                   <Ellipsis className="h-3.5 w-3.5" />
@@ -220,12 +261,12 @@ function SortableGroupRow({
                 forceMount
                 sideOffset={20}
               >
-                <DropdownMenuItem className="cursor-pointer" onClick={onRename}>
+                <DropdownMenuItem className={SIDEBAR_MENU_ITEM} onClick={onRename}>
                   <Translator path="threadHistory.thread.menu.rename" />
                   <Pencil className="ml-auto h-4 w-4 opacity-60" />
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="text-red-600 focus:text-red-600 dark:text-red-400 cursor-pointer"
+                  className={cn(SIDEBAR_MENU_ITEM, 'text-red-600 focus:text-red-600 dark:text-red-400')}
                   onClick={onDelete}
                 >
                   <Translator path="threadHistory.thread.menu.delete" />
@@ -502,27 +543,27 @@ export function GroupedChatSection({
       ariaLabel="Grouped chat"
       stickyHeader
     >
-      <div className="min-h-0 overflow-clip">
+      <div className="min-h-0 min-w-0 overflow-clip">
         <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
           <DragStateSync setActiveId={setDragActiveId} setOverId={setDragOverId} />
           <SortableContext
             items={threadGroups.map((g) => g.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className={cn('flex flex-col', SIDEBAR_SECTION_GAP)}>
+            <div className={cn('flex min-w-0 flex-col', SIDEBAR_SECTION_INNER_GAP)}>
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full justify-start gap-2 h-10 min-h-10 pl-3 pr-2 rounded-xl text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-foreground/[0.03] transition-colors duration-200"
+                className={SIDEBAR_ACTION_BUTTON}
                 onClick={() => setCreateDialogOpen(true)}
                 aria-label={t('threadHistory.sidebar.createGroupTitle')}
               >
                 <FolderPlus className="size-4 shrink-0" />
-                <span className="truncate text-[13px] font-medium tracking-tight">
+                <span className="truncate">
                   <Translator path="threadHistory.sidebar.createGroupTitle" />
                 </span>
               </Button>
-              {threadGroups.map((group) => {
+              {threadGroups.map((group, groupIndex) => {
                 const threads = threadsByGroupId[group.id] ?? [];
                 const timeGrouped = groupByDate(threads);
                 const sortedKeys = getSortedTimeGroupKeys(timeGrouped);
@@ -546,6 +587,8 @@ export function GroupedChatSection({
                   <SortableGroupRow
                     key={group.id}
                     group={group}
+                    groupIndex={groupIndex}
+                    totalGroupCount={threadGroups.length}
                     isExpanded={isExpanded}
                     hasChildren={threads.length > 0}
                     onToggle={() => toggleGroup(group.id)}
@@ -560,14 +603,14 @@ export function GroupedChatSection({
                   >
                     <div
                       className={cn(
-                        'grid transition-[grid-template-rows] duration-200 ease-out',
+                        'grid min-w-0 transition-[grid-template-rows] duration-200 ease-out',
                         isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
                       )}
                       aria-hidden={!isExpanded}
                     >
-                      <div className="min-h-0 overflow-clip">
-                        <SidebarGroupContent className="min-h-0 overflow-clip">
-                          <SidebarMenu className="gap-0">
+                      <div className={cn('min-h-0 min-w-0 overflow-clip rounded-xl', isExpanded && SIDEBAR_TOPIC_TO_CHILDREN_GAP)}>
+                        <SidebarGroupContent className="min-h-0 min-w-0 overflow-clip rounded-xl px-0">
+                          <SidebarMenu className="gap-1">
                             {sortedKeys.length > 0 && (
                               <ThreadList
                                 threadHistory={groupHistory}
@@ -586,7 +629,8 @@ export function GroupedChatSection({
                                         : updater
                                   }))
                                 }
-                                stickyTopOffset="top-[4.1rem]"
+                                stickyTopOffset={SIDEBAR_TIME_GROUP_ROW_STICKY_TOP}
+                                compactFirstGroup
                               />
                             )}
                           </SidebarMenu>

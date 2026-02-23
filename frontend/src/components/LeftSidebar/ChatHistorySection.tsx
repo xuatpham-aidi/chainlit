@@ -17,7 +17,8 @@ import {
   SIDEBAR_SECTION_HEADER_HOVER,
   SIDEBAR_SECTION_GAP,
   SIDEBAR_CONTENT_PX,
-  SIDEBAR_HISTORY_ZONE_BG
+  SIDEBAR_HISTORY_ZONE_BG,
+  SIDEBAR_ZONE_HEADER_RIGHT
 } from './layout';
 import { Translator } from '../i18n';
 import { ThreadCollapseButton } from './ThreadCollapse';
@@ -112,18 +113,20 @@ export function ChatHistorySection({
   }, [onHistoryScroll]);
 
   return (
-    <div className="flex flex-1 flex-col min-h-0" aria-label="Chat history">
-      <div className={cn('flex flex-1 flex-col min-h-0', SIDEBAR_HISTORY_ZONE_BG)}>
+    <div className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden" aria-label="Chat history">
+      <div
+        className={cn(
+          'flex flex-1 flex-col min-h-0 min-w-0 rounded-xl overflow-hidden',
+          SIDEBAR_HISTORY_ZONE_BG
+        )}
+      >
         <header
-          className={cn(
-            SIDEBAR_SECTION_HEADER,
-            SIDEBAR_SECTION_HEADER_HOVER
-          )}
+          className={cn(SIDEBAR_SECTION_HEADER)}
         >
           <p className={SIDEBAR_SECTION_HEADER_TITLE}>
             <Translator path="threadHistory.sidebar.title" />
           </p>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center">
             <ThreadCollapseButton
               visible
               onCollapseAll={handleCollapseAll}
@@ -134,14 +137,14 @@ export function ChatHistorySection({
         <CustomScrollbar
           ref={historyScrollRef}
           onScroll={handleHistoryScroll}
-          className="flex-1 min-h-0"
+          className="flex-1 min-h-0 min-w-0"
           variant="sidebar"
           hideScrollbar={hideScrollbar}
           invalidateKey={invalidateKey}
         >
           <div
             className={cn(
-              'flex flex-col min-h-0 py-4',
+              'flex flex-1 flex-col min-h-0 min-w-0 py-4',
               SIDEBAR_SECTION_GAP,
               SIDEBAR_CONTENT_PX
             )}

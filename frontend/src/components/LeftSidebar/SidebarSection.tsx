@@ -6,10 +6,14 @@ import { Button } from '@/components/ui/button';
 
 import {
   SIDEBAR_MAJOR_SECTION_HEADER,
-  SIDEBAR_SECTION_HEADER_SELECTED,
-  SIDEBAR_SECTION_HEADER_HOVER,
-  SIDEBAR_SECTION_GAP,
-  SIDEBAR_SECTION_WRAPPER_SELECTED
+  SIDEBAR_MAJOR_SECTION_HEADER_DEFAULT,
+  SIDEBAR_MAJOR_SECTION_HEADER_HOVER,
+  SIDEBAR_SECTION_HEADER_SELECTED_IN_WRAPPER,
+  SIDEBAR_SECTION_HEADER_SELECTED_STICKY,
+  SIDEBAR_SECTION_HEADER_TO_CONTENT_GAP,
+  SIDEBAR_SECTION_WRAPPER_SELECTED,
+  SIDEBAR_SECTION_LEFT_BAR_PADDING,
+  SIDEBAR_STICKY_SECTION_HEADER_BG
 } from './layout';
 
 export interface SidebarSectionProps {
@@ -42,40 +46,49 @@ export function SidebarSection({
 }: SidebarSectionProps) {
   const sectionContent = (
     <>
-      <Button
+        <Button
         onClick={onToggle}
         variant="ghost"
         size="default"
         className={cn(
           SIDEBAR_MAJOR_SECTION_HEADER,
-          stickyHeader && 'sticky top-0 z-20 bg-sidebar',
-          containsSelected && SIDEBAR_SECTION_HEADER_SELECTED,
-          !containsSelected && 'text-sidebar-foreground/65 hover:text-sidebar-foreground',
-          !containsSelected && SIDEBAR_SECTION_HEADER_HOVER
+          stickyHeader && cn('sticky top-0 z-20', SIDEBAR_STICKY_SECTION_HEADER_BG),
+          containsSelected && (stickyHeader ? SIDEBAR_SECTION_HEADER_SELECTED_STICKY : SIDEBAR_SECTION_HEADER_SELECTED_IN_WRAPPER),
+          !containsSelected && SIDEBAR_MAJOR_SECTION_HEADER_DEFAULT,
+          !containsSelected && SIDEBAR_MAJOR_SECTION_HEADER_HOVER
         )}
         aria-expanded={expanded}
       >
-        <span className="min-w-0 flex-1 truncate text-left">{title}</span>
+        <span className="min-w-0 flex-1 truncate text-left font-medium">
+          {title}
+        </span>
         <div className="flex items-center gap-1 shrink-0">
           {rightSlot != null ? (
             rightSlot
           ) : isLoading ? (
             <Loader />
           ) : expanded ? (
-            <ChevronDown className="size-4 text-sidebar-foreground/50" />
+            <ChevronDown className="size-4 text-sidebar-foreground/50 transition-opacity duration-200" />
           ) : (
-            <ChevronRight className="size-4 text-sidebar-foreground/50" />
+            <ChevronRight className="size-4 text-sidebar-foreground/50 transition-opacity duration-200" />
           )}
         </div>
       </Button>
       <div
         className={cn(
-          'grid transition-[grid-template-rows] duration-200 ease-out min-h-0 overflow-clip',
+          'grid transition-[grid-template-rows] duration-200 ease-out min-h-0 min-w-0 overflow-clip',
           expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
         )}
         aria-hidden={!expanded}
       >
-        <div className="min-h-0 overflow-clip">{children}</div>
+        <div
+          className={cn(
+            'min-h-0 min-w-0 overflow-clip',
+            SIDEBAR_SECTION_LEFT_BAR_PADDING
+          )}
+        >
+          {children}
+        </div>
       </div>
     </>
   );
@@ -83,8 +96,8 @@ export function SidebarSection({
   return (
     <section
       className={cn(
-        'shrink-0 flex flex-col',
-        expanded ? SIDEBAR_SECTION_GAP : 'gap-0',
+        'flex min-w-0 shrink-0 flex-col',
+        expanded ? SIDEBAR_SECTION_HEADER_TO_CONTENT_GAP : 'gap-0',
         containsSelected && SIDEBAR_SECTION_WRAPPER_SELECTED
       )}
       aria-label={ariaLabel}

@@ -317,7 +317,7 @@ export function ThreadHistory({
           isLoadingMore={isLoadingMore}
           collapsedGroups={collapsedGroups}
           setCollapsedGroups={setCollapsedGroups}
-          stickyTopOffset="top-9"
+          stickyTopOffset="top-10"
         />
       </div>
     ) : null
