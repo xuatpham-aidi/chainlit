@@ -118,7 +118,7 @@ const Header = memo(() => {
           </Tooltip>
         )}
         <ThemeToggle />
-        {/* <UserNav /> */}
+        <UserNav />
       </div>
     </div>
   );
