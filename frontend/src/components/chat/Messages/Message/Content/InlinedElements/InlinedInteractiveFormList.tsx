@@ -8,8 +8,11 @@ interface Props {
 
 const InlinedInteractiveFormList = ({ items }: Props) => (
   <div className="flex flex-col gap-4">
-    {items.map((formElement) => (
-      <InteractiveFormElement key={formElement.id} element={formElement} />
+    {items.map((formElement, index) => (
+      <InteractiveFormElement
+        key={`interactive-form-${formElement.forId}-${formElement.id}-${index}`}
+        element={formElement}
+      />
     ))}
   </div>
 );

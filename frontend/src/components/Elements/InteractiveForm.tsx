@@ -2,6 +2,7 @@ import { MessageContext } from '@/contexts/MessageContext';
 import {
   useCallback,
   useContext,
+  useId,
   useMemo,
   useState
 } from 'react';
@@ -35,6 +36,29 @@ const DEFAULT_PROPS = {
   showExtraMessage: true
 };
 
+const SUBMITTED_STORAGE_KEY_PREFIX = 'interactive-form-submitted';
+
+function getSubmittedStorageKey(forId: string, elementId: string): string {
+  return `${SUBMITTED_STORAGE_KEY_PREFIX}-${forId}-${elementId}`;
+}
+
+function getPersistedSubmitted(forId: string, elementId: string): boolean {
+  if (typeof sessionStorage === 'undefined') return false;
+  try {
+    return sessionStorage.getItem(getSubmittedStorageKey(forId, elementId)) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function setPersistedSubmitted(forId: string, elementId: string): void {
+  try {
+    sessionStorage.setItem(getSubmittedStorageKey(forId, elementId), 'true');
+  } catch {
+    /* ignore */
+  }
+}
+
 function getInitialValues(fields: IFormField[]): Record<string, string | number | boolean> {
   const initial: Record<string, string | number | boolean> = {};
   for (const f of fields) {
@@ -51,30 +75,64 @@ function getInitialValues(fields: IFormField[]): Record<string, string | number 
   return initial;
 }
 
+function isRequiredFieldEmpty(
+  field: IFormField,
+  value: string | number | boolean | undefined
+): boolean {
+  if (!field.required) return false;
+  if (value === undefined) return true;
+  if (field.type === 'checkbox') return value !== true;
+  if (field.type === 'number') return value === '';
+  return String(value).trim() === '';
+}
+
+function getValidationErrors(
+  fields: IFormField[],
+  values: Record<string, string | number | boolean>
+): Record<string, string> {
+  const errors: Record<string, string> = {};
+  for (const field of fields) {
+    if (!field.required) continue;
+    const value = values[field.id];
+    if (isRequiredFieldEmpty(field, value)) {
+      errors[field.id] = `${field.label} is required`;
+    }
+  }
+  return errors;
+}
+
 function FormFieldRender({
+  idPrefix,
   field,
   value,
-  onChange
+  onChange,
+  error
 }: {
+  idPrefix: string;
   field: IFormField;
   value: string | number | boolean;
   onChange: (v: string | number | boolean) => void;
+  error?: string;
 }) {
+  const fieldId = `${idPrefix}-${field.id}`;
+  const errorClass = error ? 'border-destructive focus-visible:ring-destructive' : '';
   if (field.type === 'textarea') {
     return (
       <Textarea
-        id={field.id}
+        id={fieldId}
         value={String(value)}
         onChange={(e) => onChange(e.target.value)}
         placeholder={field.label}
-        className="min-h-[80px]"
+        className={cn('min-h-[56px] text-sm py-1.5 px-2', errorClass)}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${fieldId}-error` : undefined}
       />
     );
   }
   if (field.type === 'number') {
     return (
       <Input
-        id={field.id}
+        id={fieldId}
         type="number"
         value={value === '' ? '' : Number(value)}
         onChange={(e) => {
@@ -82,6 +140,9 @@ function FormFieldRender({
           onChange(v === '' ? '' : Number(v));
         }}
         placeholder={field.label}
+        className={cn('h-8 text-sm', errorClass)}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${fieldId}-error` : undefined}
       />
     );
   }
@@ -92,7 +153,12 @@ function FormFieldRender({
         value={String(value)}
         onValueChange={(v) => onChange(v)}
       >
-        <SelectTrigger id={field.id}>
+        <SelectTrigger
+          id={fieldId}
+          className={cn('h-8 text-sm', errorClass)}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${fieldId}-error` : undefined}
+        >
           <SelectValue placeholder={field.label} />
         </SelectTrigger>
         <SelectContent>
@@ -107,13 +173,19 @@ function FormFieldRender({
   }
   if (field.type === 'checkbox') {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <Checkbox
-          id={field.id}
+          id={fieldId}
           checked={Boolean(value)}
           onCheckedChange={(checked) => onChange(checked === true)}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${fieldId}-error` : undefined}
+          className={error ? 'border-destructive data-[state=checked]:bg-destructive' : ''}
         />
-        <Label htmlFor={field.id} className="font-normal cursor-pointer">
+        <Label
+          htmlFor={fieldId}
+          className="font-normal cursor-pointer text-sm"
+        >
           {field.label}
         </Label>
       </div>
@@ -122,12 +194,18 @@ function FormFieldRender({
   if (field.type === 'radio') {
     const options = field.options ?? [];
     return (
-      <div className="flex flex-col gap-2" role="radiogroup" aria-label={field.label}>
+      <div
+        className="flex flex-col gap-1"
+        role="radiogroup"
+        aria-label={field.label}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${fieldId}-error` : undefined}
+      >
         {options.map((opt: string) => (
-          <label key={opt} className="flex items-center gap-2 cursor-pointer">
+          <label key={opt} className="flex items-center gap-1.5 cursor-pointer text-sm">
             <input
               type="radio"
-              name={field.id}
+              name={fieldId}
               value={opt}
               checked={value === opt}
               onChange={() => onChange(opt)}
@@ -141,16 +219,20 @@ function FormFieldRender({
   }
   return (
     <Input
-      id={field.id}
+      id={fieldId}
       type="text"
       value={String(value)}
       onChange={(e) => onChange(e.target.value)}
       placeholder={field.label}
+      className={cn('h-8 text-sm', errorClass)}
+      aria-invalid={!!error}
+      aria-describedby={error ? `${fieldId}-error` : undefined}
     />
   );
 }
 
 export function InteractiveFormElement({ element }: InteractiveFormElementProps) {
+  const formInstanceId = useId();
   const { askUser } = useContext(MessageContext);
   const { sendMessage } = useChatInteract();
   const { user } = useAuth();
@@ -166,6 +248,10 @@ export function InteractiveFormElement({ element }: InteractiveFormElementProps)
   );
   const [extraMessage, setExtraMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(() =>
+    getPersistedSubmitted(element.forId, element.id)
+  );
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const isAskFlow = useMemo(
     () =>
@@ -176,10 +262,22 @@ export function InteractiveFormElement({ element }: InteractiveFormElementProps)
 
   const updateValue = useCallback((id: string, v: string | number | boolean) => {
     setValues((prev) => ({ ...prev, [id]: v }));
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
   }, []);
 
   const handleSubmit = useCallback(() => {
-    if (submitting) return;
+    if (submitting || submitted) return;
+
+    const errors = getValidationErrors(fields, values);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors({});
     setSubmitting(true);
 
     const payload = {
@@ -212,6 +310,9 @@ export function InteractiveFormElement({ element }: InteractiveFormElementProps)
         metadata: { formData: values, extraMessage: showExtraMessage ? extraMessage : undefined }
       });
     }
+
+    setPersistedSubmitted(element.forId, element.id);
+    setSubmitted(true);
     setSubmitting(false);
   }, [
     values,
@@ -222,7 +323,10 @@ export function InteractiveFormElement({ element }: InteractiveFormElementProps)
     fields,
     sendMessage,
     user?.identifier,
-    submitting
+    submitting,
+    submitted,
+    element.forId,
+    element.id
   ]);
 
   const handleCancel = useCallback(() => {
@@ -238,54 +342,84 @@ export function InteractiveFormElement({ element }: InteractiveFormElementProps)
   return (
     <div
       className={cn(
-        'rounded-lg border border-border bg-muted/30 p-4 flex flex-col gap-4',
+        'rounded-lg border border-border bg-muted/30 p-2.5 flex flex-col gap-2',
         element.display === 'inline' && 'inline-form w-full max-w-xl'
       )}
     >
       {title ? (
-        <h3 className="text-sm font-semibold leading-tight">{title}</h3>
+        <h3 className="text-xs font-semibold leading-tight">{title}</h3>
       ) : null}
       {promptMessage ? (
-        <p className="text-sm text-muted-foreground">{promptMessage}</p>
+        <p className="text-xs text-muted-foreground">{promptMessage}</p>
       ) : null}
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
         {fields.map((field: IFormField) => (
-          <div key={field.id} className="flex flex-col gap-2">
+          <div key={field.id} className="flex flex-col gap-1">
             {field.type !== 'checkbox' && field.type !== 'radio' ? (
-              <Label htmlFor={field.id}>
+              <Label
+                htmlFor={`${formInstanceId}-${field.id}`}
+                className="text-xs"
+              >
                 {field.label}
                 {field.required ? <span className="text-destructive"> *</span> : null}
               </Label>
             ) : null}
             <FormFieldRender
+              idPrefix={formInstanceId}
               field={field}
               value={values[field.id] ?? (field.value ?? (field.type === 'checkbox' ? false : ''))}
               onChange={(v) => updateValue(field.id, v)}
+              error={fieldErrors[field.id]}
             />
+            {fieldErrors[field.id] ? (
+              <p
+                id={`${formInstanceId}-${field.id}-error`}
+                className="text-xs text-destructive"
+                role="alert"
+              >
+                {fieldErrors[field.id]}
+              </p>
+            ) : null}
           </div>
         ))}
       </div>
 
       {showExtraMessage ? (
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="interactive-form-extra">Your message (optional)</Label>
+        <div className="flex flex-col gap-1">
+          <Label
+            htmlFor={`${formInstanceId}-interactive-form-extra`}
+            className="text-xs"
+          >
+            Your message (optional)
+          </Label>
           <Textarea
-            id="interactive-form-extra"
+            id={`${formInstanceId}-interactive-form-extra`}
             placeholder="Add any message to send with your choices..."
             value={extraMessage}
             onChange={(e) => setExtraMessage(e.target.value)}
-            className="min-h-[60px]"
+            className="min-h-[48px] text-sm py-1.5 px-2"
           />
         </div>
       ) : null}
 
-      <div className="flex gap-2 pt-2">
-        <Button type="button" onClick={handleSubmit} disabled={submitting}>
+      <div className="flex gap-1.5 pt-1.5">
+        <Button
+          type="button"
+          size="sm"
+          onClick={handleSubmit}
+          disabled={submitting || submitted}
+          aria-disabled={submitting || submitted}
+        >
           Send
         </Button>
         {isAskFlow ? (
-          <Button type="button" variant="outline" onClick={handleCancel}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={handleCancel}
+          >
             Cancel
           </Button>
         ) : null}
