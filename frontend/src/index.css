@@ -56,6 +56,10 @@ code {
     --sidebar-border: 220 14% 92%;
     --sidebar-ring: 214 95% 42%;
     --sidebar-teal: 174 60% 42%;
+    --user-message-bg: 214 25% 96%;
+    --user-message-shadow: 0 1px 3px hsl(214 20% 90% / 0.25);
+    --ai-message-bg: 220 18% 98%;
+    --ai-message-shadow: 0 1px 3px hsl(220 14% 90% / 0.2);
   }
 
   .dark {
@@ -94,6 +98,10 @@ code {
     --sidebar-border: 224 24% 15%;
     --sidebar-ring: 174 58% 46%;
     --sidebar-teal: 174 58% 46%;
+    --user-message-bg: 214 28% 17%;
+    --user-message-shadow: 0 1px 4px hsl(0 0% 0% / 0.22);
+    --ai-message-bg: 224 24% 11%;
+    --ai-message-shadow: 0 1px 4px hsl(0 0% 0% / 0.18);
   }
 }
 

@@ -156,7 +156,13 @@ const Message = memo(
                       </Step>
                     ) : (
                       // Display an assistant message
-                      <div className="flex flex-col items-start min-w-[150px] flex-grow gap-2">
+                      <div
+                        className={cn(
+                          'flex flex-col items-start min-w-[150px] flex-grow gap-2',
+                          'px-5 py-2.5 rounded-2xl shadow-[var(--ai-message-shadow)]',
+                          'bg-[hsl(var(--ai-message-bg))] w-full'
+                        )}
+                      >
                         <MessageContent
                           ref={contentRef}
                           elements={elements}

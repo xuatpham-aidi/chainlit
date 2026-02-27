@@ -85,7 +85,13 @@ export default function Step({
             )}
           </AccordionTrigger>
           <AccordionContent>
-            <div className="flex-grow mt-4 ml-1 pl-4 border-l-2 border-primary">
+            <div
+              className={cn(
+                'flex-grow mt-4 ml-1 pl-4 border-l-2 border-primary',
+                'rounded-2xl shadow-[var(--ai-message-shadow)] bg-[hsl(var(--ai-message-bg))]',
+                'py-3 pr-4'
+              )}
+            >
               {children}
             </div>
           </AccordionContent>

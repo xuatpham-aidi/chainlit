@@ -97,14 +97,15 @@ const UserMessage = memo(function UserMessage({
         )}
         <div
           className={cn(
-            'px-5 py-2.5 relative bg-accent rounded-3xl',
+            'px-5 py-2.5 relative rounded-2xl shadow-[var(--user-message-shadow)]',
+            'bg-[hsl(var(--user-message-bg))]',
             inlineElements.length ? 'rounded-tr-lg' : '',
             isEditing ? 'w-full flex-grow' : 'max-w-[70%] flex-grow-0',
             editable ? '' : 'ml-auto'
           )}
         >
           {isEditing ? (
-            <div className="bg-accent flex flex-col">
+            <div className="bg-[hsl(var(--user-message-bg))] flex flex-col">
               <AutoResizeTextarea
                 id="edit-chat-input"
                 autoFocus
