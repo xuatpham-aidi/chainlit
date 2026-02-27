@@ -1152,44 +1152,58 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         if isinstance(elements, list):
             for element in elements:
                 thread_id = element["element_threadid"]
-                if thread_id is not None:
-                    element_url: str | None = None
-                    object_key_val = element.get("element_objectkey")
-                    if (
-                        self.storage_provider is not None
-                        and isinstance(object_key_val, str)
-                        and object_key_val.strip()
-                    ):
-                        try:
-                            element_url = await self.storage_provider.get_read_url(
-                                object_key=object_key_val,
-                            )
-                        except Exception as e:
-                            logger.warning(
-                                f"Failed to get read URL for object_key '{object_key_val}': {e}. Falling back to stored URL."
-                            )
-                            element_url = element.get("element_url")
-                    else:
+                if thread_id is None:
+                    continue
+                object_key_val = element.get("element_objectkey")
+                has_storage_key = (
+                    self.storage_provider is not None
+                    and isinstance(object_key_val, str)
+                    and object_key_val.strip()
+                )
+                element_url: str | None = None
+                if has_storage_key:
+                    try:
+                        element_url = await self.storage_provider.get_read_url(
+                            object_key=object_key_val,
+                        )
+                    except Exception as e:
+                        logger.warning(
+                            "Failed to get read URL for object_key '%s': %s. Falling back to stored URL.",
+                            object_key_val,
+                            e,
+                        )
                         element_url = element.get("element_url")
-                    element_dict = ElementDict(
-                        id=element["element_id"],
-                        threadId=thread_id,
-                        type=element["element_type"],
-                        chainlitKey=element.get("element_chainlitkey"),
-                        url=element_url,
-                        objectKey=element.get("element_objectkey"),
-                        name=element["element_name"],
-                        display=element["element_display"],
-                        size=element.get("element_size"),
-                        language=element.get("element_language"),
-                        autoPlay=element.get("element_autoPlay"),
-                        playerConfig=element.get("element_playerconfig"),
-                        page=element.get("element_page"),
-                        props=element.get("props", "{}"),
-                        forId=element.get("element_forid"),
-                        mime=element.get("element_mime"),
+                else:
+                    element_url = element.get("element_url")
+                element_content: Optional[str] = None
+                if (
+                    element.get("element_type") == "plotly"
+                    and has_storage_key
+                ):
+                    element_content = await self.storage_provider.get_file_content(
+                        object_key=object_key_val, encoding="utf-8"
                     )
-                    thread_dicts[thread_id]["elements"].append(element_dict)  # type: ignore
+                element_dict = ElementDict(
+                    id=element["element_id"],
+                    threadId=thread_id,
+                    type=element["element_type"],
+                    chainlitKey=element.get("element_chainlitkey"),
+                    url=element_url,
+                    objectKey=element.get("element_objectkey"),
+                    name=element["element_name"],
+                    display=element["element_display"],
+                    size=element.get("element_size"),
+                    language=element.get("element_language"),
+                    autoPlay=element.get("element_autoPlay"),
+                    playerConfig=element.get("element_playerconfig"),
+                    page=element.get("element_page"),
+                    props=element.get("props", "{}"),
+                    forId=element.get("element_forid"),
+                    mime=element.get("element_mime"),
+                )
+                if element_content is not None:
+                    element_dict["content"] = element_content
+                thread_dicts[thread_id]["elements"].append(element_dict)  # type: ignore
 
         return list(thread_dicts.values())
 

@@ -11,15 +11,6 @@ import { ThinkingIndicator } from '@/components/ThinkingIndicator';
 
 import { Message } from './Message';
 
-interface Props {
-  messages: IStep[];
-  elements: IMessageElement[];
-  actions: IAction[];
-  indent: number;
-  isRunning?: boolean;
-  scorableRun?: IStep;
-}
-
 const CL_RUN_NAMES = ['on_chat_start', 'on_message', 'on_audio_end'];
 
 const hasActiveToolStep = (step: IStep): boolean => {
@@ -41,13 +32,53 @@ const hasAssistantMessage = (step: IStep): boolean => {
   );
 };
 
+/** Depth-first walk; returns the id of the last assistant_message in the tree. */
+function findLastAssistantMessageIdInTree(steps: IStep[]): string | undefined {
+  let lastId: string | undefined;
+  function walk(list: IStep[]) {
+    for (const s of list) {
+      if (s.type === 'assistant_message') lastId = s.id;
+      if (s.steps?.length) walk(s.steps);
+    }
+  }
+  walk(steps);
+  return lastId;
+}
+
+interface Props {
+  messages: IStep[];
+  elements: IMessageElement[];
+  actions: IAction[];
+  indent: number;
+  isRunning?: boolean;
+  scorableRun?: IStep;
+  /** When set, only this message id gets isLatestMessage=true (thread-level last). */
+  lastAssistantMessageId?: string;
+}
+
 const Messages = memo(
-  ({ messages, elements, actions, indent, isRunning, scorableRun }: Props) => {
+  ({
+    messages,
+    elements,
+    actions,
+    indent,
+    isRunning,
+    scorableRun,
+    lastAssistantMessageId
+  }: Props) => {
     const messageContext = useContext(MessageContext);
 
     const lastAssistantMessage = useMemo(() => {
       return messages.findLast((m) => m.type === 'assistant_message');
     }, [messages]);
+
+    const resolvedLastId = useMemo(
+      () =>
+        lastAssistantMessageId !== undefined
+          ? lastAssistantMessageId
+          : findLastAssistantMessageIdInTree(messages),
+      [lastAssistantMessageId, messages]
+    );
 
     const lastScorableAssistantMessage = useMemo(() => {
       return scorableRun?.steps?.findLast(
@@ -86,6 +117,7 @@ const Messages = memo(
                     indent={indent}
                     isRunning={isRunning}
                     scorableRun={scorableRun}
+                    lastAssistantMessageId={resolvedLastId}
                   />
                 ) : null}
                 {(showToolCoTLoader || showHiddenCoTLoader) &&
@@ -122,6 +154,12 @@ const Messages = memo(
                 isRunning={isRunning}
                 scorableRun={_scorableRun}
                 isScorable={isScorable}
+                isLatestMessage={
+                  resolvedLastId != null
+                    ? m.id === resolvedLastId
+                    : m === lastAssistantMessage
+                }
+                lastAssistantMessageId={resolvedLastId}
               />
             );
           }

@@ -17,9 +17,10 @@ import { InlinedVideoList } from './InlinedVideoList';
 interface Props {
   elements: IMessageElement[];
   className?: string;
+  isLatestMessage?: boolean;
 }
 
-const InlinedElements = ({ elements, className }: Props) => {
+const InlinedElements = ({ elements, className, isLatestMessage = true }: Props) => {
   if (!elements.length) {
     return null;
   }
@@ -77,7 +78,7 @@ const InlinedElements = ({ elements, className }: Props) => {
         <InlinedDataframeList items={elementsByType.dataframe} />
       ) : null}
       {elementsByType.interactive_form?.length ? (
-        <InlinedInteractiveFormList items={elementsByType.interactive_form} />
+        <InlinedInteractiveFormList items={elementsByType.interactive_form} isLatestMessage={isLatestMessage} />
       ) : null}
     </div>
   );

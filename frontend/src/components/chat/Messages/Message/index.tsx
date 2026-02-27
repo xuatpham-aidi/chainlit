@@ -28,6 +28,8 @@ interface Props {
   isRunning?: boolean;
   isScorable?: boolean;
   scorableRun?: IStep;
+  isLatestMessage?: boolean;
+  lastAssistantMessageId?: string;
 }
 
 const EMPTY_ELEMENTS: IMessageElement[] = [];
@@ -40,7 +42,9 @@ const Message = memo(
     isRunning,
     indent,
     isScorable,
-    scorableRun
+    scorableRun,
+    isLatestMessage = true,
+    lastAssistantMessageId
   }: Props) => {
     const { allowHtml, cot, latex, onError } = useContext(MessageContext);
     const layoutMaxWidth = useLayoutMaxWidth();
@@ -82,6 +86,7 @@ const Message = memo(
           indent={indent}
           isRunning={isRunning}
           scorableRun={scorableRun}
+          lastAssistantMessageId={lastAssistantMessageId}
         />
       );
     }
@@ -136,6 +141,7 @@ const Message = memo(
                             actions={actions}
                             indent={indent + 1}
                             isRunning={isRunning}
+                            lastAssistantMessageId={lastAssistantMessageId}
                           />
                         ) : null}
                         {shouldRenderOutput ? (
@@ -146,6 +152,7 @@ const Message = memo(
                             allowHtml={allowHtml}
                             latex={latex}
                             sections={showInputSection ? ['output'] : undefined}
+                            isLatestMessage={isLatestMessage}
                           />
                         ) : null}
                         <MessageButtons
@@ -169,6 +176,7 @@ const Message = memo(
                           message={message}
                           allowHtml={allowHtml}
                           latex={latex}
+                          isLatestMessage={isLatestMessage}
                         />
                         <AskFileButton messageId={message.id} onError={onError} />
                         <AskActionButtons
@@ -210,6 +218,7 @@ const Message = memo(
             indent={0}
             isRunning={isRunning}
             scorableRun={scorableRun}
+            lastAssistantMessageId={lastAssistantMessageId}
           />
         ) : null}
         {/* Display the child steps if the message is not a step (usually a user message). */}
@@ -220,6 +229,7 @@ const Message = memo(
             actions={actions}
             indent={indent}
             isRunning={isRunning}
+            lastAssistantMessageId={lastAssistantMessageId}
           />
         ) : null}
       </>

@@ -21,6 +21,7 @@ export interface Props {
   latex?: boolean;
   sections?: ContentSection[];
   isUserMessage?: boolean;
+  isLatestMessage?: boolean;
 }
 
 const getMessageRenderProps = (message: IStep) => ({
@@ -51,7 +52,7 @@ const formatTime = (utcTimestamp: number | string | undefined): string => {
 const MessageContent = memo(
   forwardRef<HTMLDivElement, Props>(
     (
-      { isUserMessage = false, message, elements, allowHtml, latex, sections },
+      { isUserMessage = false, message, elements, allowHtml, latex, sections, isLatestMessage = true },
       ref
     ) => {
       const { loading } = useContext(MessageContext);
@@ -144,7 +145,7 @@ const MessageContent = memo(
         >
           {displayInput || (displayOutput && output) ? markdownContent : null}
           {displayOutput ? (
-            <InlinedElements elements={outputInlinedElements} />
+            <InlinedElements elements={outputInlinedElements} isLatestMessage={isLatestMessage} />
           ) : null}
           {timestamp &&
           (displayInput || (displayOutput && output)) &&
@@ -167,6 +168,7 @@ const MessageContent = memo(
       prevProps.allowHtml === nextProps.allowHtml &&
       prevProps.latex === nextProps.latex &&
       prevProps.elements === nextProps.elements &&
+      (prevProps.isLatestMessage ?? true) === (nextProps.isLatestMessage ?? true) &&
       isEqual(
         prevProps.sections ?? ['input', 'output'],
         nextProps.sections ?? ['input', 'output']

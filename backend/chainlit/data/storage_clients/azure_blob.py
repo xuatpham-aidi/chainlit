@@ -25,26 +25,25 @@ class AzureBlobStorageClient(BaseStorageClient):
         storage_key: Optional[str] = None,
         credential: Optional["TokenCredential"] = None,
     ):
-        self.container_name = container_name
-        self.storage_account = storage_account
-        self.storage_key = storage_key
+        self.container_name = (container_name or "").strip()
+        self.storage_account = (storage_account or "").strip()
+        raw_key = (storage_key or "").strip().strip('"').strip("'")
+        self.storage_key = raw_key if raw_key else None
         self._credential = credential
-        if storage_key is not None:
+        if self.storage_key is not None:
             connection_string = (
                 f"DefaultEndpointsProtocol=https;"
-                f"AccountName={storage_account};"
-                f"AccountKey={storage_key};"
+                f"AccountName={self.storage_account};"
+                f"AccountKey={self.storage_key};"
                 f"EndpointSuffix=core.windows.net"
             )
             self.service_client = AsyncBlobServiceClient.from_connection_string(
                 connection_string
             )
         elif credential is not None:
-            account_url = (
-                f"https://{storage_account}.blob.core.windows.net"
-            )
             self.service_client = AsyncBlobServiceClient(
-                account_url=account_url, credential=credential
+                account_url=f"https://{self.storage_account}.blob.core.windows.net",
+                credential=credential,
             )
             self._user_delegation_key: Any = None
             self._user_delegation_key_expiry: Optional[datetime] = None
@@ -118,6 +117,19 @@ class AzureBlobStorageClient(BaseStorageClient):
             )
         return f"{base_url}?{sas_token}"
 
+    async def get_file_content(
+        self, object_key: str, encoding: str = "utf-8"
+    ) -> Optional[str]:
+        try:
+            await self._ensure_container()
+            blob_client = self.container_client.get_blob_client(object_key)
+            download = await blob_client.download_blob()
+            data = await download.readall()
+            return data.decode(encoding)
+        except Exception as e:
+            logger.warning("Failed to get file content for %s: %s", object_key, e)
+            return None
+
     async def upload_file(
         self,
         object_key: str,
@@ -154,6 +166,13 @@ class AzureBlobStorageClient(BaseStorageClient):
             }
 
         except Exception as e:
+            err_msg = str(e).strip()
+            if "AuthenticationFailed" in err_msg or "MAC signature" in err_msg:
+                logger.error(
+                    "Azure Blob auth failed. Check: 1) Account key has no extra spaces/quotes (e.g. in .env). "
+                    "2) Key is correct for storage account %s. 3) If using credential, token scope and expiry.",
+                    self.storage_account,
+                )
             raise Exception(f"Failed to upload file to Azure Blob Storage: {e!s}")
 
     async def delete_file(self, object_key: str) -> bool:

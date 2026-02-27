@@ -34,6 +34,8 @@ interface TElement<T> {
   mime?: string;
   url?: string;
   chainlitKey?: string;
+  /** Inline content when loading from thread (e.g. plotly JSON from blob). */
+  content?: string;
 }
 
 interface TMessageElement<T> extends TElement<T> {

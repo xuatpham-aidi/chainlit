@@ -27,6 +27,8 @@ import { cn } from '@/lib/utils';
 
 interface InteractiveFormElementProps {
   element: IInteractiveFormElement;
+  /** When false, the Send button is disabled (form is not on the latest message). */
+  isLatestMessage?: boolean;
 }
 
 const DEFAULT_PROPS = {
@@ -106,13 +108,15 @@ function FormFieldRender({
   field,
   value,
   onChange,
-  error
+  error,
+  disabled
 }: {
   idPrefix: string;
   field: IFormField;
   value: string | number | boolean;
   onChange: (v: string | number | boolean) => void;
   error?: string;
+  disabled?: boolean;
 }) {
   const fieldId = `${idPrefix}-${field.id}`;
   const errorClass = error ? 'border-destructive focus-visible:ring-destructive' : '';
@@ -123,9 +127,15 @@ function FormFieldRender({
         value={String(value)}
         onChange={(e) => onChange(e.target.value)}
         placeholder={field.label}
-        className={cn('min-h-[56px] text-sm py-1.5 px-2', errorClass)}
+        className={cn(
+          'min-h-[56px] text-sm py-1.5 px-2',
+          errorClass,
+          disabled && 'resize-none'
+        )}
         aria-invalid={!!error}
         aria-describedby={error ? `${fieldId}-error` : undefined}
+        readOnly={disabled}
+        disabled={disabled}
       />
     );
   }
@@ -143,6 +153,8 @@ function FormFieldRender({
         className={cn('h-8 text-sm', errorClass)}
         aria-invalid={!!error}
         aria-describedby={error ? `${fieldId}-error` : undefined}
+        readOnly={disabled}
+        disabled={disabled}
       />
     );
   }
@@ -152,12 +164,14 @@ function FormFieldRender({
       <Select
         value={String(value)}
         onValueChange={(v) => onChange(v)}
+        disabled={disabled}
       >
         <SelectTrigger
           id={fieldId}
           className={cn('h-8 text-sm', errorClass)}
           aria-invalid={!!error}
           aria-describedby={error ? `${fieldId}-error` : undefined}
+          disabled={disabled}
         >
           <SelectValue placeholder={field.label} />
         </SelectTrigger>
@@ -173,7 +187,7 @@ function FormFieldRender({
   }
   if (field.type === 'checkbox') {
     return (
-      <div className="flex items-center gap-1.5">
+      <div className={cn('flex items-center gap-1.5')}>
         <Checkbox
           id={fieldId}
           checked={Boolean(value)}
@@ -181,6 +195,7 @@ function FormFieldRender({
           aria-invalid={!!error}
           aria-describedby={error ? `${fieldId}-error` : undefined}
           className={error ? 'border-destructive data-[state=checked]:bg-destructive' : ''}
+          disabled={disabled}
         />
         <Label
           htmlFor={fieldId}
@@ -195,7 +210,7 @@ function FormFieldRender({
     const options = field.options ?? [];
     return (
       <div
-        className="flex flex-col gap-1"
+        className={cn('flex flex-col gap-1')}
         role="radiogroup"
         aria-label={field.label}
         aria-invalid={!!error}
@@ -210,6 +225,7 @@ function FormFieldRender({
               checked={value === opt}
               onChange={() => onChange(opt)}
               className="h-4 w-4"
+              disabled={disabled}
             />
             <span>{opt}</span>
           </label>
@@ -227,11 +243,13 @@ function FormFieldRender({
       className={cn('h-8 text-sm', errorClass)}
       aria-invalid={!!error}
       aria-describedby={error ? `${fieldId}-error` : undefined}
+      readOnly={disabled}
+      disabled={disabled}
     />
   );
 }
 
-export function InteractiveFormElement({ element }: InteractiveFormElementProps) {
+export function InteractiveFormElement({ element, isLatestMessage = true }: InteractiveFormElementProps) {
   const formInstanceId = useId();
   const { askUser } = useContext(MessageContext);
   const { sendMessage } = useChatInteract();
@@ -269,8 +287,10 @@ export function InteractiveFormElement({ element }: InteractiveFormElementProps)
     });
   }, []);
 
+  const canSubmit = isLatestMessage && !submitting && !submitted;
+
   const handleSubmit = useCallback(() => {
-    if (submitting || submitted) return;
+    if (!canSubmit) return;
 
     const errors = getValidationErrors(fields, values);
     if (Object.keys(errors).length > 0) {
@@ -323,8 +343,7 @@ export function InteractiveFormElement({ element }: InteractiveFormElementProps)
     fields,
     sendMessage,
     user?.identifier,
-    submitting,
-    submitted,
+    canSubmit,
     element.forId,
     element.id
   ]);
@@ -339,12 +358,19 @@ export function InteractiveFormElement({ element }: InteractiveFormElementProps)
     return null;
   }
 
+  const isReadOnly = !isLatestMessage;
+
   return (
     <div
       className={cn(
         'rounded-lg border border-border bg-muted/30 p-2.5 flex flex-col gap-2',
-        element.display === 'inline' && 'inline-form w-full max-w-xl'
+        element.display === 'inline' && 'inline-form w-full max-w-xl',
+        isReadOnly && 'select-none',
+        isReadOnly && 'opacity-90 bg-muted/20',
+        isReadOnly &&
+          '[&_input:disabled]:cursor-default [&_textarea:disabled]:cursor-default [&_button:disabled]:cursor-default [&_[data-disabled]]:cursor-default'
       )}
+      aria-readonly={isReadOnly}
     >
       {title ? (
         <h3 className="text-xs font-semibold leading-tight">{title}</h3>
@@ -371,6 +397,7 @@ export function InteractiveFormElement({ element }: InteractiveFormElementProps)
               value={values[field.id] ?? (field.value ?? (field.type === 'checkbox' ? false : ''))}
               onChange={(v) => updateValue(field.id, v)}
               error={fieldErrors[field.id]}
+              disabled={!isLatestMessage}
             />
             {fieldErrors[field.id] ? (
               <p
@@ -398,18 +425,29 @@ export function InteractiveFormElement({ element }: InteractiveFormElementProps)
             placeholder="Add any message to send with your choices..."
             value={extraMessage}
             onChange={(e) => setExtraMessage(e.target.value)}
-            className="min-h-[48px] text-sm py-1.5 px-2"
+            className={cn(
+              'min-h-[48px] text-sm py-1.5 px-2',
+              !isLatestMessage && 'resize-none'
+            )}
+            readOnly={!isLatestMessage}
+            disabled={!isLatestMessage}
           />
         </div>
       ) : null}
 
-      <div className="flex gap-1.5 pt-1.5">
+      <div
+        className={cn(
+          'flex justify-end gap-1.5 overflow-hidden transition-all duration-200 ease-out',
+          isLatestMessage ? 'opacity-100 max-h-20 pt-1.5' : 'opacity-0 max-h-0 pt-0 pointer-events-none'
+        )}
+        aria-hidden={!isLatestMessage}
+      >
         <Button
           type="button"
           size="sm"
           onClick={handleSubmit}
-          disabled={submitting || submitted}
-          aria-disabled={submitting || submitted}
+          disabled={!canSubmit}
+          aria-disabled={!canSubmit}
         >
           Send
         </Button>

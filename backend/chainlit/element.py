@@ -55,6 +55,7 @@ class ElementDict(TypedDict, total=False):
     path: Optional[str]
     url: Optional[str]
     objectKey: Optional[str]
+    content: Optional[str]
     name: str
     display: ElementDisplay
     size: Optional[ElementSize]

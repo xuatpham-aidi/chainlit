@@ -1,6 +1,6 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 storage_expiry_time = int(os.getenv("STORAGE_EXPIRY_TIME", 3600))
 
@@ -26,6 +26,12 @@ class BaseStorageClient(ABC):
     @abstractmethod
     async def get_read_url(self, object_key: str) -> str:
         pass
+
+    async def get_file_content(
+        self, object_key: str, encoding: str = "utf-8"
+    ) -> Optional[str]:
+        """Download blob content as string. Override in subclasses that support it."""
+        return None
 
     @abstractmethod
     async def close(self) -> None:
