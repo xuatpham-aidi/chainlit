@@ -8,7 +8,8 @@ export type IElement =
   | IFileElement
   | IPlotlyElement
   | IDataframeElement
-  | ICustomElement;
+  | ICustomElement
+  | IInteractiveFormElement;
 
 export type IMessageElement =
   | IImageElement
@@ -19,7 +20,8 @@ export type IMessageElement =
   | IFileElement
   | IPlotlyElement
   | IDataframeElement
-  | ICustomElement;
+  | ICustomElement
+  | IInteractiveFormElement;
 
 export type ElementType = IElement['type'];
 export type IElementSize = 'small' | 'medium' | 'large';
@@ -78,4 +80,32 @@ export type IDataframeElement = TMessageElement<'dataframe'>;
 
 export interface ICustomElement extends TMessageElement<'custom'> {
   props: Record<string, unknown>;
+}
+
+export type FormFieldType =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'select'
+  | 'checkbox'
+  | 'radio';
+
+export interface IFormField {
+  id: string;
+  label: string;
+  type: FormFieldType;
+  options?: string[];
+  value?: string | number | boolean;
+  required?: boolean;
+}
+
+export interface IInteractiveFormProps {
+  title?: string;
+  promptMessage?: string;
+  fields: IFormField[];
+  showExtraMessage?: boolean;
+}
+
+export interface IInteractiveFormElement extends TMessageElement<'interactive_form'> {
+  props: IInteractiveFormProps;
 }

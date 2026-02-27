@@ -12,7 +12,7 @@ from chainlit.chat_context import chat_context
 from chainlit.config import config
 from chainlit.context import context, local_steps
 from chainlit.data import get_data_layer
-from chainlit.element import CustomElement, ElementBased
+from chainlit.element import CustomElement, ElementBased, InteractiveForm
 from chainlit.logger import logger
 from chainlit.step import StepDict
 from chainlit.types import (
@@ -563,12 +563,12 @@ class AskActionMessage(AskMessageBase):
 
 
 class AskElementMessage(AskMessageBase):
-    """Ask the user to submit a custom element."""
+    """Ask the user to submit a custom or interactive form element."""
 
     def __init__(
         self,
         content: str,
-        element: CustomElement,
+        element: Union[CustomElement, InteractiveForm],
         author=config.ui.name,
         timeout=90,
         raise_on_timeout=False,

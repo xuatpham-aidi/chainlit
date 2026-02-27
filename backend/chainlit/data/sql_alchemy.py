@@ -729,6 +729,19 @@ class SQLAlchemyDataLayer(BaseDataLayer):
     async def delete_step(self, step_id: str):
         if self.show_logger:
             logger.info(f"SQLAlchemy: delete_step, step_id={step_id}")
+        # Delete blob objects for elements attached to this step (sync with storage)
+        select_elements_query = """SELECT "objectKey" FROM elements WHERE "forId" = :id"""
+        step_elements = await self.execute_sql(
+            select_elements_query, {"id": step_id}
+        )
+        if (
+            self.storage_provider is not None
+            and isinstance(step_elements, list)
+        ):
+            for elem in step_elements:
+                object_key = elem.get("objectKey") or elem.get("objectkey")
+                if isinstance(object_key, str) and object_key.strip():
+                    await self.storage_provider.delete_file(object_key=object_key)
         # Delete feedbacks/elements/steps
         feedbacks_query = """DELETE FROM feedbacks WHERE "forId" = :id"""
         elements_query = """DELETE FROM elements WHERE "forId" = :id"""

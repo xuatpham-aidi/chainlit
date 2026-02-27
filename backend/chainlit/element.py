@@ -41,6 +41,7 @@ ElementType = Literal[
     "plotly",
     "dataframe",
     "custom",
+    "interactive_form",
 ]
 ElementDisplay = Literal["inline", "side", "page"]
 ElementSize = Literal["small", "medium", "large"]
@@ -181,6 +182,8 @@ class Element:
 
         elif type == "custom":
             return CustomElement(props=e_dict.get("props", {}), **common_params)  # type: ignore[arg-type]
+        elif type == "interactive_form":
+            return InteractiveForm(props=e_dict.get("props", {}), **common_params)  # type: ignore[arg-type]
         else:
             # Default to File for any other type
             return File(**common_params)  # type: ignore[arg-type]
@@ -442,6 +445,28 @@ class CustomElement(Element):
     """Useful to send a custom element to the UI."""
 
     type: ClassVar[ElementType] = "custom"
+    mime: str = "application/json"
+    props: Dict = Field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        self.content = json.dumps(self.props)
+        super().__post_init__()
+        self.updatable = True
+
+    async def update(self):
+        await super().send(self.for_id)
+
+
+@dataclass
+class InteractiveForm(Element):
+    """
+    Form element for human-in-the-loop: options, checkboxes, inputs.
+    Backend sends fields; user fills and submits with optional free-text message.
+    Use with AskElementMessage to receive submission as callback, or display
+    without ask to let user send as a normal chat message.
+    """
+
+    type: ClassVar[ElementType] = "interactive_form"
     mime: str = "application/json"
     props: Dict = Field(default_factory=dict)
 

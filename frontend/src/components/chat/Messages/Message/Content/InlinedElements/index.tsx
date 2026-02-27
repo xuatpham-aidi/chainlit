@@ -1,12 +1,14 @@
 import { cn } from '@/lib/utils';
 
 import type { ElementType, IMessageElement } from '@chainlit/react-client';
+import type { IInteractiveFormElement } from 'client-types/';
 
 import { InlinedCustomElementList } from './InlineCustomElementList';
 import { InlinedAudioList } from './InlinedAudioList';
 import { InlinedDataframeList } from './InlinedDataframeList';
 import { InlinedFileList } from './InlinedFileList';
 import { InlinedImageList } from './InlinedImageList';
+import { InlinedInteractiveFormList } from './InlinedInteractiveFormList';
 import { InlinedPDFList } from './InlinedPDFList';
 import { InlinedPlotlyList } from './InlinedPlotlyList';
 import { InlinedTextList } from './InlinedTextList';
@@ -27,6 +29,9 @@ const InlinedElements = ({ elements, className }: Props) => {
    * The TypeScript dance is needed to make sure we can do elementsByType.image
    * and get an array of IImageElement.
    */
+  type ElementsByType = {
+    [K in ElementType]: Extract<IMessageElement, { type: K }>[];
+  } & { interactive_form?: IInteractiveFormElement[] };
   const elementsByType = elements.reduce(
     (acc, el: IMessageElement) => {
       if (!acc[el.type]) {
@@ -39,9 +44,7 @@ const InlinedElements = ({ elements, className }: Props) => {
       array.push(el);
       return acc;
     },
-    {} as {
-      [K in ElementType]: Extract<IMessageElement, { type: K }>[];
-    }
+    {} as ElementsByType
   );
 
   return (
@@ -72,6 +75,9 @@ const InlinedElements = ({ elements, className }: Props) => {
       ) : null}
       {elementsByType.dataframe?.length ? (
         <InlinedDataframeList items={elementsByType.dataframe} />
+      ) : null}
+      {elementsByType.interactive_form?.length ? (
+        <InlinedInteractiveFormList items={elementsByType.interactive_form} />
       ) : null}
     </div>
   );

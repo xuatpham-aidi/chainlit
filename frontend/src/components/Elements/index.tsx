@@ -4,6 +4,7 @@ import { AudioElement } from './Audio';
 import CustomElement from './CustomElement';
 import { FileElement } from './File';
 import { ImageElement } from './Image';
+import { InteractiveFormElement } from './InteractiveForm';
 import { LazyDataframe } from './LazyDataframe';
 import { PDFElement } from './PDF';
 import { PlotlyElement } from './Plotly';
@@ -34,6 +35,8 @@ const Element = ({ element }: ElementProps): JSX.Element | null => {
       return <LazyDataframe element={element} />;
     case 'custom':
       return <CustomElement element={element} />;
+    case 'interactive_form':
+      return <InteractiveFormElement element={element} />;
     default:
       return null;
   }
