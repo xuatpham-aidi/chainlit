@@ -1,5 +1,5 @@
 import os
-from typing import Any, Literal, Optional, cast
+from typing import Any, Literal, Optional, Tuple, cast
 
 from fastapi import Request, Response
 from fastapi.exceptions import HTTPException
@@ -8,7 +8,7 @@ from fastapi.security.base import SecurityBase
 from fastapi.security.utils import get_authorization_scheme_param
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-from chainlit.config import config
+from chainlit.config import DEFAULT_HOST, config
 
 """ Module level cookie settings. """
 _cookie_samesite = cast(
@@ -24,6 +24,49 @@ assert _cookie_samesite in [
     "Invalid value for CHAINLIT_COOKIE_SAMESITE. Must be one of 'lax', 'strict' or 'none'."
 )
 _cookie_secure = _cookie_samesite == "none"
+
+_LOCALHOST_HOSTS = {"localhost", "127.0.0.1", "::1", DEFAULT_HOST}
+
+
+def _is_localhost(request: Optional[Request] = None) -> bool:
+    """Return True when the request originates from a localhost integration
+    or the server itself is bound to a localhost address.
+
+    Checks (in order):
+    1. The ``Origin`` request header – where the browser front-end is running.
+    2. ``request.client.host`` – the direct TCP peer address.
+    3. ``config.run.host`` – the address Chainlit is listening on.
+    """
+    if request is not None:
+        origin = request.headers.get("origin", "")
+        if origin:
+            # Strip scheme and port: "http://localhost:3000" -> "localhost"
+            origin_host = origin.split("//", 1)[-1].split(":")[0]
+            if origin_host in _LOCALHOST_HOSTS:
+                return True
+
+        if request.client and request.client.host in _LOCALHOST_HOSTS:
+            return True
+
+    return getattr(config.run, "host", "") in _LOCALHOST_HOSTS
+
+
+def _resolve_cookie_settings(
+    request: Optional[Request] = None,
+) -> Tuple[Literal["lax", "strict", "none"], bool]:
+    """Return ``(samesite, secure)`` for the current request context.
+
+    When ``CHAINLIT_COOKIE_SAMESITE`` is not explicitly set and the integration
+    is running from localhost, ``samesite`` is forced to ``'none'`` so that
+    cookies are accepted in cross-origin scenarios (e.g. iframe / copilot widget).
+    """
+    samesite = _cookie_samesite
+    if not os.environ.get("CHAINLIT_COOKIE_SAMESITE") and _is_localhost(request):
+        samesite = cast(Literal["lax", "strict", "none"], "none")
+    secure = samesite == "none"
+    return samesite, secure
+
+
 if _cookie_root_path := os.environ.get("CHAINLIT_ROOT_PATH", None):
     _cookie_path = os.environ.get(_cookie_root_path, "/")
 else:
@@ -124,6 +167,7 @@ def set_auth_cookie(request: Request, response: Response, token: str):
     """
 
     _chunk_size = 3000
+    samesite, secure = _resolve_cookie_settings(request)
 
     existing_cookies = {
         k for k in request.cookies.keys() if k.startswith(_auth_cookie_name)
@@ -139,8 +183,8 @@ def set_auth_cookie(request: Request, response: Response, token: str):
                 key=k,
                 value=chunk,
                 httponly=True,
-                secure=_cookie_secure,
-                samesite=_cookie_samesite,
+                secure=secure,
+                samesite=samesite,
                 max_age=config.project.user_session_timeout,
             )
 
@@ -151,8 +195,8 @@ def set_auth_cookie(request: Request, response: Response, token: str):
             key=_auth_cookie_name,
             value=token,
             httponly=True,
-            secure=_cookie_secure,
-            samesite=_cookie_samesite,
+            secure=secure,
+            samesite=samesite,
             max_age=config.project.user_session_timeout,
         )
 
@@ -161,7 +205,7 @@ def set_auth_cookie(request: Request, response: Response, token: str):
     # Delete remaining prior cookies/cookie chunks
     for k in existing_cookies:
         response.delete_cookie(
-            key=k, path=_cookie_path, secure=_cookie_secure, samesite=_cookie_samesite
+            key=k, path=_cookie_path, secure=secure, samesite=samesite
         )
 
 
@@ -170,23 +214,26 @@ def clear_auth_cookie(request: Request, response: Response):
     Helper function to clear the authentication cookie
     """
 
+    samesite, secure = _resolve_cookie_settings(request)
+
     existing_cookies = {
         k for k in request.cookies.keys() if k.startswith(_auth_cookie_name)
     }
 
     for k in existing_cookies:
         response.delete_cookie(
-            key=k, path=_cookie_path, secure=_cookie_secure, samesite=_cookie_samesite
+            key=k, path=_cookie_path, secure=secure, samesite=samesite
         )
 
 
 def set_oauth_state_cookie(response: Response, token: str):
+    samesite, secure = _resolve_cookie_settings()
     response.set_cookie(
         _state_cookie_name,
         token,
         httponly=True,
-        samesite=_cookie_samesite,
-        secure=_cookie_secure,
+        samesite=samesite,
+        secure=secure,
         max_age=_state_cookie_lifetime,
     )
 
