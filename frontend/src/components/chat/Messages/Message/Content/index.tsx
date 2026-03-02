@@ -1,11 +1,9 @@
 import { prepareContent } from '@/lib/message';
 import { cn } from '@/lib/utils';
 import { isEqual } from 'lodash';
-import { forwardRef, memo, useContext, useMemo } from 'react';
+import { forwardRef, memo, useMemo } from 'react';
 
 import type { IMessageElement, IStep } from '@chainlit/react-client';
-
-import { MessageContext } from '@/contexts/MessageContext';
 
 import { CURSOR_PLACEHOLDER } from '@/components/BlinkingCursor';
 import { Markdown } from '@/components/Markdown';
@@ -55,7 +53,6 @@ const MessageContent = memo(
       { isUserMessage = false, message, elements, allowHtml, latex, sections, isLatestMessage = true },
       ref
     ) => {
-      const { loading } = useContext(MessageContext);
       const outputContent =
         message.streaming && message.output
           ? message.output + CURSOR_PLACEHOLDER
@@ -148,8 +145,6 @@ const MessageContent = memo(
             <InlinedElements elements={outputInlinedElements} isLatestMessage={isLatestMessage} />
           ) : null}
           {timestamp &&
-          (displayInput || (displayOutput && output)) &&
-          !loading ? (
             <div
               className={cn(
                 'text-xs text-muted-foreground mt-1',
@@ -158,7 +153,7 @@ const MessageContent = memo(
             >
               {timestamp}
             </div>
-          ) : null}
+          }
         </div>
       );
     }
