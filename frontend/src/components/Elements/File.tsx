@@ -1,8 +1,8 @@
 import hljs from 'highlight.js';
 import 'highlight.js/styles/monokai-sublime.css';
 import { Bug, Database } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { type IFileElement } from '@chainlit/react-client';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { ChainlitContext, type IFileElement } from '@chainlit/react-client';
 
 import CopyButton from '@/components/CopyButton';
 import { Attachment } from '@/components/chat/MessageComposer/Attachment';
@@ -23,6 +23,20 @@ import {
 import { useFetch } from 'hooks/useFetch';
 
 const isSQLFile = (name: string) => name.toLowerCase().endsWith('sql');
+
+/**
+ * Build a same-origin proxy URL for serving persisted element content.
+ * Falls back to the element's direct URL for live-session elements.
+ */
+const useElementContentUrl = (element: IFileElement): string | null => {
+  const apiClient = useContext(ChainlitContext);
+  if (element.threadId) {
+    return apiClient.buildEndpoint(
+      `/project/thread/${element.threadId}/element/${element.id}/content`
+    );
+  }
+  return element.url || null;
+};
 
 const HighlightedSQL = ({ code }: { code: string }) => {
   const codeRef = useRef<HTMLElement>(null);
@@ -47,7 +61,8 @@ const HighlightedSQL = ({ code }: { code: string }) => {
 
 const SQLFileElement = ({ element }: { element: IFileElement }) => {
   const [open, setOpen] = useState(false);
-  const { data, isLoading } = useFetch(open ? element.url || null : null);
+  const contentUrl = useElementContentUrl(element);
+  const { data, isLoading } = useFetch(open ? contentUrl : null);
   const sql = typeof data === 'string' ? data : '';
 
   return (
@@ -96,7 +111,9 @@ const SQLFileElement = ({ element }: { element: IFileElement }) => {
 };
 
 const FileElement = ({ element }: { element: IFileElement }) => {
-  if (!element.url) {
+  const contentUrl = useElementContentUrl(element);
+
+  if (!contentUrl) {
     return null;
   }
 
@@ -108,7 +125,7 @@ const FileElement = ({ element }: { element: IFileElement }) => {
     <a
       className={`${element.display}-file no-underline`}
       download={element.name}
-      href={element.url}
+      href={contentUrl}
     >
       <Attachment name={element.name} mime={element.mime!} />
     </a>

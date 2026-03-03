@@ -882,7 +882,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                 url=element_dict.get("url"),
                 objectKey=element_dict.get("objectKey"),
                 name=element_dict["name"],
-                props=json.loads(element_dict.get("props", "{}")),
+                props=json.loads(element_dict.get("props") or "{}"),
                 display=element_dict["display"],
                 size=element_dict.get("size"),
                 language=element_dict.get("language"),
