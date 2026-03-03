@@ -18,7 +18,7 @@ from chainlit.data import get_data_layer
 from chainlit.logger import logger
 from chainlit.message import ErrorMessage, Message
 from chainlit.server import sio
-from chainlit.session import ClientType, WebsocketSession
+from chainlit.session import ClientType, WebsocketSession, ws_sessions_id, ws_sessions_sid
 from chainlit.types import (
     InputAudioChunk,
     InputAudioChunkPayload,
@@ -151,6 +151,7 @@ async def connect(sid: str, environ: WSGIEnvironment, auth: WebSocketSessionAuth
 
     session_id = auth["sessionId"]
     if restore_existing_session(sid, session_id, emit_fn, emit_call_fn, environ):
+        logger.debug("Restored session: sid=%s, session_id=%s", sid, session_id)
         return True
 
     user_env_string = auth.get("userEnv", None)
@@ -176,6 +177,7 @@ async def connect(sid: str, environ: WSGIEnvironment, auth: WebSocketSessionAuth
         environ=environ,
     )
 
+    logger.debug("New session created: sid=%s, session_id=%s", sid, session_id)
     return True
 
 
@@ -366,10 +368,22 @@ async def message(sid, payload: MessagePayload):
     """Handle a message sent by the User."""
     session = WebsocketSession.get(sid)
     if not session:
-        logger.warning("Session not found for sid %s, asking client to reconnect.", sid)
+        logger.warning(
+            "Session not found for sid %s (active_sids=%s, active_ids=%s), "
+            "asking client to reconnect.",
+            sid,
+            list(ws_sessions_sid.keys())[:5],
+            list(ws_sessions_id.keys())[:5],
+        )
         await sio.emit("session_expired", to=sid)
         return
 
+    logger.debug(
+        "client_message received: sid=%s, session_id=%s, user=%s",
+        sid,
+        session.id,
+        session.user.identifier if session.user else "anonymous",
+    )
     task = asyncio.create_task(process_message(session, payload))
     session.current_task = task
 

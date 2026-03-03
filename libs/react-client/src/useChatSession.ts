@@ -199,6 +199,13 @@ const useChatSession = () => {
         setSession((s) => ({ ...s!, error: true }));
       });
 
+      socket.on('session_expired', () => {
+        setLoading(false);
+        toast.error('Session expired. Reconnecting...');
+        socket.disconnect();
+        socket.connect();
+      });
+
       socket.on('task_start', () => {
         setLoading(true);
       });
