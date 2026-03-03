@@ -13,8 +13,8 @@ export const TIME_GROUP_ORDER = [
 export const MAX_THREAD_NAME_LENGTH = 40;
 
 export const LIST_PAGINATION = {
-  initialBatch: 3,
-  batchSize: 10
+  initialBatch: 10,
+  batchSize: 30
 } as const;
 
 export const BATCH_FETCH_DELAY_MS = 500;
