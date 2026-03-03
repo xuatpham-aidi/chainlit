@@ -26,6 +26,7 @@ interface Props {
   className?: string;
   autoFocus?: boolean;
   placeholder?: string;
+  initialValue?: string;
   selectedCommand?: ICommand;
   setSelectedCommand: (command: ICommand | undefined) => void;
   onChange: (value: string) => void;
@@ -45,6 +46,7 @@ const Input = forwardRef<InputMethods, Props>(
       id,
       className,
       autoFocus,
+      initialValue,
       selectedCommand,
       setSelectedCommand,
       onChange,
@@ -57,7 +59,7 @@ const Input = forwardRef<InputMethods, Props>(
     const [isComposing, setIsComposing] = useState(false);
     const [showCommands, setShowCommands] = useState(false);
     const [commandInput, setCommandInput] = useState('');
-    const [value, setValue] = useState('');
+    const [value, setValue] = useState(initialValue || '');
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const normalizedInput = commandInput.toLowerCase().slice(1);

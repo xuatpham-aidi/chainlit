@@ -30,6 +30,7 @@ import { chatSettingsOpenState } from '@/state/project';
 import {
   IAttachment,
   attachmentsState,
+  chatInputDraftState,
   persistentCommandState
 } from 'state/chat';
 
@@ -58,7 +59,7 @@ export default function MessageComposer({
   autoScrollRef
 }: Props) {
   const inputRef = useRef<InputMethods>(null);
-  const [value, setValue] = useState('');
+  const [value, setValue] = useRecoilState(chatInputDraftState);
   const [selectedCommand, setSelectedCommand] = useRecoilState(
     persistentCommandState
   );
@@ -257,6 +258,7 @@ export default function MessageComposer({
         ref={inputRef}
         id="chat-input"
         autoFocus={!isMobile}
+        initialValue={value}
         selectedCommand={selectedCommand}
         setSelectedCommand={setSelectedCommand}
         onChange={setValue}

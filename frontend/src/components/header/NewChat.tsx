@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useResetRecoilState } from 'recoil';
 
 import { useChatInteract, useConfig } from '@chainlit/react-client';
 
@@ -21,6 +22,7 @@ import {
 
 import { cn } from '@/lib/utils';
 
+import { chatInputDraftState } from '@/state/chat';
 import { EditSquare } from '../icons/EditSquare';
 
 type NewChatDialogProps = {
@@ -84,6 +86,7 @@ const NewChatButton = ({
 }: Props) => {
   const [open, setOpen] = useState(false);
   const { clear } = useChatInteract();
+  const resetChatInputDraft = useResetRecoilState(chatInputDraftState);
   const { config } = useConfig();
 
   const handleClickOpen = () => {
@@ -103,6 +106,7 @@ const NewChatButton = ({
       onConfirm();
     } else {
       clear();
+      resetChatInputDraft();
       navigate?.('/');
     }
     handleClose();

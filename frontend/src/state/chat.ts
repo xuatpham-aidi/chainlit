@@ -23,3 +23,8 @@ export const persistentCommandState = atom<ICommand | undefined>({
   key: 'PersistentCommand',
   default: undefined
 });
+
+export const chatInputDraftState = atom<string>({
+  key: 'ChatInputDraft',
+  default: ''
+});
