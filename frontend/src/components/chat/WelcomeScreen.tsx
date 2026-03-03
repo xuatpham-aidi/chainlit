@@ -50,7 +50,7 @@ export default function WelcomeScreen(props: Props) {
         (cp) => cp.name === chatProfile
       );
       return (
-        <div className="flex flex-col gap-2 mb-12 items-center select-none pointer-events-none max-w-lg text-center">
+        <div className="flex flex-col gap-2 mb-2 items-center select-none pointer-events-none text-center">
           {currentChatProfile?.markdown_description ? (
             <Markdown
               allowHtml={allowHtml}

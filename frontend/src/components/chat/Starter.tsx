@@ -65,17 +65,23 @@ export default function Starter({ starter }: StarterProps) {
       disabled={disabled}
       onClick={onSubmit}
     >
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         {starter.icon ? (
-          <img
-            className="h-5 w-5 rounded-md"
-            src={
-              starter.icon?.startsWith('/public')
-                ? apiClient.buildEndpoint(starter.icon)
-                : starter.icon
-            }
-            alt={starter.label}
-          />
+          /^[\p{Emoji_Presentation}\p{Extended_Pictographic}]/u.test(
+            starter.icon
+          ) ? (
+            <span className="text-base leading-none">{starter.icon}</span>
+          ) : (
+            <img
+              className="h-5 w-5 rounded-md"
+              src={
+                starter.icon?.startsWith('/public')
+                  ? apiClient.buildEndpoint(starter.icon)
+                  : starter.icon
+              }
+              alt={starter.label}
+            />
+          )
         ) : null}
         <p className="text-sm text-muted-foreground truncate">
           {starter.label}
