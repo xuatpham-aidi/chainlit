@@ -295,7 +295,10 @@ async def process_message(session: WebsocketSession, payload: MessagePayload):
 @sio.on("edit_message")  # pyright: ignore [reportOptionalCall]
 async def edit_message(sid, payload: MessagePayload):
     """Handle a message sent by the User."""
-    session = WebsocketSession.require(sid)
+    session = WebsocketSession.get(sid)
+    if not session:
+        logger.warning("Session not found for sid %s on edit_message.", sid)
+        return
     context = init_ws_context(session)
 
     messages = chat_context.get()
@@ -325,7 +328,10 @@ async def edit_message(sid, payload: MessagePayload):
 @sio.on("message_favorite")  # pyright: ignore [reportOptionalCall]
 async def message_favorite(sid, payload: MessagePayload):
     """Handle a message favorite toggle."""
-    session = WebsocketSession.require(sid)
+    session = WebsocketSession.get(sid)
+    if not session:
+        logger.warning("Session not found for sid %s on message_favorite.", sid)
+        return
     init_ws_context(session)
     messages = chat_context.get()
     if config.features.favorites:
@@ -344,7 +350,10 @@ async def message_favorite(sid, payload: MessagePayload):
 
 @sio.on("fetch_favorites")  # pyright: ignore [reportOptionalCall]
 async def fetch_favorites(sid):
-    session = WebsocketSession.require(sid)
+    session = WebsocketSession.get(sid)
+    if not session:
+        logger.warning("Session not found for sid %s on fetch_favorites.", sid)
+        return
     context = init_ws_context(session)
     if session.user and config.features.favorites:
         if data_layer := get_data_layer():
@@ -355,7 +364,11 @@ async def fetch_favorites(sid):
 @sio.on("client_message")  # pyright: ignore [reportOptionalCall]
 async def message(sid, payload: MessagePayload):
     """Handle a message sent by the User."""
-    session = WebsocketSession.require(sid)
+    session = WebsocketSession.get(sid)
+    if not session:
+        logger.warning("Session not found for sid %s, asking client to reconnect.", sid)
+        await sio.emit("session_expired", to=sid)
+        return
 
     task = asyncio.create_task(process_message(session, payload))
     session.current_task = task
@@ -364,7 +377,10 @@ async def message(sid, payload: MessagePayload):
 @sio.on("window_message")  # pyright: ignore [reportOptionalCall]
 async def window_message(sid, data):
     """Handle a message send by the host window."""
-    session = WebsocketSession.require(sid)
+    session = WebsocketSession.get(sid)
+    if not session:
+        logger.warning("Session not found for sid %s on window_message.", sid)
+        return
     init_ws_context(session)
 
     if config.code.on_window_message:
@@ -377,7 +393,10 @@ async def window_message(sid, data):
 @sio.on("audio_start")  # pyright: ignore [reportOptionalCall]
 async def audio_start(sid):
     """Handle audio init."""
-    session = WebsocketSession.require(sid)
+    session = WebsocketSession.get(sid)
+    if not session:
+        logger.warning("Session not found for sid %s on audio_start.", sid)
+        return
 
     context = init_ws_context(session)
     config: ChainlitConfig = session.get_config()  # type: ignore
@@ -391,7 +410,10 @@ async def audio_start(sid):
 @sio.on("audio_chunk")
 async def audio_chunk(sid, payload: InputAudioChunkPayload):
     """Handle an audio chunk sent by the user."""
-    session = WebsocketSession.require(sid)
+    session = WebsocketSession.get(sid)
+    if not session:
+        logger.warning("Session not found for sid %s on audio_chunk.", sid)
+        return
 
     init_ws_context(session)
 
@@ -408,7 +430,10 @@ async def audio_chunk(sid, payload: InputAudioChunkPayload):
 @sio.on("audio_end")
 async def audio_end(sid):
     """Handle the end of the audio stream."""
-    session = WebsocketSession.require(sid)
+    session = WebsocketSession.get(sid)
+    if not session:
+        logger.warning("Session not found for sid %s on audio_end.", sid)
+        return
 
     try:
         context = init_ws_context(session)
