@@ -528,12 +528,15 @@ async def _authenticate_user(
         )
 
     # If a data layer is defined, attempt to persist user.
+    # Merge new metadata with existing DB metadata so persisted fields
+    # (preferred_name, communication_style, etc.) survive re-authentication.
     if data_layer := get_data_layer():
         try:
+            existing = await data_layer.get_user(user.identifier)
+            if existing and existing.metadata:
+                user.metadata = {**existing.metadata, **(user.metadata or {})}
             await data_layer.create_user(user)
         except Exception as e:
-            # Catch and log exceptions during user creation.
-            # TODO: Make this catch only specific errors and allow others to propagate.
             logger.error(f"Error creating user: {e}")
 
     access_token = create_jwt(user)
