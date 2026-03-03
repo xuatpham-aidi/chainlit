@@ -695,6 +695,8 @@ async def oauth_callback(
 
     url = get_user_facing_url(request.url)
     token = await provider.get_token(code, url)
+    
+    logger.level("DEBUG").debug(f"[Callback] Provider token received for OAuth: {token}")
 
     (raw_user_data, default_user) = await provider.get_user_info(token)
 
@@ -787,6 +789,9 @@ async def oauth_azure_ad_mobile(
 
     body = await request.json()
     provider_token: Optional[str] = body.get("access_token")
+    
+    logger.level("DEBUG").debug(f"[Mobile] Provider token received for OAuth: {provider_token}")
+    
     if not provider_token:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
