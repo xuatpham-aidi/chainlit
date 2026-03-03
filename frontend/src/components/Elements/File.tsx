@@ -24,20 +24,6 @@ import { useFetch } from 'hooks/useFetch';
 
 const isSQLFile = (name: string) => name.toLowerCase().endsWith('sql');
 
-/**
- * Build a same-origin proxy URL for serving persisted element content.
- * Falls back to the element's direct URL for live-session elements.
- */
-const useElementContentUrl = (element: IFileElement): string | null => {
-  const apiClient = useContext(ChainlitContext);
-  if (element.threadId) {
-    return apiClient.buildEndpoint(
-      `/project/thread/${element.threadId}/element/${element.id}/content`
-    );
-  }
-  return element.url || null;
-};
-
 const HighlightedSQL = ({ code }: { code: string }) => {
   const codeRef = useRef<HTMLElement>(null);
 
@@ -59,9 +45,24 @@ const HighlightedSQL = ({ code }: { code: string }) => {
   );
 };
 
+/**
+ * SQL needs fetch() to read content into a dialog — that requires same-origin.
+ * For persisted threads the element.url is a cross-origin Azure SAS URL,
+ * so we route through the backend proxy instead.
+ */
+const useSqlContentUrl = (element: IFileElement): string | null => {
+  const apiClient = useContext(ChainlitContext);
+  if (element.threadId) {
+    return apiClient.buildEndpoint(
+      `/project/thread/${element.threadId}/element/${element.id}/content`
+    );
+  }
+  return element.url || null;
+};
+
 const SQLFileElement = ({ element }: { element: IFileElement }) => {
   const [open, setOpen] = useState(false);
-  const contentUrl = useElementContentUrl(element);
+  const contentUrl = useSqlContentUrl(element);
   const { data, isLoading } = useFetch(open ? contentUrl : null);
   const sql = typeof data === 'string' ? data : '';
 
@@ -111,9 +112,7 @@ const SQLFileElement = ({ element }: { element: IFileElement }) => {
 };
 
 const FileElement = ({ element }: { element: IFileElement }) => {
-  const contentUrl = useElementContentUrl(element);
-
-  if (!contentUrl) {
+  if (!element.url) {
     return null;
   }
 
@@ -125,7 +124,7 @@ const FileElement = ({ element }: { element: IFileElement }) => {
     <a
       className={`${element.display}-file no-underline`}
       download={element.name}
-      href={contentUrl}
+      href={element.url}
     >
       <Attachment name={element.name} mime={element.mime!} />
     </a>

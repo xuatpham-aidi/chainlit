@@ -130,16 +130,6 @@ class AzureBlobStorageClient(BaseStorageClient):
             logger.warning("Failed to get file content for %s: %s", object_key, e)
             return None
 
-    async def get_file_bytes(self, object_key: str) -> Optional[bytes]:
-        try:
-            await self._ensure_container()
-            blob_client = self.container_client.get_blob_client(object_key)
-            download = await blob_client.download_blob()
-            return await download.readall()
-        except Exception as e:
-            logger.warning("Failed to get file bytes for %s: %s", object_key, e)
-            return None
-
     async def upload_file(
         self,
         object_key: str,

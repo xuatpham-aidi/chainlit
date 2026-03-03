@@ -1095,24 +1095,19 @@ async def get_thread_element_content(
             status_code=404, detail="File content not available in storage"
         )
 
-    max_proxy_bytes = 50 * 1024 * 1024  # 50 MB
-    element_size = element.get("size")
-    if element_size and int(element_size) > max_proxy_bytes:
-        raise HTTPException(status_code=413, detail="File too large to proxy")
-
-    file_bytes = await storage.get_file_bytes(object_key)
-    if file_bytes is None:
+    content = await storage.get_file_content(object_key)
+    if content is None:
         raise HTTPException(status_code=404, detail="File not found in storage")
 
-    mime = element.get("mime") or "application/octet-stream"
+    mime = element.get("mime") or "text/plain"
     name = element.get("name", "file")
     safe_name = re.sub(r'[^\w\s\-.]', '_', name)
 
     return Response(
-        content=file_bytes,
+        content=content,
         media_type=mime,
         headers={
-            "Content-Disposition": f'attachment; filename="{safe_name}"',
+            "Content-Disposition": f'inline; filename="{safe_name}"',
             "X-Content-Type-Options": "nosniff",
         },
     )
