@@ -695,8 +695,6 @@ async def oauth_callback(
 
     url = get_user_facing_url(request.url)
     token = await provider.get_token(code, url)
-    
-    logger.level("DEBUG").debug(f"[Callback] Provider token received for OAuth: {token}")
 
     (raw_user_data, default_user) = await provider.get_user_info(token)
 
@@ -758,87 +756,6 @@ async def oauth_azure_hf_callback(
     clear_oauth_state_cookie(response)
 
     return response
-
-
-@router.post("/auth/oauth/{provider_id}/mobile")
-async def oauth_azure_ad_mobile(
-        provider_id: str,
-        request: Request,
-    ):
-    """Exchange a mobile-obtained Azure AD access token for a Chainlit session JWT.
-
-    Intended for native mobile apps (Flutter / React Native) that perform the
-    Azure AD PKCE flow independently and need a Chainlit cookie/token in return.
-
-    Request body (JSON):
-        {
-            "access_token": "<provider-access-token>"
-        }
-
-    Returns (JSON):
-        {
-            "success": true,
-            "jwt_access_token": "<chainlit-jwt>"   # also set as Set-Cookie
-        }
-    """
-    if config.code.oauth_callback is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No oauth_callback defined",
-        )
-
-    body = await request.json()
-    provider_token: Optional[str] = body.get("access_token")
-    
-    logger.level("DEBUG").debug(f"[Mobile] Provider token received for OAuth: {provider_token}")
-    
-    if not provider_token:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Missing access_token in request body",
-        )
-
-    # Validate the Provider token by calling Microsoft Graph
-    provider = get_oauth_provider(provider_id)
-    if not provider:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"{provider_id} provider is not configured",
-        )
-
-    try:
-        raw_user_data, default_user = await provider.get_user_info(provider_token)
-    except Exception as e:
-        logger.exception("Failed to validate provider token via Graph API: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired provider access token",
-        )
-
-    user = await config.code.oauth_callback(
-        {provider_id}, provider_token, raw_user_data, default_user
-    )
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="credentialssignin",
-        )
-
-    # Persist user if a data layer is configured
-    if data_layer := get_data_layer():
-        try:
-            await data_layer.create_user(user)
-        except Exception as e:
-            logger.error(f"Error persisting user: {e}")
-
-    chainlit_token = create_jwt(user)
-
-    # Set cookie (for web / hybrid scenarios)
-    json_response = JSONResponse({"success": True, "jwt_access_token": chainlit_token})
-    set_auth_cookie(request, json_response, chainlit_token)
-
-    return json_response
 
 
 GenericUser = Union[User, PersistedUser, None]
