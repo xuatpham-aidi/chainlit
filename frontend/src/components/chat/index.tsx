@@ -118,14 +118,15 @@ const Chat = () => {
               })
             );
           })
-          .catch((error) => {
-            toast.error(
-              `${t('chat.fileUpload.errors.failed')} ${file.name}: ${
-                typeof error === 'object' && error !== null
-                  ? error.message ?? error
-                  : error
-              }`
-            );
+          .catch((_error) => {
+            // toast.error(
+            //   `${t('chat.fileUpload.errors.failed')} ${file.name}: ${
+            //     typeof error === 'object' && error !== null
+            //       ? error.message ?? error
+            //       : error
+            //   }`
+            // );
+            toast.error(t('chat.fileUpload.errors.failed'));
             setAttachments((prev) =>
               prev.filter((attachment) => attachment.id !== id)
             );
