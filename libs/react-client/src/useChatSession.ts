@@ -199,9 +199,25 @@ const useChatSession = () => {
         setSession((s) => ({ ...s!, error: true }));
       });
 
-      socket.on('session_expired', () => {
+      socket.on('session_expired', (data?: { payload?: any }) => {
         setLoading(false);
-        toast.error('Session expired. Reconnecting...');
+        const pendingPayload = data?.payload;
+
+        if (pendingPayload) {
+          toast.info('Reconnecting...');
+        } else {
+          toast.error('Session expired. Reconnecting...');
+        }
+
+        if (pendingPayload) {
+          socket.once('connect', () => {
+            // Delay to let connection_successful + on_chat_start complete
+            setTimeout(() => {
+              socket.emit('client_message', pendingPayload);
+            }, 1000);
+          });
+        }
+
         socket.disconnect();
         socket.connect();
       });

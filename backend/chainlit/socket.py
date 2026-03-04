@@ -375,7 +375,7 @@ async def message(sid, payload: MessagePayload):
             list(ws_sessions_sid.keys())[:5],
             list(ws_sessions_id.keys())[:5],
         )
-        await sio.emit("session_expired", to=sid)
+        await sio.emit("session_expired", {"payload": payload}, to=sid)
         return
 
     logger.debug(
