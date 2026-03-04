@@ -1067,52 +1067,6 @@ async def get_thread_element(
     return JSONResponse(content=res)
 
 
-@router.get("/project/thread/{thread_id}/element/{element_id}/content")
-async def get_thread_element_content(
-    thread_id: str,
-    element_id: str,
-    current_user: UserParam,
-):
-    """Serve element file content proxied from storage."""
-    data_layer = get_data_layer()
-
-    if not data_layer:
-        raise HTTPException(status_code=400, detail="Data persistence is not enabled")
-
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
-    await is_thread_author(current_user.identifier, thread_id)
-
-    element = await data_layer.get_element(thread_id, element_id)
-    if not element:
-        raise HTTPException(status_code=404, detail="Element not found")
-
-    object_key = element.get("objectKey")
-    storage = getattr(data_layer, "storage_provider", None)
-    if not object_key or not storage:
-        raise HTTPException(
-            status_code=404, detail="File content not available in storage"
-        )
-
-    content = await storage.get_file_content(object_key)
-    if content is None:
-        raise HTTPException(status_code=404, detail="File not found in storage")
-
-    mime = element.get("mime") or "text/plain"
-    name = element.get("name", "file")
-    safe_name = re.sub(r'[^\w\s\-.]', '_', name)
-
-    return Response(
-        content=content,
-        media_type=mime,
-        headers={
-            "Content-Disposition": f'inline; filename="{safe_name}"',
-            "X-Content-Type-Options": "nosniff",
-        },
-    )
-
-
 @router.put("/project/element")
 async def update_thread_element(
     payload: ElementRequest,

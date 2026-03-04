@@ -125,6 +125,7 @@ class Element:
                 "language": getattr(self, "language", None),
                 "forId": getattr(self, "for_id", None),
                 "mime": getattr(self, "mime", None),
+                "content": self.content if isinstance(self.content, str) else None,
             }
         )
         return _dict

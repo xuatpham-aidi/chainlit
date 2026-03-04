@@ -1176,13 +1176,13 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                 else:
                     element_url = element.get("element_url")
                 element_content: Optional[str] = None
-                if (
-                    element.get("element_type") == "plotly"
-                    and has_storage_key
-                ):
-                    element_content = await self.storage_provider.get_file_content(
-                        object_key=object_key_val, encoding="utf-8"
-                    )
+                if has_storage_key:
+                    el_type = element.get("element_type")
+                    el_mime = element.get("element_mime") or ""
+                    if el_type == "plotly" or el_mime.startswith("text/"):
+                        element_content = await self.storage_provider.get_file_content(
+                            object_key=object_key_val, encoding="utf-8"
+                        )
                 element_dict = ElementDict(
                     id=element["element_id"],
                     threadId=thread_id,

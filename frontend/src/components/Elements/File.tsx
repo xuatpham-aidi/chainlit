@@ -1,8 +1,8 @@
 import hljs from 'highlight.js';
 import 'highlight.js/styles/monokai-sublime.css';
 import { Bug, Database } from 'lucide-react';
-import { useContext, useEffect, useRef, useState } from 'react';
-import { ChainlitContext, type IFileElement } from '@chainlit/react-client';
+import { useEffect, useRef, useState } from 'react';
+import { type IFileElement } from '@chainlit/react-client';
 
 import CopyButton from '@/components/CopyButton';
 import { Attachment } from '@/components/chat/MessageComposer/Attachment';
@@ -23,6 +23,8 @@ import {
 import { useFetch } from 'hooks/useFetch';
 
 const isSQLFile = (name: string) => name.toLowerCase().endsWith('sql');
+
+type FileElementWithContent = IFileElement & { content?: string };
 
 const HighlightedSQL = ({ code }: { code: string }) => {
   const codeRef = useRef<HTMLElement>(null);
@@ -45,26 +47,14 @@ const HighlightedSQL = ({ code }: { code: string }) => {
   );
 };
 
-/**
- * SQL needs fetch() to read content into a dialog — that requires same-origin.
- * For persisted threads the element.url is a cross-origin Azure SAS URL,
- * so we route through the backend proxy instead.
- */
-const useSqlContentUrl = (element: IFileElement): string | null => {
-  const apiClient = useContext(ChainlitContext);
-  if (element.threadId) {
-    return apiClient.buildEndpoint(
-      `/project/thread/${element.threadId}/element/${element.id}/content`
-    );
-  }
-  return element.url || null;
-};
-
 const SQLFileElement = ({ element }: { element: IFileElement }) => {
   const [open, setOpen] = useState(false);
-  const contentUrl = useSqlContentUrl(element);
-  const { data, isLoading } = useFetch(open ? contentUrl : null);
-  const sql = typeof data === 'string' ? data : '';
+  const el = element as FileElementWithContent;
+  const hasContent = el.content != null && el.content !== '';
+  const { data, isLoading } = useFetch(
+    open && !hasContent ? element.url || null : null
+  );
+  const sql = hasContent ? el.content! : (typeof data === 'string' ? data : '');
 
   return (
     <>
@@ -112,12 +102,16 @@ const SQLFileElement = ({ element }: { element: IFileElement }) => {
 };
 
 const FileElement = ({ element }: { element: IFileElement }) => {
-  if (!element.url) {
+  if (!element.url && !(element as FileElementWithContent).content) {
     return null;
   }
 
   if (isSQLFile(element.name)) {
     return <SQLFileElement element={element} />;
+  }
+
+  if (!element.url) {
+    return null;
   }
 
   return (
