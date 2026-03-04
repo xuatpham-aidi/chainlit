@@ -131,11 +131,10 @@ async def connect(sid: str, environ: WSGIEnvironment, auth: WebSocketSessionAuth
             logger.exception("Exception authenticating connection: %s", e)
 
         if not user:
-            logger.warning("Authentication failed in websocket connect. Using default user for debugging.")
-            user = User(identifier="mvp-default-user", metadata={"role": "user", "name": "Default User"})
-            token = None
+            logger.error("Authentication failed in websocket connect.")
+            raise ConnectionRefusedError("authentication failed")
 
-        if thread_id and user and user.identifier != "mvp-default-user":
+        if thread_id:
             if data_layer := get_data_layer():
                 thread = await data_layer.get_thread(thread_id)
                 if thread and not (thread["userIdentifier"] == user.identifier):
