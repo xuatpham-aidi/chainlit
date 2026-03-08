@@ -1,5 +1,5 @@
-import { ArrowDown, ArrowUp, Download, Eye, FileSpreadsheet, Search } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { ArrowDown, ArrowUp, Download, FileSpreadsheet, Search } from 'lucide-react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { type IFileElement } from '@chainlit/react-client';
 
@@ -101,37 +101,38 @@ const SpreadsheetGrid = ({ data, t }: { data: XLSXData; t: (key: string, options
     setFilters((prev) => ({ ...prev, [colIdx]: value }));
   };
 
-  const hasActiveFilters = Object.values(filters).some((v) => v !== '');
-
   return (
     <div className="flex flex-col gap-0 h-full">
-      {/* Table with scroll */}
-      <div className="overflow-auto rounded-md border border-border/60 flex-1 min-h-0">
-        <table className="w-full border-separate border-spacing-0 text-xs font-mono">
+      {/* Table with vertical scroll only — no horizontal scroll */}
+      <div className="overflow-y-auto overflow-x-hidden rounded-md border border-border/60 flex-1 min-h-0">
+        <table className="w-full border-separate border-spacing-0 text-xs font-mono table-fixed">
           <thead>
             <tr>
               {/* Row number header — sticky both top and left */}
-              <th className="sticky top-0 left-0 z-30 bg-muted w-10 min-w-[2.5rem] px-2 py-1.5 text-center text-muted-foreground font-semibold border-b border-r border-border/40">
+              <th className="sticky top-0 left-0 z-30 bg-muted w-10 px-2 py-1.5 text-center text-muted-foreground font-semibold border-b border-r border-border/40">
                 #
               </th>
               {columns.map((col, i) => (
                 <th
                   key={i}
                   onClick={() => handleSort(i)}
-                  className="sticky top-0 z-10 bg-muted px-3 py-1.5 text-left font-semibold text-card-foreground border-b border-border/40 cursor-pointer select-none hover:bg-accent whitespace-nowrap"
+                  title={col}
+                  className="sticky top-0 z-10 bg-muted px-3 py-1.5 text-left font-semibold text-card-foreground border-b border-border/40 cursor-pointer select-none hover:bg-accent"
                 >
                   <div className="flex items-center gap-1">
-                    {col}
-                    {sortCol === i && (
+                    <span className="truncate">{col}</span>
+                    {sortCol === i ? (
                       sortAsc
                         ? <ArrowUp className="h-3 w-3 text-primary shrink-0" />
                         : <ArrowDown className="h-3 w-3 text-primary shrink-0" />
+                    ) : (
+                      <ArrowUp className="h-3 w-3 text-muted-foreground/30 shrink-0" />
                     )}
                   </div>
                 </th>
               ))}
             </tr>
-            {/* Per-column filter row — sticky below header row (~30px) */}
+            {/* Per-column filter row — sticky below header row */}
             <tr>
               <th className="sticky top-[30px] left-0 z-30 bg-muted border-b border-r border-border/40" />
               {columns.map((_, i) => (
@@ -143,7 +144,7 @@ const SpreadsheetGrid = ({ data, t }: { data: XLSXData; t: (key: string, options
                       value={filters[i] || ''}
                       onChange={(e) => handleFilter(i, e.target.value)}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-full min-w-[3rem] pl-6 pr-1.5 py-0.5 text-xs font-normal rounded border border-border/40 bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                      className="w-full pl-6 pr-1.5 py-0.5 text-xs font-normal rounded border border-border/40 bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
                     />
                   </div>
                 </th>
@@ -156,10 +157,10 @@ const SpreadsheetGrid = ({ data, t }: { data: XLSXData; t: (key: string, options
               return (
                 <tr
                   key={rowIdx}
-                  className={`${striped ? 'bg-muted/30' : ''} hover:bg-primary/60 transition-colors`}
+                  className={`${striped ? 'bg-muted/30' : ''} hover:bg-primary/5 transition-colors`}
                 >
                   {/* Row number */}
-                  <td className="sticky left-0 z-10 w-10 min-w-[2.5rem] px-2 py-1 text-center text-muted-foreground border-r border-border/40 bg-background font-normal tabular-nums">
+                  <td className="sticky left-0 z-10 w-10 px-2 py-1 text-center text-muted-foreground border-r border-border/40 bg-background font-normal tabular-nums">
                     {rowIdx + 1}
                   </td>
                   {columns.map((_, colIdx) => {
@@ -168,9 +169,8 @@ const SpreadsheetGrid = ({ data, t }: { data: XLSXData; t: (key: string, options
                     return (
                       <td
                         key={colIdx}
-                        className={`px-3 py-1 border-b border-border/20 whitespace-nowrap ${
-                          numeric ? 'text-right tabular-nums' : 'text-left'
-                        }`}
+                        className={`px-3 py-1 border-b border-border/20 overflow-hidden text-ellipsis whitespace-nowrap ${numeric ? 'text-right tabular-nums' : 'text-left'
+                          }`}
                       >
                         {formatCell(value)}
                       </td>
@@ -216,13 +216,18 @@ const XLSXFileElement = ({ element }: { element: IFileElement }) => {
   const [error, setError] = useState<string | null>(null);
   const [xlsxData, setXlsxData] = useState<XLSXData | null>(null);
 
+  const elementContent = (element as FileElementWithContent).content;
+  const totalRows = (element as unknown as { props?: { totalRows?: number } }).props?.totalRows;
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [dialogLeft, setDialogLeft] = useState<string>('50%');
+  const [dialogWidth, setDialogWidth] = useState<string>('100%');
+
   const ensureData = useCallback(async (): Promise<XLSXData | null> => {
     if (xlsxData) return xlsxData;
 
     // Same pattern as SQLFileElement: use inlined content first
-    const el = element as FileElementWithContent;
-    if (el.content) {
-      const parsed = parseCsvToXlsxData(el.content);
+    if (elementContent) {
+      const parsed = parseCsvToXlsxData(elementContent);
       setXlsxData(parsed);
       return parsed;
     }
@@ -246,9 +251,17 @@ const XLSXFileElement = ({ element }: { element: IFileElement }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [element.url, (element as FileElementWithContent).content, xlsxData, t]);
+  }, [element.url, elementContent, xlsxData, t]);
 
   const handleView = useCallback(async () => {
+    if (triggerRef.current) {
+      const chatPanel = triggerRef.current.closest('[data-panel]') as HTMLElement | null;
+      if (chatPanel) {
+        const rect = chatPanel.getBoundingClientRect();
+        setDialogLeft(`${rect.left + rect.width / 2}px`);
+        setDialogWidth(`${rect.width * 0.9}px`);
+      }
+    }
     setOpen(true);
     await ensureData();
   }, [ensureData]);
@@ -263,14 +276,17 @@ const XLSXFileElement = ({ element }: { element: IFileElement }) => {
     const blob = new Blob([buffer], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
+    const downloadName = element.name.endsWith('.xlsx')
+      ? element.name
+      : `${element.name.replace(/\.[^.]+$/, '')}.xlsx`;
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = element.name;
+    a.download = downloadName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }, [ensureData, element.name]);
 
   return (
@@ -278,18 +294,14 @@ const XLSXFileElement = ({ element }: { element: IFileElement }) => {
       <TooltipProvider delayDuration={100}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="inline-flex items-center h-[32px] rounded-full border border-border/80 bg-secondary/50 overflow-hidden">
-              {/* Icon prefix */}
-              <div className="flex items-center pl-3 pr-1.5">
-                <FileSpreadsheet className="h-3.5 w-3.5 text-green-600" />
-              </div>
+            <div ref={triggerRef} className="inline-flex items-center h-[32px] rounded-full border border-border/80 bg-secondary/50 overflow-hidden">
               {/* View button */}
               <button
                 type="button"
                 onClick={handleView}
-                className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors duration-150"
+                className="flex items-center gap-1 pl-3 pr-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-colors duration-150"
               >
-                <Eye className="h-3 w-3" />
+                <FileSpreadsheet className="h-3.5 w-3.5 text-green-600" />
               </button>
               {/* Divider */}
               <div className="w-px h-4 bg-border/60" />
@@ -310,12 +322,12 @@ const XLSXFileElement = ({ element }: { element: IFileElement }) => {
       </TooltipProvider>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-[calc(100vw-var(--sidebar-width)-15vw)] max-w-none h-[85vh] p-0 gap-0 overflow-hidden border-border/80 bg-card shadow-xl [&>button]:hidden flex flex-col">
+        <DialogContent className="max-w-none h-[85vh] p-0 gap-0 overflow-hidden border-border/80 bg-card shadow-xl [&>button]:hidden flex flex-col" style={{ width: dialogWidth, left: dialogLeft }}>
           <DialogHeader className="flex flex-row items-center justify-between px-5 pt-4 pb-2 shrink-0">
             <DialogTitle className="flex items-center gap-2.5 text-sm font-semibold text-card-foreground">
-              {xlsxData && xlsxData.rows.length > DISPLAY_ROW_LIMIT ? (
+              {totalRows && totalRows > DISPLAY_ROW_LIMIT ? (
                 <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                  {t('elements.xlsx.rowLimitReached', { limit: DISPLAY_ROW_LIMIT, total: xlsxData.rows.length })}
+                  {t('elements.xlsx.rowLimitReached', { limit: DISPLAY_ROW_LIMIT, total: totalRows })}
                 </span>
               ) : null}
             </DialogTitle>
@@ -331,7 +343,7 @@ const XLSXFileElement = ({ element }: { element: IFileElement }) => {
           </DialogHeader>
           <div className="px-5 pb-5 flex-1 min-h-0 flex flex-col">
             {isLoading ? (
-              <Skeleton className="h-48 w-full rounded-[var(--radius)]" />
+              <Skeleton className="flex-1 w-full rounded-[var(--radius)]" />
             ) : error ? (
               <div className="text-sm text-destructive p-4">{error}</div>
             ) : xlsxData ? (
