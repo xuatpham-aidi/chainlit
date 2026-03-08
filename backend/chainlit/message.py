@@ -3,9 +3,11 @@ import json
 import time
 import uuid
 from abc import ABC
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Literal, Optional, Union, cast
 
-from literalai.observability.step import MessageStepType
+from literalai.observability.step import MessageStepType as _MessageStepType
+
+MessageStepType = Union[_MessageStepType, Literal["asquad_reasoning"]]
 
 from chainlit.action import Action
 from chainlit.chat_context import chat_context
