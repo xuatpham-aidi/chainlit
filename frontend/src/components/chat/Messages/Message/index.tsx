@@ -174,7 +174,7 @@ const Message = memo(
                       >
                         {/* Sticky boundary: buttons stick while content is in view */}
                         <div className="relative w-full">
-                          <div className="sticky top-0 z-10 flex justify-end w-full [&_button]:h-5 [&_button]:w-5 [&_svg]:h-3.5 [&_svg]:w-3.5 bg-[hsl(var(--ai-message-bg))] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <div className="sticky top-0 z-10 flex justify-end w-full min-h-5 [&_button]:h-5 [&_button]:w-5 [&_svg]:h-3.5 [&_svg]:w-3.5 bg-[hsl(var(--ai-message-bg))] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                             <MessageButtons
                               message={message}
                               actions={actions}
@@ -194,26 +194,32 @@ const Message = memo(
                             isLatestMessage={isLatestMessage}
                           />
                         </div>
-                        {/* Timestamp and thinking indicator outside sticky boundary */}
+                        {/* Thinking indicator and timestamp outside sticky boundary */}
                         {(formatTime(message.createdAt) || (!isStep && !indent && runStartedAt)) && (
-                          <div className="flex w-full justify-between select-none min-h-7 items-center">
-                            <div className="flex items-center">
-                              {!isStep && !indent && runStartedAt ? (
-                                <ThinkingIndicator
-                                  className="py-0"
-                                  completedSeconds={
-                                    message.start && (!isRunning || message.output)
-                                      ? (new Date(message.start).getTime() - new Date(runStartedAt).getTime()) / 1000
-                                      : undefined
-                                  }
-                                />
-                              ) : null}
-                            </div>
-                            {formatTime(message.createdAt) && message.output ? (
-                              <span className="text-xs text-muted-foreground">
-                                {formatTime(message.createdAt)}
-                              </span>
-                            ) : null}
+                          <div className="w-full select-none min-h-7">
+                            {!isStep && !indent && runStartedAt ? (
+                              <ThinkingIndicator
+                                className="py-0"
+                                completedSeconds={
+                                  message.start && (!isRunning || message.output)
+                                    ? (new Date(message.start).getTime() - new Date(runStartedAt).getTime()) / 1000
+                                    : undefined
+                                }
+                                timestamp={
+                                  formatTime(message.createdAt) && message.output
+                                    ? formatTime(message.createdAt)
+                                    : undefined
+                                }
+                              />
+                            ) : (
+                              <div className="flex w-full justify-end items-center min-h-7">
+                                {formatTime(message.createdAt) && message.output ? (
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatTime(message.createdAt)}
+                                  </span>
+                                ) : null}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
