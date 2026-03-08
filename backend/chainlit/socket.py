@@ -195,6 +195,15 @@ async def connection_successful(sid):
             context.session.current_task = task
         return
 
+    # Cancel any in-flight task before resuming to prevent duplicate messages
+    if context.session.current_task and not context.session.current_task.done():
+        context.session.current_task.cancel()
+        try:
+            await context.session.current_task
+        except (asyncio.CancelledError, Exception):
+            pass
+        context.session.current_task = None
+
     if context.session.thread_id_to_resume and config.code.on_chat_resume:
         thread = await resume_thread(context.session)
         if thread:
@@ -203,6 +212,10 @@ async def connection_successful(sid):
                 "first_interaction",
                 {"interaction": "resume", "thread_id": thread.get("id")},
             )
+
+            # Clear stale chat context before reloading from DB
+            chat_context.clear()
+
             await config.code.on_chat_resume(thread)
 
             for step in thread.get("steps", []):

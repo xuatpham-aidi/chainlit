@@ -26,9 +26,15 @@ class ChatContext:
         if context.session.id not in chat_contexts:
             chat_contexts[context.session.id] = []
 
-        if message not in chat_contexts[context.session.id]:
-            chat_contexts[context.session.id].append(message)
+        messages = chat_contexts[context.session.id]
 
+        # Deduplicate by ID: replace existing message with same ID
+        for i, existing in enumerate(messages):
+            if existing.id == message.id:
+                messages[i] = message
+                return message
+
+        messages.append(message)
         return message
 
     def remove(self, message: "Message") -> bool:
