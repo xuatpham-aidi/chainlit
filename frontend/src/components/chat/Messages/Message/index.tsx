@@ -30,6 +30,7 @@ interface Props {
   scorableRun?: IStep;
   isLatestMessage?: boolean;
   lastAssistantMessageId?: string;
+  runStartedAt?: number | string;
 }
 
 const EMPTY_ELEMENTS: IMessageElement[] = [];
@@ -44,7 +45,8 @@ const Message = memo(
     isScorable,
     scorableRun,
     isLatestMessage = true,
-    lastAssistantMessageId
+    lastAssistantMessageId,
+    runStartedAt
   }: Props) => {
     const { allowHtml, cot, latex, onError } = useContext(MessageContext);
     const layoutMaxWidth = useLayoutMaxWidth();
@@ -195,12 +197,17 @@ const Message = memo(
                       </div>
                     )}
                   </div>
-                  {/* Thinking indicator below message, left-aligned with ai-message margin; only when running and not streaming */}
-                  {!isStep && !indent && isRunning && !message.streaming && isLatestMessage ? (
+                  {/* Thinking indicator: shows completed time once streaming starts */}
+                  {!isStep && !indent && runStartedAt && message.start ? (
                     <div className="flex gap-4 w-full items-center mt-1">
                       <div className="w-5 shrink-0" aria-hidden />
-                      <div className="flex-grow min-w-0 flex items-center justify-start">
-                        <ThinkingIndicator className="py-0" />
+                      <div className="flex-grow min-w-0 flex items-center justify-start pl-5">
+                        <ThinkingIndicator
+                          className="py-0"
+                          completedSeconds={
+                            (new Date(message.start).getTime() - new Date(runStartedAt).getTime()) / 1000
+                          }
+                        />
                       </div>
                     </div>
                   ) : null}

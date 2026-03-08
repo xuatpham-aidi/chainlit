@@ -54,6 +54,7 @@ interface Props {
   scorableRun?: IStep;
   /** When set, only this message id gets isLatestMessage=true (thread-level last). */
   lastAssistantMessageId?: string;
+  runStartedAt?: number | string;
 }
 
 const Messages = memo(
@@ -64,7 +65,8 @@ const Messages = memo(
     indent,
     isRunning,
     scorableRun,
-    lastAssistantMessageId
+    lastAssistantMessageId,
+    runStartedAt
   }: Props) => {
     const messageContext = useContext(MessageContext);
 
@@ -118,6 +120,7 @@ const Messages = memo(
                     isRunning={isRunning}
                     scorableRun={scorableRun}
                     lastAssistantMessageId={resolvedLastId}
+                    runStartedAt={m.start}
                   />
                 ) : null}
                 {(showToolCoTLoader || showHiddenCoTLoader) &&
@@ -160,6 +163,7 @@ const Messages = memo(
                     : m === lastAssistantMessage
                 }
                 lastAssistantMessageId={resolvedLastId}
+                runStartedAt={runStartedAt}
               />
             );
           }
