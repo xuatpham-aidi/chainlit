@@ -194,31 +194,29 @@ const Message = memo(
                             isLatestMessage={isLatestMessage}
                           />
                         </div>
-                        {/* Timestamp outside sticky boundary */}
-                        {formatTime(message.createdAt) && (
-                          <div className="flex w-full justify-end select-none min-h-7 items-center">
-                            <span className="text-xs text-muted-foreground">
-                              {formatTime(message.createdAt)}
-                            </span>
+                        {/* Timestamp and thinking indicator outside sticky boundary */}
+                        {(formatTime(message.createdAt) || (!isStep && !indent && runStartedAt && message.start)) && (
+                          <div className="flex w-full justify-between select-none min-h-7 items-center">
+                            <div className="flex items-center">
+                              {!isStep && !indent && runStartedAt && message.start ? (
+                                <ThinkingIndicator
+                                  className="py-0"
+                                  completedSeconds={
+                                    (new Date(message.start).getTime() - new Date(runStartedAt).getTime()) / 1000
+                                  }
+                                />
+                              ) : null}
+                            </div>
+                            {formatTime(message.createdAt) && (
+                              <span className="text-xs text-muted-foreground">
+                                {formatTime(message.createdAt)}
+                              </span>
+                            )}
                           </div>
                         )}
                       </div>
                     )}
                   </div>
-                  {/* Thinking indicator: shows completed time once streaming starts */}
-                  {!isStep && !indent && runStartedAt && message.start ? (
-                    <div className="flex gap-4 w-full items-center mt-1">
-                      <div className="w-5 shrink-0" aria-hidden />
-                      <div className="flex-grow min-w-0 flex items-center justify-start pl-5">
-                        <ThinkingIndicator
-                          className="py-0"
-                          completedSeconds={
-                            (new Date(message.start).getTime() - new Date(runStartedAt).getTime()) / 1000
-                          }
-                        />
-                      </div>
-                    </div>
-                  ) : null}
                 </div>
               )}
             </div>
