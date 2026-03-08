@@ -211,7 +211,7 @@ export const SIDEBAR_TIME_GROUP_ROW_STICKY =
 
 /** Time group label (Today, Yesterday…): 11.5px, secondary but readable (55/60%); selected state uses full from SIDEBAR_GROUP_ROW_SELECTED. */
 export const SIDEBAR_TIME_GROUP_ROW =
-  'text-sidebar-foreground/55 dark:text-sidebar-foreground/60 font-semibold tracking-[0.03em] text-[11px]';
+  'capitalize text-sidebar-foreground/55 dark:text-sidebar-foreground/60 font-semibold tracking-[0.03em] text-[11px]';
 
 export const SIDEBAR_TIME_GROUP_ROW_WRAPPER = 'rounded-lg';
 
