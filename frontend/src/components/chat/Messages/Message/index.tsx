@@ -16,7 +16,7 @@ import { AskActionButtons } from './AskActionButtons';
 import { AskFileButton } from './AskFileButton';
 import { MessageAvatar } from './Avatar';
 import { MessageButtons } from './Buttons';
-import { MessageContent } from './Content';
+import { MessageContent, formatTime } from './Content';
 import Step from './Step';
 import UserMessage from './UserMessage';
 
@@ -169,31 +169,39 @@ const Message = memo(
                         className={cn(
                           'flex flex-col items-start min-w-[150px] flex-grow gap-2',
                           'px-5 py-2.5 rounded-2xl shadow-[var(--ai-message-shadow)]',
-                          'bg-[hsl(var(--ai-message-bg))] w-full'
+                          'bg-[hsl(var(--ai-message-bg))] w-full group'
                         )}
                       >
-                        <MessageContent
-                          ref={contentRef}
-                          elements={elements}
-                          message={message}
-                          allowHtml={allowHtml}
-                          latex={latex}
-                          isLatestMessage={isLatestMessage}
-                        >
-                          <MessageButtons
+                        {/* Sticky boundary: buttons stick while content is in view */}
+                        <div className="relative w-full">
+                          <div className="sticky top-0 z-10 flex justify-end w-full [&_button]:h-5 [&_button]:w-5 [&_svg]:h-3.5 [&_svg]:w-3.5 bg-[hsl(var(--ai-message-bg))] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <MessageButtons
+                              message={message}
+                              actions={actions}
+                              run={
+                                scorableRun && isScorable ? scorableRun : undefined
+                              }
+                              contentRef={contentRef}
+                            />
+                          </div>
+                          <MessageContent
+                            ref={contentRef}
+                            elements={elements}
                             message={message}
-                            actions={actions}
-                            run={
-                              scorableRun && isScorable ? scorableRun : undefined
-                            }
-                            contentRef={contentRef}
+                            allowHtml={allowHtml}
+                            latex={latex}
+                            hideTimestamp
+                            isLatestMessage={isLatestMessage}
                           />
-                        </MessageContent>
-                        {/* <AskFileButton messageId={message.id} onError={onError} /> */}
-                        {/* <AskActionButtons
-                          actions={actions}
-                          messageId={message.id}
-                        /> */}
+                        </div>
+                        {/* Timestamp outside sticky boundary */}
+                        {formatTime(message.createdAt) && (
+                          <div className="flex w-full justify-end select-none min-h-7 items-center">
+                            <span className="text-xs text-muted-foreground">
+                              {formatTime(message.createdAt)}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

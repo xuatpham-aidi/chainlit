@@ -19,6 +19,7 @@ export interface Props {
   sections?: ContentSection[];
   isUserMessage?: boolean;
   isLatestMessage?: boolean;
+  hideTimestamp?: boolean;
   children?: ReactNode;
 }
 
@@ -33,7 +34,7 @@ const getMessageRenderProps = (message: IStep) => ({
 });
 
 // Format utcTimestamp to local time
-const formatTime = (utcTimestamp: number | string | undefined): string => {
+export const formatTime = (utcTimestamp: number | string | undefined): string => {
   if (!utcTimestamp) return '';
 
   // UTC : client timezone (automatic)
@@ -50,7 +51,7 @@ const formatTime = (utcTimestamp: number | string | undefined): string => {
 const MessageContent = memo(
   forwardRef<HTMLDivElement, Props>(
     (
-      { isUserMessage = false, message, elements, allowHtml, latex, sections, isLatestMessage = true, children },
+      { isUserMessage = false, message, elements, allowHtml, latex, sections, isLatestMessage = true, hideTimestamp = false, children },
       ref
     ) => {
       const outputContent =
@@ -134,7 +135,7 @@ const MessageContent = memo(
         </div>
       );
 
-      const timestamp = formatTime(message.createdAt);
+      const timestamp = hideTimestamp ? '' : formatTime(message.createdAt);
       return (
         <div
           ref={ref}
@@ -166,6 +167,7 @@ const MessageContent = memo(
       prevProps.latex === nextProps.latex &&
       prevProps.elements === nextProps.elements &&
       prevProps.children === nextProps.children &&
+      (prevProps.hideTimestamp ?? false) === (nextProps.hideTimestamp ?? false) &&
       (prevProps.isLatestMessage ?? true) === (nextProps.isLatestMessage ?? true) &&
       isEqual(
         prevProps.sections ?? ['input', 'output'],

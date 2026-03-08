@@ -39,17 +39,17 @@ const MessageButtons = ({ message, actions, run, contentRef }: Props) => {
   }
 
   return (
-    <div className="flex items-center shrink-0">
+    <div className="flex items-center shrink-0 gap-5">
+      {run ? <FeedbackButtons message={run} /> : null}
       {showCopyButton ? (
         <CopyButton content={message.output} contentRef={contentRef} size="icon-sm" />
       ) : null}
-      {run ? <FeedbackButtons message={run} /> : null}
-      {messageActions.length ? (
+      {/* {messageActions.length ? (
         <MessageActions actions={messageActions} />
       ) : null}
       {showDebugButton ? (
         <DebugButton debugUrl={config.debugUrl!} step={message} />
-      ) : null}
+      ) : null} */}
     </div>
   );
 };
