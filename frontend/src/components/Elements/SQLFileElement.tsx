@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { type IFileElement } from '@chainlit/react-client';
 
 import CopyButton from '@/components/CopyButton';
+import { useLayoutMaxWidth } from '@/hooks/useLayoutMaxWidth';
 import {
   Dialog,
   DialogContent,
@@ -19,7 +20,7 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 
-import { useFetch } from 'hooks/useFetch';
+import { useFetch } from '@/hooks/useFetch';
 
 type FileElementWithContent = IFileElement & { content?: string };
 
@@ -28,6 +29,7 @@ const HighlightedSQL = ({ code }: { code: string }) => {
 
   useEffect(() => {
     if (codeRef.current) {
+      codeRef.current.textContent = code;
       hljs.highlightElement(codeRef.current);
     }
   }, [code]);
@@ -46,6 +48,9 @@ const HighlightedSQL = ({ code }: { code: string }) => {
 
 const SQLFileElement = ({ element }: { element: IFileElement }) => {
   const [open, setOpen] = useState(false);
+  const layoutMaxWidth = useLayoutMaxWidth();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [dialogLeft, setDialogLeft] = useState<string>('50%');
   const el = element as FileElementWithContent;
   const hasContent = el.content != null && el.content !== '';
   const { data, isLoading } = useFetch(
@@ -53,14 +58,26 @@ const SQLFileElement = ({ element }: { element: IFileElement }) => {
   );
   const sql = hasContent ? el.content! : (typeof data === 'string' ? data : '');
 
+  const handleOpen = () => {
+    if (triggerRef.current) {
+      const chatContainer = triggerRef.current.closest('.mx-auto') as HTMLElement | null;
+      if (chatContainer) {
+        const rect = chatContainer.getBoundingClientRect();
+        setDialogLeft(`${rect.left + rect.width / 2}px`);
+      }
+    }
+    setOpen(true);
+  };
+
   return (
     <>
       <TooltipProvider delayDuration={100}>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
+              ref={triggerRef}
               type="button"
-              onClick={() => setOpen(true)}
+              onClick={handleOpen}
               className="inline-flex items-center gap-1.5 h-[32px] px-3 rounded-full border border-border/80 bg-secondary/50 hover:bg-secondary text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer transition-colors duration-150"
             >
               <Bug className="h-3.5 w-3.5" />
@@ -73,7 +90,7 @@ const SQLFileElement = ({ element }: { element: IFileElement }) => {
       </TooltipProvider>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden border-border/80 bg-card shadow-xl [&>button]:hidden">
+        <DialogContent className="max-w-none p-0 gap-0 overflow-hidden border-border/80 bg-card shadow-xl [&>button]:hidden" style={{ width: layoutMaxWidth, left: dialogLeft }}>
           <DialogHeader className="flex flex-row items-center justify-between px-5 pt-4 pb-3">
             <DialogTitle className="flex items-center gap-2.5 text-sm font-semibold text-card-foreground">
               <div className="flex items-center justify-center h-7 w-7 rounded-md bg-primary/10">
