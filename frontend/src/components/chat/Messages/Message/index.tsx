@@ -31,6 +31,7 @@ interface Props {
   isLatestMessage?: boolean;
   lastAssistantMessageId?: string;
   runStartedAt?: number | string;
+  thinkingContent?: string;
 }
 
 const EMPTY_ELEMENTS: IMessageElement[] = [];
@@ -46,7 +47,8 @@ const Message = memo(
     scorableRun,
     isLatestMessage = true,
     lastAssistantMessageId,
-    runStartedAt
+    runStartedAt,
+    thinkingContent
   }: Props) => {
     const { allowHtml, cot, latex, onError } = useContext(MessageContext);
     const layoutMaxWidth = useLayoutMaxWidth();
@@ -205,6 +207,7 @@ const Message = memo(
                               {showIndicator ? (
                                 <ThinkingIndicator
                                   className="py-0"
+                                  thinkingContent={thinkingContent}
                                   completedSeconds={
                                     message.start && (!isRunning || message.output)
                                       ? (new Date(message.start).getTime() - new Date(runStartedAt).getTime()) / 1000

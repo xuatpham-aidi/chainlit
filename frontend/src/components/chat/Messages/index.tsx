@@ -4,17 +4,20 @@ import React, { memo, useContext, useMemo } from 'react';
 import {
   type IAction,
   type IMessageElement,
-  type IStep
+  type IStep,
+  type StepType
 } from '@chainlit/react-client';
 
 import { Message } from './Message';
 
 const CL_RUN_NAMES = ['on_chat_start', 'on_message', 'on_audio_end'];
+const REASONING_STEP_TYPE: StepType = 'asquad_reasoning';
+const ASSISTANT_MESSAGE_TYPE: StepType = 'assistant_message';
 
 const hasAssistantMessage = (step: IStep): boolean => {
   return (
     step.steps?.some(
-      (s) => s.type === 'assistant_message' || hasAssistantMessage(s)
+      (s) => s.type === ASSISTANT_MESSAGE_TYPE || hasAssistantMessage(s)
     ) || false
   );
 };
@@ -24,7 +27,7 @@ function findLastAssistantMessageIdInTree(steps: IStep[]): string | undefined {
   let lastId: string | undefined;
   function walk(list: IStep[]) {
     for (const s of list) {
-      if (s.type === 'assistant_message') lastId = s.id;
+      if (s.type === ASSISTANT_MESSAGE_TYPE) lastId = s.id;
       if (s.steps?.length) walk(s.steps);
     }
   }
@@ -58,7 +61,7 @@ const Messages = memo(
     const messageContext = useContext(MessageContext);
 
     const lastAssistantMessage = useMemo(() => {
-      return messages.findLast((m) => m.type === 'assistant_message');
+      return messages.findLast((m) => m.type === ASSISTANT_MESSAGE_TYPE);
     }, [messages]);
 
     const resolvedLastId = useMemo(
@@ -71,9 +74,17 @@ const Messages = memo(
 
     const lastScorableAssistantMessage = useMemo(() => {
       return scorableRun?.steps?.findLast(
-        (m) => m.type === 'assistant_message'
+        (m) => m.type === ASSISTANT_MESSAGE_TYPE
       );
     }, [scorableRun]);
+
+    const thinkingContent = useMemo(() => {
+      return messages
+        .filter((m) => m.type === REASONING_STEP_TYPE)
+        .map((m) => m.output)
+        .filter(Boolean)
+        .join('\n');
+    }, [messages]);
 
     return (
       <>
@@ -93,7 +104,7 @@ const Messages = memo(
                 {
                   id: `${m.id}-placeholder`,
                   name: '',
-                  type: 'assistant_message',
+                  type: ASSISTANT_MESSAGE_TYPE,
                   output: '',
                   createdAt: m.start || m.createdAt
                 } as IStep
@@ -117,6 +128,10 @@ const Messages = memo(
               </React.Fragment>
             );
           } else {
+            if (m.type === REASONING_STEP_TYPE) {
+              return <React.Fragment key={m.id} />;
+            }
+
             // Score the current run
             const _scorableRun = m.type === 'run' ? m : scorableRun;
             // The message is scorable if it is the last assistant message of the run
@@ -146,6 +161,9 @@ const Messages = memo(
                 }
                 lastAssistantMessageId={resolvedLastId}
                 runStartedAt={runStartedAt}
+                thinkingContent={
+                  m.type === ASSISTANT_MESSAGE_TYPE ? thinkingContent : undefined
+                }
               />
             );
           }

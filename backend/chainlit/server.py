@@ -835,7 +835,7 @@ async def project_settings(
     effective_language = config.ui.language or language
 
     # Load the markdown file based on the provided language
-    markdown = get_markdown_str(config.root, effective_language)
+    markdown = "enbc - companion" # get_markdown_str(config.root, effective_language)
 
     chat_profiles = []
     profiles: list[dict] = []

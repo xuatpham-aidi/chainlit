@@ -89,8 +89,10 @@ function ThinkingIndicator({ className, completedSeconds, thinkingContent, times
           <AccordionPrimitive.Content
             className="overflow-hidden transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
           >
-            <div className="max-h-32 overflow-y-auto custom-scrollbar text-xs text-muted-foreground whitespace-pre-wrap px-1 py-2">
-              {thinkingContent}
+            <div className="max-h-40 overflow-y-auto custom-scrollbar ml-5 my-1 border-l-4 border-l-primary/40 bg-muted/50 rounded-r-md px-3 py-2">
+              <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                {thinkingContent}
+              </p>
             </div>
           </AccordionPrimitive.Content>
         ) : null}
