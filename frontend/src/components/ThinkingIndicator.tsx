@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { ChevronRight } from 'lucide-react';
 import { Translator } from 'components/i18n';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Props {
   className?: string;
@@ -14,15 +14,23 @@ interface Props {
 function ThinkingIndicator({ className, completedSeconds, thinkingContent, timestamp }: Props) {
   const isCompleted = completedSeconds != null;
   const hasContent = Boolean(thinkingContent);
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(hasContent && !isCompleted ? 'thinking' : '');
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isCompleted) {
-      setValue('');
-    } else if (hasContent) {
+    if (hasContent) {
       setValue('thinking');
+    } else if (isCompleted) {
+      setValue('');
     }
   }, [isCompleted, hasContent]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    }
+  }, [thinkingContent]);
 
   return (
     <AccordionPrimitive.Root
@@ -89,7 +97,7 @@ function ThinkingIndicator({ className, completedSeconds, thinkingContent, times
           <AccordionPrimitive.Content
             className="overflow-hidden transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
           >
-            <div className="max-h-40 overflow-y-auto custom-scrollbar ml-5 my-1 border-l-4 border-l-primary/40 bg-muted/50 rounded-r-md px-3 py-2">
+            <div ref={scrollRef} className="max-h-40 overflow-y-auto custom-scrollbar ml-5 my-1 border-l-4 border-l-primary/40 bg-muted/50 rounded-r-md px-3 py-2">
               <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
                 {thinkingContent}
               </p>
