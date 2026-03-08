@@ -1,7 +1,6 @@
 import { prepareContent } from '@/lib/message';
-import { cn } from '@/lib/utils';
 import { isEqual } from 'lodash';
-import { forwardRef, memo, useMemo } from 'react';
+import { type ReactNode, forwardRef, memo, useMemo } from 'react';
 
 import type { IMessageElement, IStep } from '@chainlit/react-client';
 
@@ -20,6 +19,7 @@ export interface Props {
   sections?: ContentSection[];
   isUserMessage?: boolean;
   isLatestMessage?: boolean;
+  children?: ReactNode;
 }
 
 const getMessageRenderProps = (message: IStep) => ({
@@ -50,7 +50,7 @@ const formatTime = (utcTimestamp: number | string | undefined): string => {
 const MessageContent = memo(
   forwardRef<HTMLDivElement, Props>(
     (
-      { isUserMessage = false, message, elements, allowHtml, latex, sections, isLatestMessage = true },
+      { isUserMessage = false, message, elements, allowHtml, latex, sections, isLatestMessage = true, children },
       ref
     ) => {
       const outputContent =
@@ -144,14 +144,16 @@ const MessageContent = memo(
           {displayOutput ? (
             <InlinedElements elements={outputInlinedElements} isLatestMessage={isLatestMessage} />
           ) : null}
-          {timestamp &&
-            <div
-              className={cn(
-                'text-xs text-muted-foreground mt-1',
-                isUserMessage ? 'self-end' : 'self-start'
-              )}
-            >
-              {timestamp}
+          {(timestamp || children) &&
+            <div className="flex items-center mt-1 w-full justify-between min-h-7 select-none">
+              <div className="flex items-center [&_button]:h-5 [&_button]:w-5 [&_svg]:h-3.5 [&_svg]:w-3.5">
+                {!isUserMessage && !message.streaming && children}
+              </div>
+              {timestamp &&
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {timestamp}
+                </span>
+              }
             </div>
           }
         </div>
@@ -163,6 +165,7 @@ const MessageContent = memo(
       prevProps.allowHtml === nextProps.allowHtml &&
       prevProps.latex === nextProps.latex &&
       prevProps.elements === nextProps.elements &&
+      prevProps.children === nextProps.children &&
       (prevProps.isLatestMessage ?? true) === (nextProps.isLatestMessage ?? true) &&
       isEqual(
         prevProps.sections ?? ['input', 'output'],

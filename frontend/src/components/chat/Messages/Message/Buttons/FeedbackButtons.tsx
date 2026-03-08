@@ -1,5 +1,5 @@
 import { MessageContext } from '@/contexts/MessageContext';
-import { MessageCircle, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { CircleX, MessageCircle, Smile } from 'lucide-react';
 import { useCallback, useContext, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 
@@ -113,7 +113,7 @@ export function FeedbackButtons({ message }: FeedbackButtonsProps) {
                   : 'text-muted-foreground positive-feedback-off'
               }
             >
-              <ThumbsUp className="h-4 w-4" />
+              <Smile className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -134,7 +134,7 @@ export function FeedbackButtons({ message }: FeedbackButtonsProps) {
                   : 'text-muted-foreground negative-feedback-off'
               }
             >
-              <ThumbsDown />
+              <CircleX />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -171,7 +171,7 @@ export function FeedbackButtons({ message }: FeedbackButtonsProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {showDialog === 0 ? <ThumbsDown /> : <ThumbsUp />}
+              {showDialog === 0 ? <CircleX /> : <Smile />}
               <Translator path="chat.messages.feedback.dialog.title" />
             </DialogTitle>
           </DialogHeader>

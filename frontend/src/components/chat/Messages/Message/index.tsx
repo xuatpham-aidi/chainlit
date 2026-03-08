@@ -8,7 +8,7 @@ import {
   type IStep
 } from '@chainlit/react-client';
 
-import { useLayoutMaxWidth } from 'hooks/useLayoutMaxWidth'; 
+import { useLayoutMaxWidth } from 'hooks/useLayoutMaxWidth';
 
 import { ThinkingIndicator } from '@/components/ThinkingIndicator';
 import { Messages } from '..';
@@ -177,26 +177,26 @@ const Message = memo(
                           allowHtml={allowHtml}
                           latex={latex}
                           isLatestMessage={isLatestMessage}
-                        />
-                        <AskFileButton messageId={message.id} onError={onError} />
-                        <AskActionButtons
+                        >
+                          <MessageButtons
+                            message={message}
+                            actions={actions}
+                            run={
+                              scorableRun && isScorable ? scorableRun : undefined
+                            }
+                            contentRef={contentRef}
+                          />
+                        </MessageContent>
+                        {/* <AskFileButton messageId={message.id} onError={onError} /> */}
+                        {/* <AskActionButtons
                           actions={actions}
                           messageId={message.id}
-                        />
-
-                        <MessageButtons
-                          message={message}
-                          actions={actions}
-                          run={
-                            scorableRun && isScorable ? scorableRun : undefined
-                          }
-                          contentRef={contentRef}
-                        />
+                        /> */}
                       </div>
                     )}
                   </div>
                   {/* Thinking indicator below message, left-aligned with ai-message margin; only when running and not streaming */}
-                  {!isStep && !indent && isRunning && !message.streaming ? (
+                  {!isStep && !indent && isRunning && !message.streaming && isLatestMessage ? (
                     <div className="flex gap-4 w-full items-center mt-1">
                       <div className="w-5 shrink-0" aria-hidden />
                       <div className="flex-grow min-w-0 flex items-center justify-start">
