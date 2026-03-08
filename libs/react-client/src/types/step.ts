@@ -10,6 +10,7 @@ type StepType =
   | 'embedding'
   | 'retrieval'
   | 'rerank'
+  | 'asquad_reasoning'
   | 'undefined';
 
 export interface IStep {

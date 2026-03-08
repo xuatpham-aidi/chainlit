@@ -104,7 +104,7 @@ export function FeedbackButtons({ message }: FeedbackButtonsProps) {
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-sm"
               disabled={isDisabled}
               onClick={() => handleFeedbackClick(1)}
               className={
@@ -125,7 +125,7 @@ export function FeedbackButtons({ message }: FeedbackButtonsProps) {
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-sm"
               disabled={isDisabled}
               onClick={() => handleFeedbackClick(0)}
               className={
@@ -147,7 +147,7 @@ export function FeedbackButtons({ message }: FeedbackButtonsProps) {
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
+                size="icon-sm"
                 disabled={isDisabled}
                 onClick={() => {
                   setShowDialog(feedback);

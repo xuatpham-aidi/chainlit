@@ -29,7 +29,7 @@ const DebugButton = ({ step, debugUrl }: DebugButtonProps) => {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-9 w-9 p-0" asChild>
+          <Button variant="ghost" size="icon-sm" className="p-0" asChild>
             <a href={href} target="_blank" rel="noopener noreferrer">
               <BugIcon />
             </a>

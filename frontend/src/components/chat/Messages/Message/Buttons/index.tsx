@@ -39,9 +39,9 @@ const MessageButtons = ({ message, actions, run, contentRef }: Props) => {
   }
 
   return (
-    <div className="-ml-1.5 flex items-center flex-wrap">
+    <div className="flex items-center shrink-0">
       {showCopyButton ? (
-        <CopyButton content={message.output} contentRef={contentRef} />
+        <CopyButton content={message.output} contentRef={contentRef} size="icon-sm" />
       ) : null}
       {run ? <FeedbackButtons message={run} /> : null}
       {messageActions.length ? (

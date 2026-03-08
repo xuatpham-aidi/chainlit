@@ -15,9 +15,10 @@ interface Props {
   content: unknown;
   className?: string;
   contentRef?: React.RefObject<HTMLDivElement>;
+  size?: 'icon' | 'icon-sm';
 }
 
-const CopyButton = ({ content, className, contentRef }: Props) => {
+const CopyButton = ({ content, className, contentRef, size = 'icon' }: Props) => {
   const [copied, setCopied] = useState(false);
   const { t } = useTranslation();
 
@@ -84,7 +85,7 @@ const CopyButton = ({ content, className, contentRef }: Props) => {
           <Button
             onClick={copyToClipboard}
             variant="ghost"
-            size="icon"
+            size={size}
             className={`text-muted-foreground ${className}`}
           >
             {copied ? (

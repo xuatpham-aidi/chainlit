@@ -19,21 +19,10 @@ function ThinkingIndicator({ className }: Props) {
       data-testid="thinking-indicator"
       aria-label="Assistant is typing"
     >
+      <span className="h-4 w-4 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
       <span className="text-sm text-muted-foreground shrink-0">
         <Translator path="chat.messages.processing" />
       </span>
-      <span
-        className="h-2 w-2 rounded-full bg-muted-foreground animate-thinking-dot"
-        style={{ animationDelay: '0ms' }}
-      />
-      <span
-        className="h-2 w-2 rounded-full bg-muted-foreground animate-thinking-dot"
-        style={{ animationDelay: '160ms' }}
-      />
-      <span
-        className="h-2 w-2 rounded-full bg-muted-foreground animate-thinking-dot"
-        style={{ animationDelay: '320ms' }}
-      />
     </div>
   );
 }
