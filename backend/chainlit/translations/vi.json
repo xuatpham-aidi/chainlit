@@ -89,15 +89,15 @@
             }
         },
         "messages": {
-            "processing": "Đang xử lý",
-            "completed": "Hoàn thành trong",
+            "processing": "Đang suy nghĩ",
+            "completed": "Hoàn thành trong {{seconds}}s",
             "status": {
                 "using": "Đang dùng",
                 "used": "Đã dùng"
             },
             "actions": {
                 "copy": {
-                    "button": "Sao chép vào clipboard",
+                    "button": "Sao chép",
                     "success": "Đã sao chép!"
                 }
             },
@@ -266,6 +266,14 @@
     "components": {
         "MultiSelectInput": {
             "placeholder": "Chọn..."
+        }
+    },
+    "elements": {
+        "xlsx": {
+            "download": "Tải xuống",
+            "noData": "Không có dữ liệu",
+            "rowLimitReached": "Hiển thị {{limit}} trên {{total}} dòng. Tải xuống để xem toàn bộ dữ liệu.",
+            "fetchError": "Không thể tải tệp: {{status}} {{statusText}}"
         }
     }
 }

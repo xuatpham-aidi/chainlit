@@ -90,7 +90,7 @@
     },
     "messages": {
       "processing": "Processing",
-      "completed": "Completed",
+      "completed": "Completed in {{seconds}}s",
       "status": {
         "using": "Using",
         "used": "Used"
@@ -274,6 +274,14 @@
         "single": "Pick a date",
         "range": "Pick a date range"
       }
+    }
+  },
+  "elements": {
+    "xlsx": {
+      "download": "Download",
+      "noData": "No data",
+      "rowLimitReached": "Showing {{limit}} of {{total}} rows. Download to view full data.",
+      "fetchError": "Failed to fetch file: {{status}} {{statusText}}"
     }
   }
 }
