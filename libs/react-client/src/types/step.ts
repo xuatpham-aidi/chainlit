@@ -1,6 +1,6 @@
 import { IFeedback } from './feedback';
 
-type StepType =
+export type StepType =
   | 'assistant_message'
   | 'user_message'
   | 'system_message'

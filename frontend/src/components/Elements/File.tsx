@@ -7,9 +7,9 @@ import { XLSXFileElement } from './XLSXFileElement';
 
 type FileElementWithContent = IFileElement & { content?: string };
 
-const isSQLFile = (name: string) => name.toLowerCase().endsWith('sql');
+export const isSQLFile = (name: string) => name.toLowerCase().endsWith('sql');
 
-const isXLSXFile = (name: string) => {
+export const isXLSXFile = (name: string) => {
   const lower = name.toLowerCase();
   return lower.endsWith('.xlsx') || lower.endsWith('.xls');
 };

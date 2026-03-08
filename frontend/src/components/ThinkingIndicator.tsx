@@ -2,27 +2,32 @@ import { cn } from '@/lib/utils';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { ChevronRight } from 'lucide-react';
 import { Translator } from 'components/i18n';
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 interface Props {
   className?: string;
   completedSeconds?: number;
   thinkingContent?: string;
   timestamp?: string;
+  trailing?: ReactNode;
 }
 
-function ThinkingIndicator({ className, completedSeconds, thinkingContent, timestamp }: Props) {
+function ThinkingIndicator({ className, completedSeconds, thinkingContent, timestamp, trailing }: Props) {
   const isCompleted = completedSeconds != null;
   const hasContent = Boolean(thinkingContent);
-  const [value, setValue] = useState(hasContent && !isCompleted ? 'thinking' : '');
+  const [value, setValue] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const prevHasContentRef = useRef(hasContent);
 
   useEffect(() => {
-    if (hasContent) {
+    // Only expand when hasContent transitions from false to true (live streaming),
+    // not when it's already true on mount (reload).
+    if (hasContent && !prevHasContentRef.current) {
       setValue('thinking');
-    } else if (isCompleted) {
+    } else if (isCompleted && !hasContent) {
       setValue('');
     }
+    prevHasContentRef.current = hasContent;
   }, [isCompleted, hasContent]);
 
   useEffect(() => {
@@ -42,7 +47,7 @@ function ThinkingIndicator({ className, completedSeconds, thinkingContent, times
       data-testid="thinking-indicator"
     >
       <AccordionPrimitive.Item value="thinking" className="border-none">
-        <AccordionPrimitive.Header className="flex items-center min-h-7">
+        <AccordionPrimitive.Header className="flex items-center min-h-8">
           <AccordionPrimitive.Trigger
             className={cn(
               'flex items-center gap-2 py-1 group',
@@ -55,7 +60,9 @@ function ThinkingIndicator({ className, completedSeconds, thinkingContent, times
                 <ChevronRight
                   className="h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90"
                 />
-              ) : null}
+              ) : (
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
+              )}
             </span>
             <span className="grid items-center [&>*]:col-start-1 [&>*]:row-start-1">
               <span
@@ -87,6 +94,11 @@ function ThinkingIndicator({ className, completedSeconds, thinkingContent, times
               </span>
             </span>
           </AccordionPrimitive.Trigger>
+          {trailing ? (
+            <div className="flex items-center gap-2 ml-8 shrink-0">
+              {trailing}
+            </div>
+          ) : null}
           {timestamp ? (
             <span className="text-xs text-muted-foreground ml-auto shrink-0">
               {timestamp}

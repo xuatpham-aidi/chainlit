@@ -4,13 +4,16 @@ import { memo, useContext, useMemo, useRef } from 'react';
 
 import {
   type IAction,
+  type IFileElement,
   type IMessageElement,
   type IStep
 } from '@chainlit/react-client';
 
 import { useLayoutMaxWidth } from 'hooks/useLayoutMaxWidth';
 
+import { isSQLFile, isXLSXFile } from '@/components/Elements/File';
 import { ThinkingIndicator } from '@/components/ThinkingIndicator';
+import { InlinedFileList } from './Content/InlinedElements/InlinedFileList';
 import { Messages } from '..';
 import { AskActionButtons } from './AskActionButtons';
 import { AskFileButton } from './AskFileButton';
@@ -64,6 +67,23 @@ const Message = memo(
     const skip = toolCallSkip || hiddenSkip;
     const showInputSection = Boolean(message.input && message.showInput);
     const shouldRenderOutput = !showInputSection || Boolean(message.output);
+
+    const isToolFile = (el: IMessageElement): el is IFileElement =>
+      el.type === 'file' && (isSQLFile(el.name) || isXLSXFile(el.name));
+
+    const toolFileElements = useMemo(
+      () => elements
+        .filter((el) => el.forId === message.id && isToolFile(el))
+        .sort((a, b) => a.name.localeCompare(b.name)) as IFileElement[],
+      [elements, message.id]
+    );
+
+    const contentElements = useMemo(
+      () => toolFileElements.length > 0
+        ? elements.filter((el) => !toolFileElements.includes(el as IFileElement))
+        : elements,
+      [elements, toolFileElements]
+    );
 
     const userMessageContent = useMemo(
       () => (
@@ -188,7 +208,7 @@ const Message = memo(
                           </div>
                           <MessageContent
                             ref={contentRef}
-                            elements={elements}
+                            elements={contentElements}
                             message={message}
                             allowHtml={allowHtml}
                             latex={latex}
@@ -203,7 +223,7 @@ const Message = memo(
                           if (!formattedTime && !showIndicator) return null;
                           const visibleTimestamp = formattedTime && message.output ? formattedTime : undefined;
                           return (
-                            <div className="w-full select-none min-h-7">
+                            <div className="w-full select-none min-h-8">
                               {showIndicator ? (
                                 <ThinkingIndicator
                                   className="py-0"
@@ -214,9 +234,11 @@ const Message = memo(
                                       : undefined
                                   }
                                   timestamp={visibleTimestamp}
+                                  trailing={toolFileElements.length > 0 ? <InlinedFileList items={toolFileElements} /> : undefined}
                                 />
                               ) : (
-                                <div className="flex w-full justify-end items-center min-h-7">
+                                <div className="flex w-full justify-end items-center gap-2 min-h-8">
+                                  {toolFileElements.length > 0 ? <InlinedFileList items={toolFileElements} /> : null}
                                   {visibleTimestamp ? (
                                     <span className="text-xs text-muted-foreground">
                                       {visibleTimestamp}
