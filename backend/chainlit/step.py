@@ -5,10 +5,10 @@ import time
 import uuid
 from copy import deepcopy
 from functools import wraps
-from typing import Callable, Dict, List, Optional, TypedDict, Union
+from typing import Callable, Dict, List, Optional, TypedDict, Union, Literal
 
 from literalai import BaseGeneration
-from literalai.observability.step import StepType, TrueStepType
+from literalai.observability.step import StepType as _StepType, TrueStepType as _TrueStepType
 
 from chainlit.config import config
 from chainlit.context import CL_RUN_NAMES, context, local_steps
@@ -18,14 +18,21 @@ from chainlit.logger import logger
 from chainlit.types import FeedbackDict
 from chainlit.utils import utc_now
 
+TrueStepType = Union[_TrueStepType, Literal["asquad_reasoning"]]
+StepType = Union[_StepType, Literal["asquad_reasoning"]]
+
 
 def check_add_step_in_cot(step: "Step"):
     is_message = step.type in [
         "user_message",
         "assistant_message",
+        "asquad_reasoning",
     ]
     is_cl_run = step.name in CL_RUN_NAMES and step.type == "run"
-    if config.ui.cot == "hidden" and not is_message and not is_cl_run:
+
+    # completely ignore cot of chainlit
+    # if config.ui.cot == "hidden" and not is_message and not is_cl_run:
+    if not is_message and not is_cl_run:
         return False
     return True
 
