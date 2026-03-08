@@ -7,22 +7,9 @@ import {
   type IStep
 } from '@chainlit/react-client';
 
-import { ThinkingIndicator } from '@/components/ThinkingIndicator';
-
 import { Message } from './Message';
 
 const CL_RUN_NAMES = ['on_chat_start', 'on_message', 'on_audio_end'];
-
-const hasActiveToolStep = (step: IStep): boolean => {
-  return (
-    step.steps?.some(
-      (s) =>
-        (s.type === 'tool' && s.start && !s.end && !s.isError) ||
-        s.type.includes('message') ||
-        hasActiveToolStep(s)
-    ) || false
-  );
-};
 
 const hasAssistantMessage = (step: IStep): boolean => {
   return (
@@ -94,26 +81,30 @@ const Messages = memo(
           // Handle chainlit runs
           if (CL_RUN_NAMES.includes(m.name)) {
             const isRunning = !m.end && !m.isError && messageContext.loading;
-            const isToolCallCoT =
-              messageContext.cot === 'tool_call' ||
-              messageContext.cot === 'full';
-            const isHiddenCoT = messageContext.cot === 'hidden';
-
-            const showToolCoTLoader = isToolCallCoT
-              ? isRunning && !hasActiveToolStep(m)
-              : false;
-
-            const showHiddenCoTLoader = isHiddenCoT
-              ? isRunning && !hasAssistantMessage(m)
-              : false;
             // Ignore on_chat_start for scorable run
             const scorableRun =
               !isRunning && m.name !== 'on_chat_start' ? m : undefined;
+            const showPlaceholder =
+              isRunning && !hasAssistantMessage(m) && m.name !== 'on_chat_start';
+
+            const stepsWithPlaceholder = showPlaceholder
+              ? [
+                ...(m.steps || []),
+                {
+                  id: `${m.id}-placeholder`,
+                  name: '',
+                  type: 'assistant_message',
+                  output: '',
+                  createdAt: new Date().toISOString()
+                } as IStep
+              ]
+              : m.steps;
+
             return (
               <React.Fragment key={m.id}>
-                {m.steps?.length ? (
+                {stepsWithPlaceholder?.length ? (
                   <Messages
-                    messages={m.steps}
+                    messages={stepsWithPlaceholder}
                     elements={elements}
                     actions={actions}
                     indent={indent}
@@ -122,15 +113,6 @@ const Messages = memo(
                     lastAssistantMessageId={resolvedLastId}
                     runStartedAt={m.start}
                   />
-                ) : null}
-                {(showToolCoTLoader || showHiddenCoTLoader) &&
-                m.name !== 'on_chat_start' ? (
-                  <div className="flex gap-4 w-full items-center">
-                    <div className="w-5 shrink-0" aria-hidden />
-                    <div className="flex-grow min-w-0 flex items-center justify-start">
-                      <ThinkingIndicator className="py-2" />
-                    </div>
-                  </div>
                 ) : null}
               </React.Fragment>
             );

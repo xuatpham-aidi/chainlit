@@ -195,23 +195,25 @@ const Message = memo(
                           />
                         </div>
                         {/* Timestamp and thinking indicator outside sticky boundary */}
-                        {(formatTime(message.createdAt) || (!isStep && !indent && runStartedAt && message.start)) && (
+                        {(formatTime(message.createdAt) || (!isStep && !indent && runStartedAt)) && (
                           <div className="flex w-full justify-between select-none min-h-7 items-center">
                             <div className="flex items-center">
-                              {!isStep && !indent && runStartedAt && message.start ? (
+                              {!isStep && !indent && runStartedAt ? (
                                 <ThinkingIndicator
                                   className="py-0"
                                   completedSeconds={
-                                    (new Date(message.start).getTime() - new Date(runStartedAt).getTime()) / 1000
+                                    message.start && (!isRunning || message.output)
+                                      ? (new Date(message.start).getTime() - new Date(runStartedAt).getTime()) / 1000
+                                      : undefined
                                   }
                                 />
                               ) : null}
                             </div>
-                            {formatTime(message.createdAt) && (
+                            {formatTime(message.createdAt) && message.output ? (
                               <span className="text-xs text-muted-foreground">
                                 {formatTime(message.createdAt)}
                               </span>
-                            )}
+                            ) : null}
                           </div>
                         )}
                       </div>
