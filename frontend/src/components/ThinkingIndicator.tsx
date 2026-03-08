@@ -49,23 +49,22 @@ function ThinkingIndicator({ className, completedSeconds, thinkingContent, times
                 />
               ) : null}
             </span>
-            <span className="relative h-5 inline-flex items-center">
+            <span className="grid items-center [&>*]:col-start-1 [&>*]:row-start-1">
               <span
                 className={cn(
-                  'flex items-center gap-2 transition-all duration-300 ease-in-out absolute left-0',
+                  'flex items-center gap-2 transition-all duration-300 ease-in-out',
                   isCompleted
                     ? 'opacity-0 scale-95 pointer-events-none'
                     : 'opacity-100 scale-100'
                 )}
               >
-                <span className="text-sm font-bold text-muted-foreground shrink-0">
+                <span className="text-sm font-bold text-muted-foreground shrink-0 animate-pulse">
                   <Translator path="chat.messages.processing" />
                 </span>
-                <span className="h-4 w-4 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
               </span>
               <span
                 className={cn(
-                  'flex items-center transition-all duration-300 ease-in-out absolute left-0',
+                  'flex items-center transition-all duration-300 ease-in-out',
                   isCompleted
                     ? 'opacity-100 scale-100'
                     : 'opacity-0 scale-95 pointer-events-none'
