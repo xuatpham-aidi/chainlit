@@ -95,7 +95,7 @@ const Messages = memo(
                   name: '',
                   type: 'assistant_message',
                   output: '',
-                  createdAt: new Date().toISOString()
+                  createdAt: m.start || m.createdAt
                 } as IStep
               ]
               : m.steps;

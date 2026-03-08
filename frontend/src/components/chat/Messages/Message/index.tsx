@@ -195,33 +195,35 @@ const Message = memo(
                           />
                         </div>
                         {/* Thinking indicator and timestamp outside sticky boundary */}
-                        {(formatTime(message.createdAt) || (!isStep && !indent && runStartedAt)) && (
-                          <div className="w-full select-none min-h-7">
-                            {!isStep && !indent && runStartedAt ? (
-                              <ThinkingIndicator
-                                className="py-0"
-                                completedSeconds={
-                                  message.start && (!isRunning || message.output)
-                                    ? (new Date(message.start).getTime() - new Date(runStartedAt).getTime()) / 1000
-                                    : undefined
-                                }
-                                timestamp={
-                                  formatTime(message.createdAt) && message.output
-                                    ? formatTime(message.createdAt)
-                                    : undefined
-                                }
-                              />
-                            ) : (
-                              <div className="flex w-full justify-end items-center min-h-7">
-                                {formatTime(message.createdAt) && message.output ? (
-                                  <span className="text-xs text-muted-foreground">
-                                    {formatTime(message.createdAt)}
-                                  </span>
-                                ) : null}
-                              </div>
-                            )}
-                          </div>
-                        )}
+                        {(() => {
+                          const formattedTime = formatTime(message.createdAt);
+                          const showIndicator = !isStep && !indent && runStartedAt;
+                          if (!formattedTime && !showIndicator) return null;
+                          const visibleTimestamp = formattedTime && message.output ? formattedTime : undefined;
+                          return (
+                            <div className="w-full select-none min-h-7">
+                              {showIndicator ? (
+                                <ThinkingIndicator
+                                  className="py-0"
+                                  completedSeconds={
+                                    message.start && (!isRunning || message.output)
+                                      ? (new Date(message.start).getTime() - new Date(runStartedAt).getTime()) / 1000
+                                      : undefined
+                                  }
+                                  timestamp={visibleTimestamp}
+                                />
+                              ) : (
+                                <div className="flex w-full justify-end items-center min-h-7">
+                                  {visibleTimestamp ? (
+                                    <span className="text-xs text-muted-foreground">
+                                      {visibleTimestamp}
+                                    </span>
+                                  ) : null}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>
