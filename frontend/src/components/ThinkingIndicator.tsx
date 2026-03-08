@@ -47,7 +47,7 @@ function ThinkingIndicator({ className, completedSeconds }: Props) {
         <span className="text-xs text-muted-foreground shrink-0">
           <Translator
             path="chat.messages.completed"
-            options={{ seconds: completedSeconds?.toFixed(1) ?? '0' }}
+            options={{ seconds: completedSeconds?.toFixed(1).replace(/\.0$/, "") ?? '0' }}
           />
         </span>
       </div>

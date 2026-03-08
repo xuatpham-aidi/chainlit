@@ -277,7 +277,8 @@ async def disconnect(sid):
 async def stop(sid):
     if session := WebsocketSession.get(sid):
         init_ws_context(session)
-        await Message(content="Task manually stopped.").send()
+        # need signal to use correct translator in UI
+        await Message(content="Stopped !").send()
 
         if session.current_task:
             session.current_task.cancel()
