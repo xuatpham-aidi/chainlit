@@ -1,5 +1,5 @@
 import { MessageContext } from '@/contexts/MessageContext';
-import { CircleX, MessageCircle, Smile } from 'lucide-react';
+import { Frown, MessageCircle, Smile } from 'lucide-react';
 import { useCallback, useContext, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 
@@ -89,16 +89,16 @@ export function FeedbackButtons({ message }: FeedbackButtonsProps) {
       if (feedback === nextValue) {
         handleFeedbackChange(undefined);
       } else {
-        setShowDialog(nextValue);
+        handleFeedbackChange(nextValue, comment);
       }
     },
-    [feedback, handleFeedbackChange]
+    [feedback, comment, handleFeedbackChange]
   );
 
   const isDisabled = message.streaming || !(firstInteraction || idToResume);
 
   return (
-    <div className="flex items-center">
+    <div className="flex items-center gap-1">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -134,7 +134,7 @@ export function FeedbackButtons({ message }: FeedbackButtonsProps) {
                   : 'text-muted-foreground negative-feedback-off'
               }
             >
-              <CircleX />
+              <Frown />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -142,26 +142,29 @@ export function FeedbackButtons({ message }: FeedbackButtonsProps) {
           </TooltipContent>
         </Tooltip>
 
-        {comment && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                disabled={isDisabled}
-                onClick={() => {
-                  setShowDialog(feedback);
-                  setCommentInput(comment);
-                }}
-              >
-                <MessageCircle />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <Translator path="chat.messages.feedback.edit" />
-            </TooltipContent>
-          </Tooltip>
-        )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={isDisabled}
+              onClick={() => {
+                setShowDialog(feedback ?? 1);
+                setCommentInput(comment);
+              }}
+              className={
+                comment
+                  ? 'text-primary'
+                  : 'text-muted-foreground'
+              }
+            >
+              <MessageCircle />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <Translator path={comment ? 'chat.messages.feedback.edit' : 'chat.messages.feedback.dialog.title'} />
+          </TooltipContent>
+        </Tooltip>
       </TooltipProvider>
 
       <Dialog
@@ -171,7 +174,7 @@ export function FeedbackButtons({ message }: FeedbackButtonsProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {showDialog === 0 ? <CircleX /> : <Smile />}
+              {showDialog === 0 ? <Frown /> : <Smile />}
               <Translator path="chat.messages.feedback.dialog.title" />
             </DialogTitle>
           </DialogHeader>
