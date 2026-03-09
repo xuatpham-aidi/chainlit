@@ -274,6 +274,17 @@
             "noData": "Không có dữ liệu",
             "rowLimitReached": "Hiển thị {{limit}} trên {{total}} dòng. Tải xuống để xem toàn bộ dữ liệu.",
             "fetchError": "Không thể tải tệp: {{status}} {{statusText}}"
+        },
+        "interactiveForm": {
+            "required": "{{label}} cần được xác định!",
+            "extraMessage": {
+                "label": "Thêm tin nhắn khác",
+                "placeholder": "Thêm tin nhắn khác"
+            },
+            "actions": {
+                "send": "OK",
+                "cancel": "Hủy"
+            }
         }
     }
 }

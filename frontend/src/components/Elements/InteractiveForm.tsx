@@ -9,6 +9,7 @@ import {
 
 import type { IFormField, IInteractiveFormElement } from 'client-types/';
 import { useAuth, useChatInteract } from '@chainlit/react-client';
+import { useTranslation } from '@/components/i18n/Translator';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -90,14 +91,15 @@ function isRequiredFieldEmpty(
 
 function getValidationErrors(
   fields: IFormField[],
-  values: Record<string, string | number | boolean>
+  values: Record<string, string | number | boolean>,
+  t: (key: string, options?: Record<string, string>) => string
 ): Record<string, string> {
   const errors: Record<string, string> = {};
   for (const field of fields) {
     if (!field.required) continue;
     const value = values[field.id];
     if (isRequiredFieldEmpty(field, value)) {
-      errors[field.id] = `${field.label} is required`;
+      errors[field.id] = t('elements.interactiveForm.required', { label: field.label });
     }
   }
   return errors;
@@ -251,6 +253,7 @@ function FormFieldRender({
 
 export function InteractiveFormElement({ element, isLatestMessage = true }: InteractiveFormElementProps) {
   const formInstanceId = useId();
+  const { t } = useTranslation();
   const { askUser } = useContext(MessageContext);
   const { sendMessage } = useChatInteract();
   const { user } = useAuth();
@@ -292,7 +295,7 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
   const handleSubmit = useCallback(() => {
     if (!canSubmit) return;
 
-    const errors = getValidationErrors(fields, values);
+    const errors = getValidationErrors(fields, values, t);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
@@ -418,11 +421,11 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
             htmlFor={`${formInstanceId}-interactive-form-extra`}
             className="text-xs"
           >
-            Your message (optional)
+            {t('elements.interactiveForm.extraMessage.label')}
           </Label>
           <Textarea
             id={`${formInstanceId}-interactive-form-extra`}
-            placeholder="Add any message to send with your choices..."
+            placeholder={t('elements.interactiveForm.extraMessage.placeholder')}
             value={extraMessage}
             onChange={(e) => setExtraMessage(e.target.value)}
             className={cn(
@@ -449,7 +452,7 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
           disabled={!canSubmit}
           aria-disabled={!canSubmit}
         >
-          Send
+          {t('elements.interactiveForm.actions.send')}
         </Button>
         {isAskFlow ? (
           <Button
@@ -458,7 +461,7 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
             variant="outline"
             onClick={handleCancel}
           >
-            Cancel
+            {t('elements.interactiveForm.actions.cancel')}
           </Button>
         ) : null}
       </div>

@@ -282,6 +282,17 @@
       "noData": "No data",
       "rowLimitReached": "Showing {{limit}} of {{total}} rows. Download to view full data.",
       "fetchError": "Failed to fetch file: {{status}} {{statusText}}"
+    },
+    "interactiveForm": {
+      "required": "{{label}} is required",
+      "extraMessage": {
+        "label": "Your message (optional)",
+        "placeholder": "Add any message to send with your choices..."
+      },
+      "actions": {
+        "send": "Send",
+        "cancel": "Cancel"
+      }
     }
   }
 }
