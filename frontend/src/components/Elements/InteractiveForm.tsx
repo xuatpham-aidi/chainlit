@@ -7,12 +7,17 @@ import {
   useMemo,
   useState
 } from 'react';
-import { useSetRecoilState } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 
 import { activeInteractiveFormState } from '@/state/chat';
 
 import type { IFormField, IInteractiveFormElement } from 'client-types/';
-import { useAuth, useChatInteract } from '@chainlit/react-client';
+import {
+  ChainlitContext,
+  sessionIdState,
+  useAuth,
+  useChatInteract
+} from '@chainlit/react-client';
 import { useTranslation } from '@/components/i18n/Translator';
 
 import { Button } from '@/components/ui/button';
@@ -43,24 +48,48 @@ const DEFAULT_PROPS = {
   showExtraMessage: true
 };
 
-const SUBMITTED_STORAGE_KEY_PREFIX = 'interactive-form-submitted';
+const STORAGE_PREFIX = 'interactive-form';
 
-function getSubmittedStorageKey(forId: string, elementId: string): string {
-  return `${SUBMITTED_STORAGE_KEY_PREFIX}-${forId}-${elementId}`;
+function storageKey(forId: string, elementId: string, suffix: string): string {
+  return `${STORAGE_PREFIX}-${suffix}-${forId}-${elementId}`;
 }
 
 function getPersistedSubmitted(forId: string, elementId: string): boolean {
   if (typeof sessionStorage === 'undefined') return false;
   try {
-    return sessionStorage.getItem(getSubmittedStorageKey(forId, elementId)) === 'true';
+    return sessionStorage.getItem(storageKey(forId, elementId, 'submitted')) === 'true';
   } catch {
     return false;
   }
 }
 
-function setPersistedSubmitted(forId: string, elementId: string): void {
+function getPersistedFormData(forId: string, elementId: string): {
+  values: Record<string, string | number | boolean>;
+  extraMessage: string;
+  showExtra: boolean;
+} | null {
+  if (typeof sessionStorage === 'undefined') return null;
   try {
-    sessionStorage.setItem(getSubmittedStorageKey(forId, elementId), 'true');
+    const raw = sessionStorage.getItem(storageKey(forId, elementId, 'data'));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistFormState(
+  forId: string,
+  elementId: string,
+  values: Record<string, string | number | boolean>,
+  extraMessage: string,
+  showExtra: boolean
+): void {
+  try {
+    sessionStorage.setItem(storageKey(forId, elementId, 'submitted'), 'true');
+    sessionStorage.setItem(
+      storageKey(forId, elementId, 'data'),
+      JSON.stringify({ values, extraMessage, showExtra })
+    );
   } catch {
     /* ignore */
   }
@@ -73,8 +102,6 @@ function getInitialValues(fields: IFormField[]): Record<string, string | number 
       initial[f.id] = f.value;
     } else if (f.type === 'checkbox') {
       initial[f.id] = false;
-    } else if (f.type === 'number') {
-      initial[f.id] = '';
     } else {
       initial[f.id] = '';
     }
@@ -167,7 +194,6 @@ function FormFieldRender({
           className={cn('h-8 text-sm', errorClass)}
           aria-invalid={!!error}
           aria-describedby={error ? `${fieldId}-error` : undefined}
-          disabled={disabled}
         >
           <SelectValue placeholder={field.label} />
         </SelectTrigger>
@@ -183,7 +209,7 @@ function FormFieldRender({
   }
   if (field.type === 'checkbox') {
     return (
-      <div className={cn('flex items-center gap-1.5')}>
+      <div className="flex items-center gap-1.5">
         <Checkbox
           id={fieldId}
           checked={Boolean(value)}
@@ -252,6 +278,8 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
   const { askUser } = useContext(MessageContext);
   const { sendMessage } = useChatInteract();
   const { user } = useAuth();
+  const apiClient = useContext(ChainlitContext);
+  const sessionId = useRecoilValue(sessionIdState);
 
   const props = useMemo(
     () => ({ ...DEFAULT_PROPS, ...element.props }),
@@ -259,14 +287,27 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
   );
   const { title, promptMessage, fields, showExtraMessage } = props;
 
+  // Check DB-persisted state first (survives new tabs/sessions),
+  // then fall back to sessionStorage (same-tab persistence).
+  const dbSubmitted = element.props?.submitted === true;
+
+  const persisted = useMemo(() => {
+    if (dbSubmitted) {
+      return {
+        values: (element.props?.submittedValues ?? {}) as Record<string, string | number | boolean>,
+        extraMessage: (element.props?.submittedExtraMessage ?? '') as string,
+        showExtra: (element.props?.submittedShowExtra ?? false) as boolean
+      };
+    }
+    return getPersistedFormData(element.forId, element.id);
+  }, [element.forId, element.id, element.props, dbSubmitted]);
   const [values, setValues] = useState<Record<string, string | number | boolean>>(
-    () => getInitialValues(fields)
+    () => persisted?.values ?? getInitialValues(fields)
   );
-  const [extraMessage, setExtraMessage] = useState('');
-  const [showExtra, setShowExtra] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [extraMessage, setExtraMessage] = useState(persisted?.extraMessage ?? '');
+  const [showExtra, setShowExtra] = useState(persisted?.showExtra ?? false);
   const [submitted, setSubmitted] = useState(() =>
-    getPersistedSubmitted(element.forId, element.id)
+    dbSubmitted || getPersistedSubmitted(element.forId, element.id)
   );
 
   useEffect(() => {
@@ -297,12 +338,33 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
     [fields, values, showExtra, extraMessage]
   );
 
-  const canSubmit = isLatestMessage && !submitting && !submitted && anyFilled;
+  const canSubmit = isLatestMessage && !submitted && anyFilled;
+
+  const persistToDb = useCallback(
+    (
+      vals: Record<string, string | number | boolean>,
+      extra: string,
+      showEx: boolean
+    ) => {
+      if (!sessionId) return;
+      const updatedProps = {
+        ...element.props,
+        submitted: true,
+        submittedValues: vals,
+        submittedExtraMessage: extra,
+        submittedShowExtra: showEx
+      };
+      apiClient
+        .updateElement({ ...element, props: updatedProps }, sessionId)
+        .catch(() => {
+          /* best-effort persistence */
+        });
+    },
+    [element, sessionId, apiClient]
+  );
 
   const handleSubmit = useCallback(() => {
     if (!canSubmit) return;
-
-    setSubmitting(true);
 
     const payload = {
       ...values,
@@ -314,13 +376,11 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
       askUser.callback(payload);
     } else {
       const parts: string[] = [];
-      for (const [k, v] of Object.entries(values)) {
-        const field = fields.find((f: IFormField) => f.id === k);
-        const label = field?.label ?? k;
-        parts.push(`${label}: ${String(v)}`);
+      for (const [, v] of Object.entries(values)) {
+        const str = String(v).trim();
+        if (str) parts.push(str);
       }
       if (showExtraMessage && extraMessage.trim()) {
-        parts.push('');
         parts.push(extraMessage.trim());
       }
       const message = parts.join('\n') || JSON.stringify(values);
@@ -335,21 +395,22 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
       });
     }
 
-    setPersistedSubmitted(element.forId, element.id);
+    persistFormState(element.forId, element.id, values, extraMessage, showExtra);
+    persistToDb(values, extraMessage, showExtra);
     setSubmitted(true);
-    setSubmitting(false);
   }, [
     values,
     extraMessage,
+    showExtra,
     showExtraMessage,
     isAskFlow,
     askUser,
-    fields,
     sendMessage,
     user?.identifier,
     canSubmit,
     element.forId,
-    element.id
+    element.id,
+    persistToDb
   ]);
 
   const handleCancel = useCallback(() => {
@@ -369,17 +430,22 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
       });
     }
 
-    setPersistedSubmitted(element.forId, element.id);
+    persistFormState(element.forId, element.id, values, extraMessage, showExtra);
+    persistToDb(values, extraMessage, showExtra);
     setSubmitted(true);
   }, [
     submitted,
+    values,
+    extraMessage,
+    showExtra,
     isAskFlow,
     askUser,
     sendMessage,
     user?.identifier,
     t,
     element.forId,
-    element.id
+    element.id,
+    persistToDb
   ]);
 
   if (!fields.length) {
@@ -393,10 +459,7 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
       className={cn(
         'rounded-lg border border-border bg-muted/30 p-2.5 flex flex-col gap-2',
         element.display === 'inline' && 'inline-form w-full max-w-xl',
-        isReadOnly && 'select-none',
-        isReadOnly && 'opacity-90 bg-muted/20',
-        isReadOnly &&
-        '[&_input:disabled]:cursor-default [&_textarea:disabled]:cursor-default [&_button:disabled]:cursor-default [&_[data-disabled]]:cursor-default'
+        isReadOnly && 'select-none pointer-events-none opacity-90 bg-muted/20 [&_input:disabled]:cursor-default [&_textarea:disabled]:cursor-default [&_button:disabled]:cursor-default [&_[data-disabled]]:cursor-default'
       )}
       aria-readonly={isReadOnly}
     >
@@ -459,7 +522,7 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
       <div
         className={cn(
           'flex justify-end gap-1.5 overflow-hidden transition-all duration-200 ease-out',
-          !isReadOnly ? 'opacity-100 max-h-20 pt-1.5' : 'opacity-0 max-h-0 pt-0 pointer-events-none'
+          !isReadOnly ? 'opacity-100 max-h-20 pt-1.5' : 'opacity-0 max-h-0 pt-0'
         )}
         aria-hidden={isReadOnly}
       >
