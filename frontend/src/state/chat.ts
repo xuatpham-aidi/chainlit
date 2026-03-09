@@ -28,3 +28,8 @@ export const chatInputDraftState = atom<string>({
   key: 'ChatInputDraft',
   default: ''
 });
+
+export const activeInteractiveFormState = atom<boolean>({
+  key: 'ActiveInteractiveForm',
+  default: false
+});

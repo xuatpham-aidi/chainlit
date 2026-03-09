@@ -50,6 +50,15 @@ function ThinkingIndicator({ className, completedSeconds, thinkingContent, times
     prevHasContentRef.current = hasContent;
   }, [hasContent]);
 
+  // Auto-collapse when processing completes (message starts streaming)
+  const prevCompletedRef = useRef(isCompleted);
+  useEffect(() => {
+    if (isCompleted && !prevCompletedRef.current) {
+      setValue('');
+    }
+    prevCompletedRef.current = isCompleted;
+  }, [isCompleted]);
+
   useEffect(() => {
     const el = scrollRef.current;
     if (el) {
