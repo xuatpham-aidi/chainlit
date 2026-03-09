@@ -2,10 +2,14 @@ import { MessageContext } from '@/contexts/MessageContext';
 import {
   useCallback,
   useContext,
+  useEffect,
   useId,
   useMemo,
   useState
 } from 'react';
+import { useSetRecoilState } from 'recoil';
+
+import { activeInteractiveFormState } from '@/state/chat';
 
 import type { IFormField, IInteractiveFormElement } from 'client-types/';
 import { useAuth, useChatInteract } from '@chainlit/react-client';
@@ -78,31 +82,21 @@ function getInitialValues(fields: IFormField[]): Record<string, string | number 
   return initial;
 }
 
-function isRequiredFieldEmpty(
+function isFieldFilled(
   field: IFormField,
   value: string | number | boolean | undefined
 ): boolean {
-  if (!field.required) return false;
-  if (value === undefined) return true;
-  if (field.type === 'checkbox') return value !== true;
-  if (field.type === 'number') return value === '';
-  return String(value).trim() === '';
+  if (value === undefined) return false;
+  if (field.type === 'checkbox') return value === true;
+  if (field.type === 'number') return value !== '';
+  return String(value).trim() !== '';
 }
 
-function getValidationErrors(
+function hasAnyFieldFilled(
   fields: IFormField[],
-  values: Record<string, string | number | boolean>,
-  t: (key: string, options?: Record<string, string>) => string
-): Record<string, string> {
-  const errors: Record<string, string> = {};
-  for (const field of fields) {
-    if (!field.required) continue;
-    const value = values[field.id];
-    if (isRequiredFieldEmpty(field, value)) {
-      errors[field.id] = t('elements.interactiveForm.required', { label: field.label });
-    }
-  }
-  return errors;
+  values: Record<string, string | number | boolean>
+): boolean {
+  return fields.some((f) => isFieldFilled(f, values[f.id]));
 }
 
 function FormFieldRender({
@@ -254,6 +248,7 @@ function FormFieldRender({
 export function InteractiveFormElement({ element, isLatestMessage = true }: InteractiveFormElementProps) {
   const formInstanceId = useId();
   const { t } = useTranslation();
+  const setActiveForm = useSetRecoilState(activeInteractiveFormState);
   const { askUser } = useContext(MessageContext);
   const { sendMessage } = useChatInteract();
   const { user } = useAuth();
@@ -268,11 +263,17 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
     () => getInitialValues(fields)
   );
   const [extraMessage, setExtraMessage] = useState('');
+  const [showExtra, setShowExtra] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(() =>
     getPersistedSubmitted(element.forId, element.id)
   );
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const isActive = isLatestMessage && !submitted;
+    setActiveForm(isActive);
+    return () => setActiveForm(false);
+  }, [isLatestMessage, submitted, setActiveForm]);
 
   const isAskFlow = useMemo(
     () =>
@@ -283,24 +284,24 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
 
   const updateValue = useCallback((id: string, v: string | number | boolean) => {
     setValues((prev) => ({ ...prev, [id]: v }));
-    setFieldErrors((prev) => {
-      const next = { ...prev };
-      delete next[id];
-      return next;
-    });
+    setShowExtra(false);
   }, []);
 
-  const canSubmit = isLatestMessage && !submitting && !submitted;
+  const selectExtraMessage = useCallback(() => {
+    setShowExtra(true);
+    setValues(() => getInitialValues(fields));
+  }, [fields]);
+
+  const anyFilled = useMemo(
+    () => hasAnyFieldFilled(fields, values) || (showExtra && extraMessage.trim() !== ''),
+    [fields, values, showExtra, extraMessage]
+  );
+
+  const canSubmit = isLatestMessage && !submitting && !submitted && anyFilled;
 
   const handleSubmit = useCallback(() => {
     if (!canSubmit) return;
 
-    const errors = getValidationErrors(fields, values, t);
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      return;
-    }
-    setFieldErrors({});
     setSubmitting(true);
 
     const payload = {
@@ -352,16 +353,40 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
   ]);
 
   const handleCancel = useCallback(() => {
+    if (submitted) return;
+
     if (isAskFlow && askUser) {
       askUser.callback({ submitted: false });
+    } else {
+      sendMessage({
+        threadId: '',
+        id: crypto.randomUUID(),
+        name: user?.identifier ?? 'User',
+        type: 'user_message',
+        output: t('elements.interactiveForm.actions.skippedMessage'),
+        createdAt: new Date().toISOString(),
+        metadata: { formSkipped: true }
+      });
     }
-  }, [isAskFlow, askUser]);
+
+    setPersistedSubmitted(element.forId, element.id);
+    setSubmitted(true);
+  }, [
+    submitted,
+    isAskFlow,
+    askUser,
+    sendMessage,
+    user?.identifier,
+    t,
+    element.forId,
+    element.id
+  ]);
 
   if (!fields.length) {
     return null;
   }
 
-  const isReadOnly = !isLatestMessage;
+  const isReadOnly = !isLatestMessage || submitted;
 
   return (
     <div
@@ -371,7 +396,7 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
         isReadOnly && 'select-none',
         isReadOnly && 'opacity-90 bg-muted/20',
         isReadOnly &&
-          '[&_input:disabled]:cursor-default [&_textarea:disabled]:cursor-default [&_button:disabled]:cursor-default [&_[data-disabled]]:cursor-default'
+        '[&_input:disabled]:cursor-default [&_textarea:disabled]:cursor-default [&_button:disabled]:cursor-default [&_[data-disabled]]:cursor-default'
       )}
       aria-readonly={isReadOnly}
     >
@@ -391,7 +416,6 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
                 className="text-xs"
               >
                 {field.label}
-                {field.required ? <span className="text-destructive"> *</span> : null}
               </Label>
             ) : null}
             <FormFieldRender
@@ -399,41 +423,35 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
               field={field}
               value={values[field.id] ?? (field.value ?? (field.type === 'checkbox' ? false : ''))}
               onChange={(v) => updateValue(field.id, v)}
-              error={fieldErrors[field.id]}
-              disabled={!isLatestMessage}
+              disabled={isReadOnly}
             />
-            {fieldErrors[field.id] ? (
-              <p
-                id={`${formInstanceId}-${field.id}-error`}
-                className="text-xs text-destructive"
-                role="alert"
-              >
-                {fieldErrors[field.id]}
-              </p>
-            ) : null}
           </div>
         ))}
       </div>
 
       {showExtraMessage ? (
-        <div className="flex flex-col gap-1">
-          <Label
-            htmlFor={`${formInstanceId}-interactive-form-extra`}
-            className="text-xs"
-          >
-            {t('elements.interactiveForm.extraMessage.label')}
-          </Label>
+        <div className="flex items-start gap-1.5">
+          <input
+            type="radio"
+            name={`${formInstanceId}-${fields[0]?.id ?? 'selection'}`}
+            className="h-4 w-4 mt-1 shrink-0"
+            checked={showExtra}
+            onChange={selectExtraMessage}
+            disabled={isReadOnly}
+          />
           <Textarea
             id={`${formInstanceId}-interactive-form-extra`}
             placeholder={t('elements.interactiveForm.extraMessage.placeholder')}
             value={extraMessage}
             onChange={(e) => setExtraMessage(e.target.value)}
+            onFocus={() => { if (!showExtra && !isReadOnly) selectExtraMessage(); }}
             className={cn(
-              'min-h-[48px] text-sm py-1.5 px-2',
-              !isLatestMessage && 'resize-none'
+              'min-h-[40px] text-sm py-1.5 px-2 flex-1 transition-opacity duration-200 ease-out',
+              !showExtra && 'opacity-40',
+              isReadOnly && 'resize-none'
             )}
-            readOnly={!isLatestMessage}
-            disabled={!isLatestMessage}
+            readOnly={isReadOnly || !showExtra}
+            disabled={isReadOnly}
           />
         </div>
       ) : null}
@@ -441,29 +459,30 @@ export function InteractiveFormElement({ element, isLatestMessage = true }: Inte
       <div
         className={cn(
           'flex justify-end gap-1.5 overflow-hidden transition-all duration-200 ease-out',
-          isLatestMessage ? 'opacity-100 max-h-20 pt-1.5' : 'opacity-0 max-h-0 pt-0 pointer-events-none'
+          !isReadOnly ? 'opacity-100 max-h-20 pt-1.5' : 'opacity-0 max-h-0 pt-0 pointer-events-none'
         )}
-        aria-hidden={!isLatestMessage}
+        aria-hidden={isReadOnly}
       >
-        <Button
-          type="button"
-          size="sm"
-          onClick={handleSubmit}
-          disabled={!canSubmit}
-          aria-disabled={!canSubmit}
-        >
-          {t('elements.interactiveForm.actions.send')}
-        </Button>
-        {isAskFlow ? (
+        <div className="flex shrink-0 gap-1.5">
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            aria-disabled={!canSubmit}
+          >
+            {t('elements.interactiveForm.actions.send')}
+          </Button>
           <Button
             type="button"
             size="sm"
             variant="outline"
             onClick={handleCancel}
+            disabled={submitted}
           >
             {t('elements.interactiveForm.actions.cancel')}
           </Button>
-        ) : null}
+        </div>
       </div>
     </div>
   );

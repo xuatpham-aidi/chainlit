@@ -5,7 +5,7 @@ import {
   useRef,
   useState
 } from 'react';
-import { useRecoilState, useSetRecoilState } from 'recoil';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -23,12 +23,14 @@ import { Settings } from '@/components/icons/Settings';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'components/i18n/Translator';
 
+import { cn } from '@/lib/utils';
 import { useQuery } from '@/hooks/query';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 import { chatSettingsOpenState } from '@/state/project';
 import {
   IAttachment,
+  activeInteractiveFormState,
   attachmentsState,
   chatInputDraftState,
   persistentCommandState
@@ -71,7 +73,8 @@ export default function MessageComposer({
   const { sendMessage, replyMessage } = useChatInteract();
   const { askUser, chatSettingsInputs, disabled: _disabled } = useChatData();
 
-  const disabled = _disabled || !!attachments.find((a) => !a.uploaded);
+  const hasActiveForm = useRecoilValue(activeInteractiveFormState);
+  const disabled = _disabled || hasActiveForm || !!attachments.find((a) => !a.uploaded);
 
   const { config } = useConfig();
   const showSettingsInComposer =
@@ -247,7 +250,12 @@ export default function MessageComposer({
   return (
     <div
       id="message-composer"
-      className="bg-accent dark:bg-card rounded-3xl p-3 px-4 w-full min-h-24 flex flex-col"
+      className={cn(
+        'bg-accent dark:bg-card rounded-3xl w-full flex flex-col transition-all duration-300 ease-out',
+        hasActiveForm
+          ? 'opacity-0 max-h-0 overflow-hidden pointer-events-none p-0 min-h-0'
+          : 'opacity-100 max-h-40 p-3 px-4 min-h-24'
+      )}
     >
       {attachments.length > 0 ? (
         <div className="mb-1">

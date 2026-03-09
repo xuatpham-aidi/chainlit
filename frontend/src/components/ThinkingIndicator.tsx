@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { ChevronRight } from 'lucide-react';
 import { Translator } from 'components/i18n';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 interface Props {
   className?: string;
@@ -14,21 +14,41 @@ interface Props {
 
 function ThinkingIndicator({ className, completedSeconds, thinkingContent, timestamp, trailing }: Props) {
   const isCompleted = completedSeconds != null;
-  const hasContent = Boolean(thinkingContent);
-  const [value, setValue] = useState('');
+
+  // Cache content so it persists even if the prop becomes empty after streaming
+  const cachedContentRef = useRef(thinkingContent);
+  if (thinkingContent) {
+    cachedContentRef.current = thinkingContent;
+  }
+  const displayContent = cachedContentRef.current || '';
+  const hasContent = Boolean(displayContent);
+
+  // Reload: isCompleted && hasContent on mount -> collapsed
+  // Active streaming with buffered content: !isCompleted && hasContent -> expanded
+  const [value, setValue] = useState(() =>
+    hasContent && !isCompleted ? 'thinking' : ''
+  );
+
+  // Track whether user manually collapsed
+  const userCollapsedRef = useRef(false);
+  const handleValueChange = useCallback((newValue: string) => {
+    if (newValue === '') {
+      userCollapsedRef.current = true;
+    }
+    setValue(newValue);
+  }, []);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevHasContentRef = useRef(hasContent);
 
   useEffect(() => {
-    // Only expand when hasContent transitions from false to true (live streaming),
-    // not when it's already true on mount (reload).
-    if (hasContent && !prevHasContentRef.current) {
+    // Auto-expand when content appears (false -> true transition),
+    // unless user manually collapsed.
+    if (hasContent && !prevHasContentRef.current && !userCollapsedRef.current) {
       setValue('thinking');
-    } else if (isCompleted && !hasContent) {
-      setValue('');
     }
     prevHasContentRef.current = hasContent;
-  }, [isCompleted, hasContent]);
+  }, [hasContent]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -42,7 +62,7 @@ function ThinkingIndicator({ className, completedSeconds, thinkingContent, times
       type="single"
       collapsible
       value={value}
-      onValueChange={hasContent ? setValue : undefined}
+      onValueChange={hasContent ? handleValueChange : undefined}
       className={cn('w-full select-none', className)}
       data-testid="thinking-indicator"
     >
@@ -111,7 +131,7 @@ function ThinkingIndicator({ className, completedSeconds, thinkingContent, times
           >
             <div ref={scrollRef} className="max-h-40 overflow-y-auto custom-scrollbar ml-5 my-1 border-l-4 border-l-primary/40 bg-muted/50 rounded-r-md px-3 py-2">
               <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                {thinkingContent}
+                {displayContent}
               </p>
             </div>
           </AccordionPrimitive.Content>
