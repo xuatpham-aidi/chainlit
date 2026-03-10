@@ -882,7 +882,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                 url=element_dict.get("url"),
                 objectKey=element_dict.get("objectKey"),
                 name=element_dict["name"],
-                props=json.loads(element_dict.get("props") or "{}"),
+                props=element_dict.get("props") if isinstance(element_dict.get("props"), dict) else json.loads(element_dict.get("props") or "{}"),
                 display=element_dict["display"],
                 size=element_dict.get("size"),
                 language=element_dict.get("language"),
@@ -1197,7 +1197,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                     autoPlay=element.get("element_autoPlay"),
                     playerConfig=element.get("element_playerconfig"),
                     page=element.get("element_page"),
-                    props=element.get("props", "{}"),
+                    props=element.get("props") if isinstance(element.get("props"), dict) else json.loads(element.get("props") or "{}"),
                     forId=element.get("element_forid"),
                     mime=element.get("element_mime"),
                 )

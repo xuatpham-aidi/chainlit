@@ -11,6 +11,7 @@ import webbrowser
 from contextlib import AsyncExitStack, asynccontextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Union, cast
+from chainlit.element import InteractiveForm
 
 import socketio
 from fastapi import (
@@ -1083,10 +1084,13 @@ async def update_thread_element(
 
     element_dict = cast(ElementDict, payload.element)
 
-    if element_dict["type"] != "custom":
+    element_type = element_dict["type"]
+    if element_type == "custom":
+        element = _sanitize_custom_element(element_dict)
+    elif element_type == "interactive_form":
+        element = _sanitize_interactive_form_element(element_dict)
+    else:
         return {"success": False}
-
-    element = _sanitize_custom_element(element_dict)
 
     if current_user:
         if (
@@ -1143,6 +1147,20 @@ def _sanitize_custom_element(element_dict: "ElementDict") -> "CustomElement":
     from chainlit.element import CustomElement
 
     return CustomElement(
+        id=element_dict["id"],
+        for_id=element_dict.get("forId") or "",
+        thread_id=element_dict.get("threadId") or "",
+        name=element_dict["name"],
+        props=element_dict.get("props") or {},
+        display=element_dict["display"],
+    )
+
+
+def _sanitize_interactive_form_element(
+    element_dict: "ElementDict",
+) -> "InteractiveForm":
+
+    return InteractiveForm(
         id=element_dict["id"],
         for_id=element_dict.get("forId") or "",
         thread_id=element_dict.get("threadId") or "",

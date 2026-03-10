@@ -106,6 +106,10 @@ export interface IInteractiveFormProps {
   promptMessage?: string;
   fields: IFormField[];
   showExtraMessage?: boolean;
+  submitted?: boolean;
+  submittedValues?: Record<string, string | number | boolean>;
+  submittedExtraMessage?: string;
+  submittedShowExtra?: boolean;
 }
 
 export interface IInteractiveFormElement extends TMessageElement<'interactive_form'> {
