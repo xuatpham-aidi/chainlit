@@ -254,7 +254,7 @@ export default function MessageComposer({
         'bg-accent dark:bg-card rounded-3xl w-full flex flex-col transition-all duration-300 ease-out',
         hasActiveForm
           ? 'opacity-0 max-h-0 overflow-hidden pointer-events-none p-0 min-h-0'
-          : 'opacity-100 max-h-40 p-3 px-4 min-h-24'
+          : 'opacity-100 max-h-96 p-3 px-4 min-h-24'
       )}
     >
       {attachments.length > 0 ? (
