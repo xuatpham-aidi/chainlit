@@ -254,7 +254,15 @@ const XLSXFileElement = ({ element }: { element: IFileElement }) => {
         throw new Error(t('elements.xlsx.fetchError', { status: response.status, statusText: response.statusText }));
       }
       const buffer = await response.arrayBuffer();
-      const parsed = parseBinaryToXlsxData(buffer);
+      const bytes = new Uint8Array(buffer);
+      const isZip = bytes.length >= 2 && bytes[0] === 0x50 && bytes[1] === 0x4B;
+      let parsed: XLSXData;
+      if (isZip) {
+        parsed = parseBinaryToXlsxData(buffer);
+      } else {
+        const text = new TextDecoder('utf-8').decode(buffer);
+        parsed = parseCsvToXlsxData(text);
+      }
       setXlsxData(parsed);
       return parsed;
     } catch (err) {
