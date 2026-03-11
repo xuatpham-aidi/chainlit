@@ -33,6 +33,10 @@ class BaseStorageClient(ABC):
         """Download blob content as string. Override in subclasses that support it."""
         return None
 
+    async def get_file_bytes(self, object_key: str) -> Optional[bytes]:
+        """Download blob content as raw bytes. Override in subclasses that support it."""
+        return None
+
     @abstractmethod
     async def close(self) -> None:
         pass

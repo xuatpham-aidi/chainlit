@@ -27,7 +27,7 @@ from fastapi import (
     status,
 )
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette.datastructures import URL
 from starlette.middleware.cors import CORSMiddleware
@@ -1814,6 +1814,52 @@ async def get_file(
         return FileResponse(file["path"], media_type=file["type"])
     else:
         raise HTTPException(status_code=404, detail="File not found")
+
+
+@router.get("/project/element/{thread_id}/{element_id}")
+async def get_element_file(
+    thread_id: str,
+    element_id: str,
+    current_user: UserParam,
+) -> StreamingResponse:
+    """Proxy download for element files stored in blob storage.
+
+    Avoids CORS issues by fetching from storage server-side.
+    """
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    await is_thread_author(current_user.identifier, thread_id)
+
+    data_layer = get_data_layer()
+    if not data_layer:
+        raise HTTPException(status_code=400, detail="Data layer not initialized")
+
+    element = await data_layer.get_element(thread_id, element_id)
+    if not element:
+        raise HTTPException(status_code=404, detail="Element not found")
+
+    object_key = element.get("objectKey")
+    if not object_key or not data_layer.storage_client:
+        raise HTTPException(
+            status_code=404, detail="Element has no stored file"
+        )
+
+    file_bytes = await data_layer.storage_client.get_file_bytes(object_key)
+    if file_bytes is None:
+        raise HTTPException(status_code=404, detail="File content not found")
+
+    mime = element.get("mime") or "application/octet-stream"
+    safe_name = urllib.parse.quote(
+        element.get("name", "file"), safe=" ._-"
+    )
+    return StreamingResponse(
+        iter([file_bytes]),
+        media_type=mime,
+        headers={
+            "Content-Disposition": f"inline; filename*=UTF-8''{safe_name}"
+        },
+    )
 
 
 @router.get("/favicon")

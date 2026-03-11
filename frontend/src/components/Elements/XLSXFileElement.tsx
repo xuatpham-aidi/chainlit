@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, Download, FileSpreadsheet, Search } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useMemo, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
-import { type IFileElement } from '@chainlit/react-client';
+import { ChainlitContext, type IFileElement } from '@chainlit/react-client';
 
 import { useTranslation } from '@/components/i18n/Translator';
 import {
@@ -21,6 +21,8 @@ import {
 type FileElementWithContent = IFileElement & { content?: string };
 
 const DISPLAY_ROW_LIMIT = 368;
+const MAX_COL_WIDTH_PX = 200;
+const MIN_COL_WIDTH_PX = 80;
 
 interface XLSXData {
   columns: string[];
@@ -103,9 +105,9 @@ const SpreadsheetGrid = ({ data, t }: { data: XLSXData; t: (key: string, options
 
   return (
     <div className="flex flex-col gap-0 h-full">
-      {/* Table with vertical scroll only — no horizontal scroll */}
-      <div className="overflow-y-auto overflow-x-hidden rounded-md border border-border/60 flex-1 min-h-0">
-        <table className="w-full border-separate border-spacing-0 text-xs font-mono table-fixed">
+      {/* Scrollable table container */}
+      <div className="overflow-y-auto overflow-x-auto rounded-md border border-border/60 flex-1 min-h-0">
+        <table className="w-max min-w-full border-separate border-spacing-0 text-xs font-sans table-fixed">
           <thead>
             <tr>
               {/* Row number header — sticky both top and left */}
@@ -117,10 +119,11 @@ const SpreadsheetGrid = ({ data, t }: { data: XLSXData; t: (key: string, options
                   key={i}
                   onClick={() => handleSort(i)}
                   title={col}
+                  style={{ minWidth: MIN_COL_WIDTH_PX, maxWidth: MAX_COL_WIDTH_PX }}
                   className="sticky top-0 z-10 bg-muted px-3 py-1.5 text-left font-semibold text-card-foreground border-b border-border/40 cursor-pointer select-none hover:bg-accent"
                 >
                   <div className="flex items-center gap-1">
-                    <span className="truncate">{col}</span>
+                    <span className="break-words whitespace-normal">{col}</span>
                     {sortCol === i ? (
                       sortAsc
                         ? <ArrowUp className="h-3 w-3 text-primary shrink-0" />
@@ -136,7 +139,7 @@ const SpreadsheetGrid = ({ data, t }: { data: XLSXData; t: (key: string, options
             <tr>
               <th className="sticky top-[30px] left-0 z-30 bg-muted border-b border-r border-border/40" />
               {columns.map((_, i) => (
-                <th key={i} className="sticky top-[30px] z-10 bg-muted px-1.5 py-1 border-b border-border/40">
+                <th key={i} style={{ minWidth: MIN_COL_WIDTH_PX, maxWidth: MAX_COL_WIDTH_PX }} className="sticky top-[30px] z-10 bg-muted px-1.5 py-1 border-b border-border/40">
                   <div className="relative flex items-center">
                     <Search className="absolute left-1.5 h-3 w-3 text-muted-foreground/50 pointer-events-none" />
                     <input
@@ -169,6 +172,7 @@ const SpreadsheetGrid = ({ data, t }: { data: XLSXData; t: (key: string, options
                     return (
                       <td
                         key={colIdx}
+                        style={{ minWidth: MIN_COL_WIDTH_PX, maxWidth: MAX_COL_WIDTH_PX }}
                         className={`px-3 py-1 border-b border-border/20 overflow-hidden text-ellipsis whitespace-nowrap ${numeric ? 'text-right tabular-nums' : 'text-left'
                           }`}
                       >
@@ -196,8 +200,7 @@ const SpreadsheetGrid = ({ data, t }: { data: XLSXData; t: (key: string, options
   );
 };
 
-const parseCsvToXlsxData = (csv: string): XLSXData => {
-  const workbook = XLSX.read(csv, { type: 'string' });
+const parseWorkbookToXlsxData = (workbook: XLSX.WorkBook): XLSXData => {
   const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
   const jsonRows: (string | number | null)[][] = XLSX.utils.sheet_to_json(
     firstSheet,
@@ -209,8 +212,17 @@ const parseCsvToXlsxData = (csv: string): XLSXData => {
   return { columns, rows };
 };
 
+const parseCsvToXlsxData = (csv: string): XLSXData => {
+  return parseWorkbookToXlsxData(XLSX.read(csv, { type: 'string' }));
+};
+
+const parseBinaryToXlsxData = (buffer: ArrayBuffer): XLSXData => {
+  return parseWorkbookToXlsxData(XLSX.read(buffer, { type: 'array' }));
+};
+
 const XLSXFileElement = ({ element }: { element: IFileElement }) => {
   const { t } = useTranslation();
+  const apiClient = useContext(ChainlitContext);
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -232,17 +244,17 @@ const XLSXFileElement = ({ element }: { element: IFileElement }) => {
       return parsed;
     }
 
-    // Fallback: fetch from URL
-    if (!element.url) return null;
+    // Fallback: fetch via backend proxy to avoid CORS issues with blob storage
+    if (!element.threadId) return null;
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(element.url);
+      const response = await apiClient.get(`/project/element/${element.threadId}/${element.id}`);
       if (!response.ok) {
         throw new Error(t('elements.xlsx.fetchError', { status: response.status, statusText: response.statusText }));
       }
-      const text = await response.text();
-      const parsed = parseCsvToXlsxData(text);
+      const buffer = await response.arrayBuffer();
+      const parsed = parseBinaryToXlsxData(buffer);
       setXlsxData(parsed);
       return parsed;
     } catch (err) {
@@ -251,7 +263,7 @@ const XLSXFileElement = ({ element }: { element: IFileElement }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [element.url, elementContent, xlsxData, t]);
+  }, [element.threadId, element.id, elementContent, xlsxData, t, apiClient]);
 
   const handleView = useCallback(async () => {
     if (triggerRef.current) {

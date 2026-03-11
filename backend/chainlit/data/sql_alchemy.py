@@ -74,6 +74,10 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                 "SQLAlchemyDataLayer storage client is not initialized and elements will not be persisted!"
             )
 
+    @property
+    def storage_client(self) -> Optional[BaseStorageClient]:
+        return self.storage_provider
+
     def _clean_for_json(self, obj: Any) -> Any:
         """
         Recursively clean non-serializable objects (like ModelMetaclass) from dicts/lists.

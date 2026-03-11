@@ -1,8 +1,8 @@
 import hljs from 'highlight.js';
 import 'highlight.js/styles/monokai-sublime.css';
 import { Bug, Database } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { type IFileElement } from '@chainlit/react-client';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { ChainlitContext, type IFileElement } from '@chainlit/react-client';
 
 import CopyButton from '@/components/CopyButton';
 import { useLayoutMaxWidth } from '@/hooks/useLayoutMaxWidth';
@@ -20,8 +20,6 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 
-import { useFetch } from '@/hooks/useFetch';
-
 type FileElementWithContent = IFileElement & { content?: string };
 
 const HighlightedSQL = ({ code }: { code: string }) => {
@@ -29,6 +27,7 @@ const HighlightedSQL = ({ code }: { code: string }) => {
 
   useEffect(() => {
     if (codeRef.current) {
+      delete codeRef.current.dataset.highlighted;
       codeRef.current.textContent = code;
       hljs.highlightElement(codeRef.current);
     }
@@ -53,10 +52,29 @@ const SQLFileElement = ({ element }: { element: IFileElement }) => {
   const [dialogLeft, setDialogLeft] = useState<string>('50%');
   const el = element as FileElementWithContent;
   const hasContent = el.content != null && el.content !== '';
-  const { data, isLoading } = useFetch(
-    open && !hasContent ? element.url || null : null
-  );
-  const sql = hasContent ? el.content! : (typeof data === 'string' ? data : '');
+  const apiClient = useContext(ChainlitContext);
+  const [fetchedSql, setFetchedSql] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const ensureData = useCallback(async () => {
+    if (hasContent || fetchedSql) return;
+    if (!element.threadId) return;
+    setIsLoading(true);
+    try {
+      const response = await apiClient.get(
+        `/project/element/${element.threadId}/${element.id}`
+      );
+      if (!response.ok) throw new Error('Failed to fetch SQL');
+      const text = await response.text();
+      setFetchedSql(text);
+    } catch (err) {
+      console.error('Failed to fetch SQL element:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [element.threadId, element.id, hasContent, fetchedSql, apiClient]);
+
+  const sql = hasContent ? el.content! : fetchedSql;
 
   const handleOpen = () => {
     if (triggerRef.current) {
@@ -67,6 +85,7 @@ const SQLFileElement = ({ element }: { element: IFileElement }) => {
       }
     }
     setOpen(true);
+    if (!hasContent) ensureData();
   };
 
   return (
