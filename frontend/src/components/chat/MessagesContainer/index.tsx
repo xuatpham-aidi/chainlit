@@ -46,47 +46,39 @@ const MessagesContainer = ({ navigate }: Props) => {
 
   const onFeedbackUpdated = useCallback(
     async (message: IStep, onSuccess: () => void, feedback: IFeedback) => {
-      toast.promise(apiClient.setFeedback(feedback, sessionId), {
-        loading: t('chat.messages.feedback.status.updating'),
-        success: (res) => {
-          setMessages((prev) =>
-            updateMessageById(prev, message.id, {
-              ...message,
-              feedback: {
-                ...feedback,
-                id: res.feedbackId
-              }
-            })
-          );
-          onSuccess();
-          return t('chat.messages.feedback.status.updated');
-        },
-        error: (err) => {
-          return <span>{err.message}</span>;
-        }
-      });
+      try {
+        const res = await apiClient.setFeedback(feedback, sessionId);
+        setMessages((prev) =>
+          updateMessageById(prev, message.id, {
+            ...message,
+            feedback: {
+              ...feedback,
+              id: res.feedbackId
+            }
+          })
+        );
+        onSuccess();
+      } catch {
+        // Silently handle feedback update errors
+      }
     },
     []
   );
 
   const onFeedbackDeleted = useCallback(
     async (message: IStep, onSuccess: () => void, feedbackId: string) => {
-      toast.promise(apiClient.deleteFeedback(feedbackId), {
-        loading: t('chat.messages.feedback.status.updating'),
-        success: () => {
-          setMessages((prev) =>
-            updateMessageById(prev, message.id, {
-              ...message,
-              feedback: undefined
-            })
-          );
-          onSuccess();
-          return t('chat.messages.feedback.status.updated');
-        },
-        error: (err) => {
-          return <span>{err.message}</span>;
-        }
-      });
+      try {
+        await apiClient.deleteFeedback(feedbackId);
+        setMessages((prev) =>
+          updateMessageById(prev, message.id, {
+            ...message,
+            feedback: undefined
+          })
+        );
+        onSuccess();
+      } catch {
+        // Silently handle feedback delete errors
+      }
     },
     []
   );
