@@ -125,7 +125,7 @@ export default function LeftSidebar({
         )}
       >
         <div className="flex items-center justify-between gap-2 min-h-8">
-          <Logo className="h-6 w-auto max-w-[120px] shrink-0" />
+          <Logo className="h-6 w-auto max-w-[120px] shrink-0 invisible" aria-hidden="true" />
           <SidebarTrigger />
         </div>
       </SidebarHeader>
