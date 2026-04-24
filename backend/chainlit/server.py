@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING, List, Optional, Union, cast
 
 import socketio
 from fastapi import (
-    Pagination,
     APIRouter,
     Depends,
     FastAPI,
@@ -70,6 +69,7 @@ from chainlit.types import (
     DisconnectMCPRequest,
     ElementRequest,
     GetThreadsRequest,
+    Pagination,
     ShareThreadRequest,
     Theme,
     UpdateFeedbackRequest,
