@@ -573,6 +573,94 @@ class ChainlitDataLayer(BaseDataLayer):
             tags=[],
         )
 
+    async def get_thread_steps(
+        self, thread_id: str, pagination: Pagination
+    ) -> Optional[PaginatedResponse[ThreadDict]]:
+        # Fetch thread metadata
+        thread_query = """
+        SELECT t.*, u.identifier as user_identifier
+        FROM "Thread" t
+        LEFT JOIN "User" u ON t."userId" = u.id
+        WHERE t.id = $1 AND t."deletedAt" IS NULL
+        """
+        thread_results = await self.execute_query(thread_query, {"thread_id": thread_id})
+        if not thread_results:
+            return None
+        thread = thread_results[0]
+
+        # Build paginated steps query ordered latest → earliest
+        if pagination.cursor:
+            steps_query = """
+            SELECT  s.*,
+                    f.id feedback_id,
+                    f.value feedback_value,
+                    f."comment" feedback_comment
+            FROM "Step" s LEFT JOIN "Feedback" f ON s.id = f."stepId"
+            WHERE s."threadId" = $1
+              AND s."startTime" < (SELECT "startTime" FROM "Step" WHERE id = $2)
+            ORDER BY s."startTime" DESC
+            LIMIT $3
+            """
+            steps_params = {"thread_id": thread_id, "cursor": pagination.cursor, "limit": pagination.first + 1}
+        else:
+            steps_query = """
+            SELECT  s.*,
+                    f.id feedback_id,
+                    f.value feedback_value,
+                    f."comment" feedback_comment
+            FROM "Step" s LEFT JOIN "Feedback" f ON s.id = f."stepId"
+            WHERE s."threadId" = $1
+            ORDER BY s."startTime" DESC
+            LIMIT $2
+            """
+            steps_params = {"thread_id": thread_id, "limit": pagination.first + 1}
+
+        steps_results = await self.execute_query(steps_query, steps_params)
+
+        has_next_page = len(steps_results) > pagination.first
+        if has_next_page:
+            steps_results = steps_results[:-1]
+
+        # Fetch elements only for the steps on this page
+        step_ids = [str(row["id"]) for row in steps_results]
+        elements_results: List[Dict[str, Any]] = []
+        if step_ids:
+            elements_query = """
+            SELECT * FROM "Element"
+            WHERE "threadId" = $1 AND "stepId" = ANY($2::text[])
+            """
+            elements_results = await self.execute_query(
+                elements_query, {"thread_id": thread_id, "step_ids": step_ids}
+            )
+            if self.storage_client is not None:
+                for elem in elements_results:
+                    if not elem["url"] and elem["objectKey"]:
+                        elem["url"] = await self.storage_client.get_read_url(
+                            object_key=elem["objectKey"],
+                        )
+
+        thread_dict = ThreadDict(
+            id=str(thread["id"]),
+            createdAt=thread["createdAt"].isoformat(),
+            name=thread["name"],
+            userId=str(thread["userId"]) if thread["userId"] else None,
+            userIdentifier=thread["user_identifier"],
+            metadata=json.loads(thread["metadata"]),
+            tags=[],
+            steps=[self._convert_step_row_to_dict(step) for step in steps_results],
+            elements=[
+                self._convert_element_row_to_dict(elem) for elem in elements_results
+            ],
+        )
+        return PaginatedResponse(
+            pageInfo=PageInfo(
+                hasNextPage=has_next_page,
+                startCursor=str(steps_results[0]["id"]) if steps_results else None,
+                endCursor=str(steps_results[-1]["id"]) if steps_results else None,
+            ),
+            data=[thread_dict],
+        )
+
     async def update_thread(
         self,
         thread_id: str,

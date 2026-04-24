@@ -69,6 +69,7 @@ from chainlit.types import (
     DisconnectMCPRequest,
     ElementRequest,
     GetThreadsRequest,
+    Pagination,
     ShareThreadRequest,
     Theme,
     UpdateFeedbackRequest,
@@ -968,8 +969,20 @@ async def get_thread(
     request: Request,
     thread_id: str,
     current_user: UserParam,
+    first: int = Query(default=50, ge=1, le=500, description="Number of steps per page"),
+    cursor: Optional[str] = Query(default=None, description="Pagination cursor (step ID of the last item from the previous page)"),
 ):
-    """Get a specific thread."""
+    """Get a thread with paginated steps.
+
+    Returns thread metadata and a page of steps ordered from latest to earliest.
+
+    - **thread_id**: ID of the thread to retrieve.
+    - **first**: Maximum number of steps to return (1–500, default 50).
+    - **cursor**: Step ID from the previous page's `endCursor` to fetch the next page. Omit for the first page.
+
+    The response `pageInfo` contains `hasNextPage`, `startCursor`, and `endCursor` for
+    subsequent pagination calls.
+    """
     data_layer = get_data_layer()
 
     if not data_layer:
@@ -980,8 +993,10 @@ async def get_thread(
 
     await is_thread_author(current_user.identifier, thread_id)
 
-    res = await data_layer.get_thread(thread_id)
-    return JSONResponse(content=res)
+    res = await data_layer.get_thread_steps(thread_id, pagination=Pagination(first=first, cursor=cursor))
+    if res is None:
+        raise HTTPException(status_code=404, detail="Thread not found")
+    return JSONResponse(content=res.to_dict())
 
 
 @router.get("/project/share/{thread_id}")

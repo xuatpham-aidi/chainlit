@@ -169,6 +169,8 @@ class FileDict(TypedDict):
 
 class MessagePayload(TypedDict):
     message: "StepDict"
+    chatMode: Optional[Literal["reflect", "career", "learning", "parent"]]
+    chatStyle: Optional[Literal["quick", "empathetic", "profound", "playful"]]
     fileReferences: Optional[List[FileReference]]
 
 
