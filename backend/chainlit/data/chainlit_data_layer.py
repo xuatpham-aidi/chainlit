@@ -573,6 +573,133 @@ class ChainlitDataLayer(BaseDataLayer):
             tags=[],
         )
 
+    async def get_thread_steps(
+        self, thread_id: str, pagination: Pagination
+    ) -> Optional[PaginatedResponse[ThreadDict]]:
+        # Fetch thread metadata
+        thread_query = """
+        SELECT t.*, u.identifier as user_identifier
+        FROM "Thread" t
+        LEFT JOIN "User" u ON t."userId" = u.id
+        WHERE t.id = $1 AND t."deletedAt" IS NULL
+        """
+        thread_results = await self.execute_query(thread_query, {"thread_id": thread_id})
+        if not thread_results:
+            return None
+        thread = thread_results[0]
+
+        # Pagination is counted by 'user_message' steps only.
+        # First, find the user_message steps for this page to establish the time window.
+        if pagination.cursor:
+            user_msg_query = """
+            SELECT id, "startTime"
+            FROM "Step"
+            WHERE "threadId" = $1
+              AND type = 'user_message'
+              AND "startTime" < (SELECT "startTime" FROM "Step" WHERE id = $2)
+            ORDER BY "startTime" DESC
+            LIMIT $3
+            """
+            user_msg_params = {
+                "thread_id": thread_id,
+                "cursor": pagination.cursor,
+                "limit": pagination.first + 1,
+            }
+        else:
+            user_msg_query = """
+            SELECT id, "startTime"
+            FROM "Step"
+            WHERE "threadId" = $1
+              AND type = 'user_message'
+            ORDER BY "startTime" DESC
+            LIMIT $2
+            """
+            user_msg_params = {"thread_id": thread_id, "limit": pagination.first + 1}
+
+        user_msgs = await self.execute_query(user_msg_query, user_msg_params)
+
+        has_next_page = len(user_msgs) > pagination.first
+        if has_next_page:
+            user_msgs = user_msgs[:-1]
+
+        steps_results: List[Dict[str, Any]] = []
+        if user_msgs:
+            # Fetch ALL step types within the time window covered by the page's user_message steps.
+            # Lower bound: startTime of the oldest user_message on this page (inclusive).
+            # Upper bound: startTime of the cursor step (exclusive) — omitted on first page.
+            min_time = min(row["startTime"] for row in user_msgs)
+            if pagination.cursor:
+                all_steps_query = """
+                SELECT  s.*,
+                        f.id feedback_id,
+                        f.value feedback_value,
+                        f."comment" feedback_comment
+                FROM "Step" s LEFT JOIN "Feedback" f ON s.id = f."stepId"
+                WHERE s."threadId" = $1
+                  AND s."startTime" >= $2
+                  AND s."startTime" < (SELECT "startTime" FROM "Step" WHERE id = $3)
+                ORDER BY s."startTime" DESC
+                """
+                all_steps_params = {
+                    "thread_id": thread_id,
+                    "min_time": min_time,
+                    "cursor": pagination.cursor,
+                }
+            else:
+                all_steps_query = """
+                SELECT  s.*,
+                        f.id feedback_id,
+                        f.value feedback_value,
+                        f."comment" feedback_comment
+                FROM "Step" s LEFT JOIN "Feedback" f ON s.id = f."stepId"
+                WHERE s."threadId" = $1
+                  AND s."startTime" >= $2
+                ORDER BY s."startTime" DESC
+                """
+                all_steps_params = {"thread_id": thread_id, "min_time": min_time}
+
+            steps_results = await self.execute_query(all_steps_query, all_steps_params)
+
+        # Fetch elements only for the steps on this page
+        step_ids = [str(row["id"]) for row in steps_results]
+        elements_results: List[Dict[str, Any]] = []
+        if step_ids:
+            elements_query = """
+            SELECT * FROM "Element"
+            WHERE "threadId" = $1 AND "stepId" = ANY($2::text[])
+            """
+            elements_results = await self.execute_query(
+                elements_query, {"thread_id": thread_id, "step_ids": step_ids}
+            )
+            if self.storage_client is not None:
+                for elem in elements_results:
+                    if not elem["url"] and elem["objectKey"]:
+                        elem["url"] = await self.storage_client.get_read_url(
+                            object_key=elem["objectKey"],
+                        )
+
+        thread_dict = ThreadDict(
+            id=str(thread["id"]),
+            createdAt=thread["createdAt"].isoformat(),
+            name=thread["name"],
+            userId=str(thread["userId"]) if thread["userId"] else None,
+            userIdentifier=thread["user_identifier"],
+            metadata=json.loads(thread["metadata"]),
+            tags=[],
+            steps=[self._convert_step_row_to_dict(step) for step in steps_results],
+            elements=[
+                self._convert_element_row_to_dict(elem) for elem in elements_results
+            ],
+        )
+        return PaginatedResponse(
+            pageInfo=PageInfo(
+                hasNextPage=has_next_page,
+                startCursor=str(user_msgs[0]["id"]) if user_msgs else None,
+                endCursor=str(user_msgs[-1]["id"]) if user_msgs else None,
+            ),
+            data=[thread_dict],
+        )
+
     async def update_thread(
         self,
         thread_id: str,

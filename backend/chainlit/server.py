@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, List, Optional, Union, cast
 
 import socketio
 from fastapi import (
+    Pagination,
     APIRouter,
     Depends,
     FastAPI,
@@ -968,8 +969,23 @@ async def get_thread(
     request: Request,
     thread_id: str,
     current_user: UserParam,
+    first: int = Query(default=10, ge=1, le=500, description="Number of user_message steps per page"),
+    cursor: Optional[str] = Query(default=None, description="Pagination cursor (user_message step ID from the previous page's endCursor)"),
 ):
-    """Get a specific thread."""
+    """Get a thread with paginated steps.
+
+    Returns thread metadata and a page of steps ordered from latest to earliest.
+    Pagination is counted by `user_message` steps — each page contains at most `first`
+    user messages plus all associated steps (tool calls, assistant messages, etc.)
+    within the same time window.
+
+    - **thread_id**: ID of the thread to retrieve.
+    - **first**: Maximum number of user messages per page (1–500, default 10).
+    - **cursor**: `endCursor` from the previous response's `pageInfo` to fetch the next page.
+
+    The response `pageInfo` contains `hasNextPage`, `startCursor`, and `endCursor` for
+    subsequent pagination calls.
+    """
     data_layer = get_data_layer()
 
     if not data_layer:
@@ -980,8 +996,10 @@ async def get_thread(
 
     await is_thread_author(current_user.identifier, thread_id)
 
-    res = await data_layer.get_thread(thread_id)
-    return JSONResponse(content=res)
+    res = await data_layer.get_thread_steps(thread_id, pagination=Pagination(first=first, cursor=cursor))
+    if res is None:
+        raise HTTPException(status_code=404, detail="Thread not found")
+    return JSONResponse(content=res.to_dict())
 
 
 @router.get("/project/share/{thread_id}")
