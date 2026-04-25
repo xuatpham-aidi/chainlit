@@ -91,10 +91,11 @@ class BaseDataLayer(ABC):
     async def get_thread(self, thread_id: str) -> "Optional[ThreadDict]":
         pass
 
+    @abstractmethod
     async def get_thread_steps(
         self, thread_id: str, pagination: "Pagination"
     ) -> "Optional[PaginatedResponse[ThreadDict]]":
-        return None
+        pass
 
     @abstractmethod
     async def update_thread(

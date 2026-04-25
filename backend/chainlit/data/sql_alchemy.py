@@ -248,6 +248,290 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         else:
             return None
 
+    async def get_thread_steps(
+        self, thread_id: str, pagination: Pagination
+    ) -> Optional[PaginatedResponse[ThreadDict]]:
+        if self.show_logger:
+            logger.info(
+                f"SQLAlchemy: get_thread_steps, thread_id={thread_id}, "
+                f"first={pagination.first}, cursor={pagination.cursor}"
+            )
+
+        # Fetch thread metadata
+        thread_query = """
+            SELECT
+                t."id" AS thread_id,
+                t."createdAt" AS thread_createdat,
+                t."name" AS thread_name,
+                t."userId" AS user_id,
+                t."userIdentifier" AS user_identifier,
+                t."tags" AS thread_tags,
+                t."metadata" AS thread_metadata
+            FROM threads t
+            WHERE t."id" = :thread_id
+        """
+        thread_rows = await self.execute_sql(
+            query=thread_query, parameters={"thread_id": thread_id}
+        )
+        if not isinstance(thread_rows, list) or not thread_rows:
+            return None
+        thread = thread_rows[0]
+
+        # Pagination is counted by 'user_message' steps only.
+        # Find the user_message steps for this page to establish the time window.
+        if pagination.cursor:
+            user_msg_query = """
+                SELECT id, "createdAt"
+                FROM steps
+                WHERE "threadId" = :thread_id
+                  AND type = 'user_message'
+                  AND "createdAt" < (SELECT "createdAt" FROM steps WHERE id = :cursor)
+                ORDER BY "createdAt" DESC
+                LIMIT :limit
+            """
+            user_msg_params = {
+                "thread_id": thread_id,
+                "cursor": pagination.cursor,
+                "limit": pagination.first + 1,
+            }
+        else:
+            user_msg_query = """
+                SELECT id, "createdAt"
+                FROM steps
+                WHERE "threadId" = :thread_id
+                  AND type = 'user_message'
+                ORDER BY "createdAt" DESC
+                LIMIT :limit
+            """
+            user_msg_params = {
+                "thread_id": thread_id,
+                "limit": pagination.first + 1,
+            }
+
+        user_msgs = await self.execute_sql(
+            query=user_msg_query, parameters=user_msg_params
+        )
+        if not isinstance(user_msgs, list):
+            user_msgs = []
+
+        has_next_page = len(user_msgs) > pagination.first
+        if has_next_page:
+            user_msgs = user_msgs[:-1]
+
+        steps_feedbacks: List[Dict[str, Any]] = []
+        if user_msgs:
+            # Fetch ALL step types within the time window of the page's user_message steps.
+            # Lower bound: createdAt of the oldest user_message on this page (inclusive).
+            # Upper bound: createdAt of the cursor step (exclusive) — omitted on first page.
+            min_time = min(row["createdAt"] for row in user_msgs)
+            if pagination.cursor:
+                all_steps_query = """
+                    SELECT
+                        s."id" AS step_id,
+                        s."name" AS step_name,
+                        s."type" AS step_type,
+                        s."threadId" AS step_threadid,
+                        s."parentId" AS step_parentid,
+                        s."streaming" AS step_streaming,
+                        s."waitForAnswer" AS step_waitforanswer,
+                        s."isError" AS step_iserror,
+                        s."metadata" AS step_metadata,
+                        s."tags" AS step_tags,
+                        s."input" AS step_input,
+                        s."output" AS step_output,
+                        s."createdAt" AS step_createdat,
+                        s."start" AS step_start,
+                        s."end" AS step_end,
+                        s."generation" AS step_generation,
+                        s."showInput" AS step_showinput,
+                        s."language" AS step_language,
+                        f."value" AS feedback_value,
+                        f."comment" AS feedback_comment,
+                        f."id" AS feedback_id
+                    FROM steps s LEFT JOIN feedbacks f ON s."id" = f."forId"
+                    WHERE s."threadId" = :thread_id
+                      AND s."createdAt" >= :min_time
+                      AND s."createdAt" < (SELECT "createdAt" FROM steps WHERE id = :cursor)
+                    ORDER BY s."createdAt" ASC
+                """
+                all_steps_params: Dict[str, Any] = {
+                    "thread_id": thread_id,
+                    "min_time": min_time,
+                    "cursor": pagination.cursor,
+                }
+            else:
+                all_steps_query = """
+                    SELECT
+                        s."id" AS step_id,
+                        s."name" AS step_name,
+                        s."type" AS step_type,
+                        s."threadId" AS step_threadid,
+                        s."parentId" AS step_parentid,
+                        s."streaming" AS step_streaming,
+                        s."waitForAnswer" AS step_waitforanswer,
+                        s."isError" AS step_iserror,
+                        s."metadata" AS step_metadata,
+                        s."tags" AS step_tags,
+                        s."input" AS step_input,
+                        s."output" AS step_output,
+                        s."createdAt" AS step_createdat,
+                        s."start" AS step_start,
+                        s."end" AS step_end,
+                        s."generation" AS step_generation,
+                        s."showInput" AS step_showinput,
+                        s."language" AS step_language,
+                        f."value" AS feedback_value,
+                        f."comment" AS feedback_comment,
+                        f."id" AS feedback_id
+                    FROM steps s LEFT JOIN feedbacks f ON s."id" = f."forId"
+                    WHERE s."threadId" = :thread_id
+                      AND s."createdAt" >= :min_time
+                    ORDER BY s."createdAt" ASC
+                """
+                all_steps_params = {"thread_id": thread_id, "min_time": min_time}
+
+            result = await self.execute_sql(
+                query=all_steps_query, parameters=all_steps_params
+            )
+            if isinstance(result, list):
+                steps_feedbacks = result
+
+        # Fetch elements for the steps on this page
+        step_ids = [row["step_id"] for row in steps_feedbacks]
+        elements: List[Dict[str, Any]] = []
+        if step_ids:
+            step_ids_literal = "('" + "','".join(map(str, step_ids)) + "')"
+            elements_query = f"""
+                SELECT
+                    e."id" AS element_id,
+                    e."threadId" AS element_threadid,
+                    e."type" AS element_type,
+                    e."chainlitKey" AS element_chainlitkey,
+                    e."url" AS element_url,
+                    e."objectKey" AS element_objectkey,
+                    e."name" AS element_name,
+                    e."display" AS element_display,
+                    e."size" AS element_size,
+                    e."language" AS element_language,
+                    e."page" AS element_page,
+                    e."forId" AS element_forid,
+                    e."mime" AS element_mime,
+                    e."props" AS props
+                FROM elements e
+                WHERE e."threadId" = :thread_id
+                  AND e."forId" IN {step_ids_literal}
+            """
+            result = await self.execute_sql(
+                query=elements_query, parameters={"thread_id": thread_id}
+            )
+            if isinstance(result, list):
+                elements = result
+
+        # Build steps
+        steps: List[StepDict] = []
+        for step_feedback in steps_feedbacks:
+            feedback = None
+            if step_feedback["feedback_value"] is not None:
+                feedback = FeedbackDict(
+                    forId=step_feedback["step_id"],
+                    id=step_feedback.get("feedback_id"),
+                    value=step_feedback["feedback_value"],
+                    comment=step_feedback.get("feedback_comment"),
+                )
+            steps.append(
+                StepDict(
+                    id=step_feedback["step_id"],
+                    name=step_feedback["step_name"],
+                    type=step_feedback["step_type"],
+                    threadId=step_feedback["step_threadid"],
+                    parentId=step_feedback.get("step_parentid"),
+                    streaming=step_feedback.get("step_streaming", False),
+                    waitForAnswer=step_feedback.get("step_waitforanswer"),
+                    isError=step_feedback.get("step_iserror"),
+                    metadata=(
+                        step_feedback["step_metadata"]
+                        if step_feedback.get("step_metadata") is not None
+                        else {}
+                    ),
+                    tags=step_feedback.get("step_tags"),
+                    input=(
+                        step_feedback.get("step_input", "")
+                        if step_feedback.get("step_showinput") not in [None, "false"]
+                        else ""
+                    ),
+                    output=step_feedback.get("step_output", ""),
+                    createdAt=step_feedback.get("step_createdat"),
+                    start=step_feedback.get("step_start"),
+                    end=step_feedback.get("step_end"),
+                    generation=step_feedback.get("step_generation"),
+                    showInput=step_feedback.get("step_showinput"),
+                    language=step_feedback.get("step_language"),
+                    feedback=feedback,
+                )
+            )
+
+        # Build elements
+        element_dicts: List[ElementDict] = []
+        for element in elements:
+            element_url: str | None = None
+            object_key_val = element.get("element_objectkey")
+            if (
+                self.storage_provider is not None
+                and isinstance(object_key_val, str)
+                and object_key_val.strip()
+            ):
+                try:
+                    element_url = await self.storage_provider.get_read_url(
+                        object_key=object_key_val,
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to get read URL for object_key '{object_key_val}': {e}. Falling back to stored URL."
+                    )
+                    element_url = element.get("element_url")
+            else:
+                element_url = element.get("element_url")
+            element_dicts.append(
+                ElementDict(
+                    id=element["element_id"],
+                    threadId=element["element_threadid"],
+                    type=element["element_type"],
+                    chainlitKey=element.get("element_chainlitkey"),
+                    url=element_url,
+                    objectKey=element.get("element_objectkey"),
+                    name=element["element_name"],
+                    display=element["element_display"],
+                    size=element.get("element_size"),
+                    language=element.get("element_language"),
+                    autoPlay=element.get("element_autoPlay"),
+                    playerConfig=element.get("element_playerconfig"),
+                    page=element.get("element_page"),
+                    props=element.get("props", "{}"),
+                    forId=element.get("element_forid"),
+                    mime=element.get("element_mime"),
+                )
+            )
+
+        thread_dict = ThreadDict(
+            id=thread["thread_id"],
+            createdAt=thread["thread_createdat"],
+            name=thread["thread_name"],
+            userId=thread["user_id"],
+            userIdentifier=thread["user_identifier"],
+            tags=thread["thread_tags"],
+            metadata=thread["thread_metadata"],
+            steps=steps,
+            elements=element_dicts,
+        )
+        return PaginatedResponse(
+            pageInfo=PageInfo(
+                hasNextPage=has_next_page,
+                startCursor=str(user_msgs[0]["id"]) if user_msgs else None,
+                endCursor=str(user_msgs[-1]["id"]) if user_msgs else None,
+            ),
+            data=[thread_dict],
+        )
+
     async def update_thread(
         self,
         thread_id: str,
