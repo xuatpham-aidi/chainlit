@@ -961,7 +961,9 @@ async def get_user_threads(
     else:
         payload.filter.userId = current_user.id
 
+    logger.debug(f"Fetching threads for user ID: {payload.filter.userId} with pagination: {payload.pagination}")
     res = await data_layer.list_threads(payload.pagination, payload.filter)
+    logger.debug("Fetched threads successfully")
     return JSONResponse(content=res.to_dict())
 
 

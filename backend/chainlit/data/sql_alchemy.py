@@ -633,7 +633,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         all_user_threads: List[ThreadDict] = (
             await self.get_all_user_threads(user_id=filters.userId) or []
         )
-
+        logger.info(f"SQLAlchemy: list_threads, found {len(all_user_threads)} threads for userId={filters.userId}") 
         search_keyword = filters.search.lower() if filters.search else None
         feedback_value = int(filters.feedback) if filters.feedback else None
 
@@ -673,6 +673,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
         start_cursor = paginated_threads[0]["id"] if paginated_threads else None
         end_cursor = paginated_threads[-1]["id"] if paginated_threads else None
 
+        logger.info(f"SQLAlchemy: list_threads, returning {len(paginated_threads)} threads, hasNextPage={has_next_page}, startCursor={start_cursor}, endCursor={end_cursor}")
         return PaginatedResponse(
             pageInfo=PageInfo(
                 hasNextPage=has_next_page,
