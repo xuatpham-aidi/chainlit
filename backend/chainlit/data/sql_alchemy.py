@@ -350,6 +350,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                         f."id" AS feedback_id
                     FROM steps s LEFT JOIN feedbacks f ON s."id" = f."forId"
                     WHERE s."threadId" = :thread_id
+                      AND s."type" != 'undefined'
                       AND s."createdAt" >= :min_time
                       AND s."createdAt" < (SELECT "createdAt" FROM steps WHERE id = :cursor)
                     ORDER BY s."createdAt" ASC
@@ -385,6 +386,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                         f."id" AS feedback_id
                     FROM steps s LEFT JOIN feedbacks f ON s."id" = f."forId"
                     WHERE s."threadId" = :thread_id
+                      AND s."type" != 'undefined'
                       AND s."createdAt" >= :min_time
                     ORDER BY s."createdAt" ASC
                 """
@@ -1038,7 +1040,7 @@ class SQLAlchemyDataLayer(BaseDataLayer):
                 f."comment" AS feedback_comment,
                 f."id" AS feedback_id
             FROM steps s LEFT JOIN feedbacks f ON s."id" = f."forId"
-            WHERE s."threadId" IN {thread_ids}
+            WHERE s."threadId" IN {thread_ids} AND s."type" != 'undefined'
             ORDER BY s."createdAt" ASC
         """
         steps_feedbacks = await self.execute_sql(

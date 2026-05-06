@@ -949,6 +949,7 @@ async def get_user_threads(
     if not data_layer:
         raise HTTPException(status_code=400, detail="Data persistence is not enabled")
 
+    logger.debug(f"Current user: {current_user}")
     if not current_user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
