@@ -111,7 +111,9 @@ async def _authenticate_connection(
     environ: WSGIEnvironment,
 ) -> Union[Tuple[Union[User, PersistedUser], str], Tuple[None, None]]:
     if token := _get_token(environ):
+        logger.debug("Authenticating connection with token: %s", token)
         user = await get_current_user(token=token)
+        logger.debug("Authenticated user: %s", user)
         if user:
             return user, token
 
@@ -130,6 +132,7 @@ async def connect(sid: str, environ: WSGIEnvironment, auth: WebSocketSessionAuth
         except Exception as e:
             logger.exception("Exception authenticating connection: %s", e)
 
+        logger.debug("User %s is connecting with token: %s", user, token)
         if not user:
             logger.error("Authentication failed in websocket connect.")
             raise ConnectionRefusedError("authentication failed")
